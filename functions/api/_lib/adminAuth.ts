@@ -1,33 +1,24 @@
+import { COOKIE_NAME, parseCookie, verifyAdminSession } from './adminSession';
+
 type AdminAuthEnv = {
-  ADMIN_PASSWORD?: string;
+  ADMIN_SESSION_SECRET?: string;
 };
 
-export const getAdminPasswordFromRequest = (request: Request): string => {
-  return (
-    request.headers.get('x-admin-password') ||
-    request.headers.get('X-Admin-Password') ||
-    ''
-  );
-};
+export const requireAdmin = async (request: Request, env: AdminAuthEnv): Promise<Response | null> => {
+  const secret = env?.ADMIN_SESSION_SECRET || '';
+  if (!secret) {
+    // Treat as misconfiguration to avoid silently allowing auth-less access.
+    return Response.json({ ok: false, code: 'MISSING_SESSION_SECRET' }, { status: 500 });
+  }
 
-export const requireAdmin = (request: Request, env: AdminAuthEnv): Response | null => {
-  const expected = env?.ADMIN_PASSWORD || '';
-  const provided = getAdminPasswordFromRequest(request);
-  const hasExpected = !!expected;
-  const hasProvided = !!provided;
+  const token = parseCookie(request.headers.get('Cookie'), COOKIE_NAME);
+  if (!token) {
+    return Response.json({ ok: false, code: 'UNAUTHORIZED' }, { status: 401 });
+  }
 
-  if (!hasExpected || !hasProvided || provided !== expected) {
-    return Response.json(
-      {
-        ok: false,
-        code: 'UNAUTHORIZED',
-        expectedLength: expected.length,
-        providedLength: provided.length,
-        hasExpected,
-        hasProvided,
-      },
-      { status: 401 }
-    );
+  const payload = await verifyAdminSession(token, secret);
+  if (!payload) {
+    return Response.json({ ok: false, code: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   return null;

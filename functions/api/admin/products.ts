@@ -254,7 +254,7 @@ const resolveProductImagePayload = async (
 
 export async function onRequestGet(context: { env: { DB: D1Database }; request: Request }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureProductSchema(context.env.DB);
     await ensureProductImageColumns(context.env.DB);
@@ -286,7 +286,7 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
 
 export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SECRET_KEY?: string }; request: Request }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     console.log('[products save] incoming', {
       method: context.request.method,
@@ -494,7 +494,7 @@ export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SEC
 
 async function onRequestDelete(context: { env: { DB: D1Database }; request: Request }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     const url = new URL(context.request.url);
     let id = url.searchParams.get('id');
@@ -555,3 +555,4 @@ export async function onRequest(context: { env: { DB: D1Database }; request: Req
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

@@ -1,7 +1,8 @@
-import { getAdminPasswordFromRequest, requireAdmin } from '../_lib/adminAuth';
+import { parseCookie, COOKIE_NAME } from '../_lib/adminSession';
+import { requireAdmin } from '../_lib/adminAuth';
 
 type Env = {
-  ADMIN_PASSWORD?: string;
+  ADMIN_SESSION_SECRET?: string;
 };
 
 const json = (data: unknown, status = 200) =>
@@ -14,17 +15,15 @@ const json = (data: unknown, status = 200) =>
   });
 
 export async function onRequestGet(context: { env: Env; request: Request }): Promise<Response> {
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
 
-  const expected = context.env.ADMIN_PASSWORD || '';
-  const provided = getAdminPasswordFromRequest(context.request);
+  const provided = parseCookie(context.request.headers.get('Cookie'), COOKIE_NAME);
   return json({
     ok: true,
     code: 'AUTHORIZED',
-    expectedLength: expected.length,
-    providedLength: provided.length,
-    hasExpected: !!expected,
+    providedLength: provided?.length ?? 0,
     hasProvided: !!provided,
   });
 }
+

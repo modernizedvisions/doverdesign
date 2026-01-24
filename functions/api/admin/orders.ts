@@ -45,7 +45,7 @@ type OrderItemRow = {
 
 export const onRequestGet = async (context: { env: { DB: D1Database }; request: Request }): Promise<Response> => {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await assertOrdersTables(context.env.DB);
     await ensureOrdersSeenSchema(context.env.DB);
@@ -287,3 +287,4 @@ async function backfillDisplayOrderIds(db: D1Database) {
     throw error;
   }
 }
+

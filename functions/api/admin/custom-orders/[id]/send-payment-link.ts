@@ -75,7 +75,7 @@ export async function onRequestPost(context: {
   request: Request;
 }) {
   const { env, params } = context;
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
   const id = params?.id;
   const debug = (env as any)?.DEBUG_CUSTOM_ORDERS === '1';
@@ -407,3 +407,4 @@ function resolveSiteUrl(env: {
   const raw = env.PUBLIC_SITE_URL || env.VITE_PUBLIC_SITE_URL || '';
   return raw ? raw.replace(/\/+$/, '') : '';
 }
+

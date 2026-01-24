@@ -18,13 +18,12 @@ import { getAdminOrders } from './db/orders';
 import { getReviewsForProduct } from './db/reviews';
 import { createEmbeddedCheckoutSession, fetchCheckoutSession } from './payments/checkout';
 import { sendContactEmail } from './contact';
-import { verifyAdminPassword } from './auth';
 import { fetchAdminPromotions, createAdminPromotion, updateAdminPromotion, deleteAdminPromotion } from './adminPromotions';
 import { fetchAdminPromoCodes, createAdminPromoCode, updateAdminPromoCode, deleteAdminPromoCode } from './adminPromoCodes';
 import type { Category, HomeSiteContent } from './types';
 import { normalizeImageUrl } from './images';
 import { optimizeImageForUpload } from './imageOptimization';
-import { adminFetch, getAdminPassword, notifyAdminAuthRequired } from './adminAuth';
+import { adminFetch, notifyAdminAuthRequired } from './adminAuth';
 
 // Aggregates the mock data layer and stubs so the UI can continue working while we
 // prepare for Cloudflare D1 + Stripe with the site/admin as the source of truth.
@@ -43,7 +42,7 @@ export const saveShopCategoryTiles = persistShopCategoryTiles;
 export const fetchReviewsForProduct = getReviewsForProduct;
 // validateCart is no longer exported here (orders/cart validation will be wired separately if needed)
 
-export { createEmbeddedCheckoutSession, fetchCheckoutSession, sendContactEmail, verifyAdminPassword };
+export { createEmbeddedCheckoutSession, fetchCheckoutSession, sendContactEmail };
 export {
   fetchAdminPromotions,
   createAdminPromotion,
@@ -254,10 +253,6 @@ export async function adminUploadImageScoped(
   form.append('file', uploadFile, uploadFile.name || 'upload');
   const url = `/api/admin/images/upload?rid=${encodeURIComponent(rid)}&scope=${encodeURIComponent(scope)}`;
   const method = 'POST';
-  const adminPassword = getAdminPassword();
-  if (!adminPassword) {
-    throw new Error('Missing admin password. Please re-authenticate in /admin.');
-  }
   console.debug('[admin image upload] request', {
     rid,
     url,
@@ -274,7 +269,6 @@ export async function adminUploadImageScoped(
     method,
     headers: {
       'X-Upload-Request-Id': rid,
-      'x-admin-password': adminPassword,
     },
     body: form,
   });

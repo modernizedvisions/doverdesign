@@ -124,7 +124,7 @@ export async function onRequest(context: { env: { DB: D1Database }; request: Req
   const method = context.request.method.toUpperCase();
 
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureCategorySchema(context.env.DB);
     await seedDefaultCategories(context.env.DB);
@@ -523,3 +523,4 @@ async function ensureOtherItemsCategory(db: D1Database) {
     return null;
   }
 }
+

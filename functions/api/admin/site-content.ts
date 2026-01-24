@@ -48,7 +48,7 @@ export async function onRequest(context: { env: { DB: D1Database }; request: Req
   const db = context.env.DB;
 
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureSiteContent(db);
 
@@ -113,3 +113,4 @@ export async function onRequest(context: { env: { DB: D1Database }; request: Req
     return json({ error: 'Internal server error' }, 500);
   }
 }
+

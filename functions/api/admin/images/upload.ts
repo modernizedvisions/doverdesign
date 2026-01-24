@@ -20,11 +20,19 @@ const VALID_SCOPES = new Set(['products', 'gallery', 'home', 'categories', 'cust
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-const corsHeaders = (request?: Request | null) => ({
-  'Access-Control-Allow-Origin': request?.headers.get('Origin') || '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Upload-Request-Id, X-Admin-Password',
-});
+const corsHeaders = (request?: Request | null) => {
+  const origin = request?.headers.get('Origin') || '';
+  return {
+    ...(origin
+      ? {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Credentials': 'true',
+        }
+      : {}),
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Upload-Request-Id, X-Admin-Password',
+  };
+};
 
 const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(data), {
@@ -77,7 +85,7 @@ export async function onRequestOptions(context: { request: Request }): Promise<R
 
 export async function onRequestGet(context: { request: Request; env: Env }): Promise<Response> {
   const { request } = context;
-  const unauthorized = requireAdmin(request, context.env);
+  const unauthorized = await requireAdmin(request, context.env);
   if (unauthorized) return unauthorized;
   console.log('[images/upload] handler', {
     handler: 'GET',
@@ -120,7 +128,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   });
 
   try {
-    const unauthorized = requireAdmin(request, env);
+    const unauthorized = await requireAdmin(request, env);
     if (unauthorized) return unauthorized;
 
     if (!env.IMAGES_BUCKET) {
@@ -347,3 +355,4 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     );
   }
 }
+

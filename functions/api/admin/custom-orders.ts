@@ -57,7 +57,7 @@ type CustomOrderPayload = {
 
 export async function onRequestGet(context: { env: { DB: D1Database }; request: Request }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureCustomOrdersSchema(context.env.DB);
     const columns = await getCustomOrdersColumns(context.env.DB);
@@ -87,7 +87,7 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
 
 export async function onRequestPost(context: { env: { DB: D1Database }; request: Request }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureCustomOrdersSchema(context.env.DB);
     const columns = await getCustomOrdersColumns(context.env.DB);
@@ -461,6 +461,7 @@ async function backfillDisplayCustomOrderIds(db: D1Database) {
     throw error;
   }
 }
+
 
 
 

@@ -35,7 +35,7 @@ export async function onRequestGet(context: {
   env: { DB: D1Database; PUBLIC_IMAGES_BASE_URL?: string };
   request: Request;
 }): Promise<Response> {
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
   try {
     const db = context.env.DB;
@@ -67,7 +67,7 @@ export async function onRequestPut(context: {
   env: { DB: D1Database; PUBLIC_IMAGES_BASE_URL?: string };
   request: Request;
 }): Promise<Response> {
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
 
   try {
@@ -188,3 +188,4 @@ const normalizeTags = (value: unknown): string[] => {
   }
   return [];
 };
+

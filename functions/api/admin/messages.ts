@@ -48,7 +48,7 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
   const db = context.env.DB;
 
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureMessagesSchema(db);
     let result;
@@ -108,3 +108,4 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
     });
   }
 }
+

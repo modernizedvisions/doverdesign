@@ -38,7 +38,7 @@ export async function onRequestDelete(context: {
 
   console.log('[images/delete] request', { id, method: request.method, url: request.url });
 
-  const unauthorized = requireAdmin(request, env);
+  const unauthorized = await requireAdmin(request, env);
   if (unauthorized) return unauthorized;
 
   if (!env.DB) {
@@ -92,10 +92,11 @@ export async function onRequest(context: {
   params: Record<string, string>;
   request: Request;
 }): Promise<Response> {
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
   if (context.request.method.toUpperCase() === 'DELETE') {
     return onRequestDelete(context);
   }
   return json({ ok: false, code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' }, 405);
 }
+

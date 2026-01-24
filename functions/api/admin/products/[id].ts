@@ -243,7 +243,7 @@ export async function onRequestPut(context: {
   params: Record<string, string>;
 }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     console.log('[products save] incoming', {
       method: context.request.method,
@@ -419,7 +419,7 @@ export async function onRequestDelete(context: {
   params: Record<string, string>;
 }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     const id = context.params?.id;
     if (!id) {
@@ -456,3 +456,4 @@ export async function onRequestDelete(context: {
     });
   }
 }
+

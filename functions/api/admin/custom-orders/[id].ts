@@ -29,7 +29,7 @@ type CustomOrderPayload = {
 
 export async function onRequestPatch(context: { env: { DB: D1Database }; request: Request; params: Record<string, string> }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureCustomOrdersSchema(context.env.DB);
     const columns = await getCustomOrdersColumns(context.env.DB);
@@ -287,3 +287,4 @@ function normalizeShippingCents(value: unknown): number | null {
   if (!Number.isInteger(value) || value < 0) return null;
   return value;
 }
+

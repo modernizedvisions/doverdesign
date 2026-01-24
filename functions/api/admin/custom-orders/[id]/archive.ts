@@ -44,7 +44,7 @@ export async function onRequestPatch(context: {
   request: Request;
 }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     await ensureCustomOrdersSchema(context.env.DB);
     const columns = await getCustomOrdersColumns(context.env.DB);
@@ -236,3 +236,4 @@ function jsonResponse(data: unknown, status = 200) {
     },
   });
 }
+

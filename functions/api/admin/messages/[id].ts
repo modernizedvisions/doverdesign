@@ -14,7 +14,7 @@ export async function onRequestDelete(context: {
   params: Record<string, string>;
   request: Request;
 }): Promise<Response> {
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
   const id = context.params?.id;
   if (!id) {
@@ -53,3 +53,4 @@ export async function onRequestDelete(context: {
     });
   }
 }
+

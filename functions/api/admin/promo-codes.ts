@@ -156,7 +156,7 @@ export async function onRequest(context: { env: { DB: D1Database; ADMIN_PASSWORD
   const { request, env } = context;
   const method = request.method.toUpperCase();
 
-  const unauthorized = requireAdmin(request, env);
+  const unauthorized = await requireAdmin(request, env);
   if (unauthorized) return unauthorized;
 
   try {
@@ -394,3 +394,4 @@ export async function onRequest(context: { env: { DB: D1Database; ADMIN_PASSWORD
     return json({ error: 'Internal server error' }, 500);
   }
 }
+

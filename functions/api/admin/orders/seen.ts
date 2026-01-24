@@ -24,7 +24,7 @@ async function ensureOrdersSeenSchema(db: D1Database) {
 
 export async function onRequestPost(context: { env: { DB: D1Database }; request: Request }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
 
     await ensureOrdersSeenSchema(context.env.DB);
@@ -67,3 +67,4 @@ export async function onRequestPost(context: { env: { DB: D1Database }; request:
     });
   }
 }
+

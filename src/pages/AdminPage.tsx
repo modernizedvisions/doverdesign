@@ -4,7 +4,6 @@ import {
   fetchOrders,
   fetchSoldProducts,
   saveGalleryImages,
-  verifyAdminPassword,
   adminFetchProducts,
   adminCreateProduct,
   adminUpdateProduct,
@@ -12,7 +11,7 @@ import {
   adminUploadImage,
   adminDeleteImage,
 } from '../lib/api';
-import { adminFetch, clearAdminPassword, getAdminPassword, getRememberAdminPassword, setAdminPassword } from '../lib/adminAuth';
+import { adminFetch } from '../lib/adminAuth';
 import { GalleryImage, Product } from '../lib/types';
 import type { AdminOrder } from '../lib/db/orders';
 import { AdminOrdersTab } from '../components/admin/AdminOrdersTab';
@@ -88,8 +87,8 @@ const initialProductForm: ProductFormState = {
 export function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
-  const [rememberPassword, setRememberPassword] = useState(() => getRememberAdminPassword());
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [error, setError] = useState('');
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [ordersError, setOrdersError] = useState<string | null>(null);
@@ -147,18 +146,32 @@ export function AdminPage() {
   };
 
   useEffect(() => {
-    const token = sessionStorage.getItem('admin_token');
-    const storedPassword = getAdminPassword();
-    if (token && storedPassword) {
-      setIsAuthenticated(true);
-      loadAdminData();
-      return;
-    }
-    if (storedPassword) {
-      sessionStorage.setItem('admin_token', 'demo_token');
-      setIsAuthenticated(true);
-      loadAdminData();
-    }
+    let cancelled = false;
+    const checkSession = async () => {
+      setIsCheckingSession(true);
+      try {
+        const res = await fetch('/api/admin/session', { credentials: 'include' });
+        if (cancelled) return;
+        if (res.ok) {
+          setIsAuthenticated(true);
+          await loadAdminData();
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setIsAuthenticated(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsCheckingSession(false);
+        }
+      }
+    };
+    void checkSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -168,8 +181,7 @@ export function AdminPage() {
       setIsAuthenticated(false);
       setIsLoading(false);
       setPassword('');
-      sessionStorage.removeItem('admin_token');
-      clearAdminPassword();
+      setIsCheckingSession(false);
     };
     window.addEventListener('admin-auth-required', handler as EventListener);
     return () => window.removeEventListener('admin-auth-required', handler as EventListener);
@@ -189,14 +201,22 @@ export function AdminPage() {
     setError('');
 
     try {
-      const result = await verifyAdminPassword(password);
-      if (result) {
-        sessionStorage.setItem('admin_token', 'demo_token');
-        setAdminPassword(password, rememberPassword);
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
         setIsAuthenticated(true);
-        loadAdminData();
-      } else {
+        setPassword('');
+        setError('');
+        await loadAdminData();
+      } else if (res.status === 401) {
         setError('Invalid password');
+      } else {
+        const detail = await res.json().catch(() => null);
+        setError(detail?.error || 'Error verifying password');
       }
     } catch (err) {
       setError('Error verifying password');
@@ -305,8 +325,7 @@ export function AdminPage() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('admin_token');
-    clearAdminPassword();
+    void fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
     setIsAuthenticated(false);
     setPassword('');
   };
@@ -964,6 +983,17 @@ export function AdminPage() {
     return () => clearTimeout(timeout);
   }, [productStatus]);
 
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Checking session…</h2>
+          <p className="text-sm text-gray-600">Please wait while we verify admin access.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -986,15 +1016,6 @@ export function AdminPage() {
                 required
               />
             </div>
-            <label className="mb-4 flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={rememberPassword}
-                onChange={(e) => setRememberPassword(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-              />
-              Remember on this device
-            </label>
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
                 <div className="flex items-center justify-between gap-3">

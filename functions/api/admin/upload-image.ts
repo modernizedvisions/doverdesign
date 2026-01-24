@@ -3,7 +3,7 @@ import { requireAdmin } from '../_lib/adminAuth';
 // Stub upload endpoint to be replaced with real storage (e.g., R2 or Cloudflare Images).
 export async function onRequestPost(context: { request: Request; env: { ADMIN_PASSWORD?: string } }): Promise<Response> {
   try {
-    const unauthorized = requireAdmin(context.request, context.env);
+    const unauthorized = await requireAdmin(context.request, context.env);
     if (unauthorized) return unauthorized;
     const contentType = context.request.headers.get('content-type') || '';
     if (!contentType.includes('multipart/form-data')) {
@@ -43,7 +43,7 @@ export async function onRequestPost(context: { request: Request; env: { ADMIN_PA
 }
 
 export async function onRequest(context: { request: Request; env: { ADMIN_PASSWORD?: string } }): Promise<Response> {
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
   if (context.request.method.toUpperCase() === 'POST') {
     return onRequestPost(context);
@@ -53,3 +53,4 @@ export async function onRequest(context: { request: Request; env: { ADMIN_PASSWO
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

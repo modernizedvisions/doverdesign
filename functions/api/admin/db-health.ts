@@ -11,7 +11,7 @@ type D1Database = {
 };
 
 export const onRequestGet = async (context: { request: Request; env: { DB: D1Database } }) => {
-  const unauthorized = requireAdmin(context.request, context.env);
+  const unauthorized = await requireAdmin(context.request, context.env);
   if (unauthorized) return unauthorized;
   const { DB } = context.env;
   try {
@@ -55,3 +55,4 @@ export const onRequestGet = async (context: { request: Request; env: { DB: D1Dat
     });
   }
 };
+
