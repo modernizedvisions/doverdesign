@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Force square UI across the site */
+.rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl,
+.rounded-full,
+.rounded-t, .rounded-t-sm, .rounded-t-md, .rounded-t-lg, .rounded-t-xl, .rounded-t-2xl, .rounded-t-3xl,
+.rounded-b, .rounded-b-sm, .rounded-b-md, .rounded-b-lg, .rounded-b-xl, .rounded-b-2xl, .rounded-b-3xl,
+.rounded-l, .rounded-l-sm, .rounded-l-md, .rounded-l-lg, .rounded-l-xl, .rounded-l-2xl, .rounded-l-3xl,
+.rounded-r, .rounded-r-sm, .rounded-r-md, .rounded-r-lg, .rounded-r-xl, .rounded-r-2xl, .rounded-r-3xl,
+.rounded-tl, .rounded-tr, .rounded-bl, .rounded-br,
+.rounded-tl-sm, .rounded-tr-sm, .rounded-bl-sm, .rounded-br-sm,
+.rounded-tl-md, .rounded-tr-md, .rounded-bl-md, .rounded-br-md,
+.rounded-tl-lg, .rounded-tr-lg, .rounded-bl-lg, .rounded-br-lg,
+.rounded-tl-xl, .rounded-tr-xl, .rounded-bl-xl, .rounded-br-xl,
+.rounded-tl-2xl, .rounded-tr-2xl, .rounded-bl-2xl, .rounded-br-2xl,
+.rounded-none {
+  border-radius: 0 !important;
+}
+
+
+.custom-order-card {
+  border-radius: 0.375rem !important;
+}
+
+.contact-form-card {
+  border-radius: 0.375rem !important;
+}
+.subtitle-text {
+  color: #000 !important;
+}
+
+.rounded-ui {
+  border-radius: 9999px !important;
+}
+
+.notif-circle {
+  border-radius: 9999px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe-only {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.drawer-overlay {
+  transition: opacity 260ms ease;
+  opacity: 0;
+}
+.drawer-overlay[data-state="open"],
+.drawer-overlay.is-open {
+  opacity: 1;
+}
+
+.drawer-panel {
+  transition: transform 280ms cubic-bezier(.22,1,.36,1), opacity 240ms ease;
+  transform: translateX(16px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.drawer-panel[data-state="open"],
+.drawer-panel.is-open {
+  transform: translateX(0);
+  opacity: 1;
+}
+.drawer-panel[data-state="closed"],
+.drawer-panel.is-closed {
+  transform: translateX(16px);
+  opacity: 0;
+}
+
+.menu-panel {
+  transition: transform 260ms cubic-bezier(.22,1,.36,1), opacity 220ms ease;
+  transform: translateY(-10px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.menu-panel[data-state="open"],
+.menu-panel.is-open {
+  transform: translateY(0);
+  opacity: 1;
+}
+.menu-panel[data-state="closed"],
+.menu-panel.is-closed {
+  transform: translateY(-10px);
+  opacity: 0;
+}
+
+@layer base {
+  body {
+    @apply font-sans text-gray-900 bg-white;
+  }
+
+  button {
+    @apply font-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  /* Landscape phones/tablets under desktop breakpoint: force 4 columns for the home category grid */
+  .mobile-landscape\:grid-cols-4 {
+    @media (orientation: landscape) and (max-width: 1023px) {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+  }
+  /* Landscape phones/tablets under desktop breakpoint: force 4 columns for product grid */
+  .landscape\:grid-cols-4 {
+    @media (orientation: landscape) and (max-width: 1023px) {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+  }
+  /* Landscape phones/tablets under desktop breakpoint: force 4 columns for gallery grids */
+  .gallery-grid.landscape\:grid-cols-4,
+  .sold-grid.landscape\:grid-cols-4 {
+    @media (orientation: landscape) and (max-width: 1023px) {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+  }
+}
+
+
+
+.marquee {
+  width: 100%;
+}
+
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll var(--marquee-duration, 38s) linear infinite;
+  will-change: transform;
+}
+
+.marquee:hover .marqueeTrack {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack {
+    animation: none !important;
+    transform: none !important;
+  }
+}

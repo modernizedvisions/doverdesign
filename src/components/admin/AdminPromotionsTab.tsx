@@ -1,0 +1,667 @@
+import { useEffect, useMemo, useState } from 'react';
+import { AdminSectionHeader } from './AdminSectionHeader';
+import {
+  createAdminPromotion,
+  deleteAdminPromotion,
+  adminFetchCategories,
+  fetchAdminPromoCodes,
+  fetchAdminPromotions,
+  updateAdminPromotion,
+  updateAdminPromoCode,
+  createAdminPromoCode,
+  deleteAdminPromoCode,
+} from '../../lib/api';
+import type { Category, PromoCode, Promotion } from '../../lib/types';
+
+type PromotionFormState = {
+  name: string;
+  percentOff: string;
+  scope: 'global' | 'categories';
+  categorySlugs: string[];
+  bannerEnabled: boolean;
+  bannerText: string;
+  startsAt: string;
+  endsAt: string;
+  enabled: boolean;
+};
+
+type PromoCodeFormState = {
+  code: string;
+  percentOff: string;
+  freeShipping: boolean;
+  scope: 'global' | 'categories';
+  categorySlugs: string[];
+  startsAt: string;
+  endsAt: string;
+  enabled: boolean;
+};
+
+const emptyPromotionForm: PromotionFormState = {
+  name: '',
+  percentOff: '',
+  scope: 'global',
+  categorySlugs: [],
+  bannerEnabled: false,
+  bannerText: '',
+  startsAt: '',
+  endsAt: '',
+  enabled: false,
+};
+
+const emptyPromoCodeForm: PromoCodeFormState = {
+  code: '',
+  percentOff: '',
+  freeShipping: false,
+  scope: 'global',
+  categorySlugs: [],
+  startsAt: '',
+  endsAt: '',
+  enabled: false,
+};
+
+const toDateTimeLocal = (value?: string | null) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (num: number) => String(num).padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const fromDateTimeLocal = (value?: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
+const formatRange = (startsAt?: string | null, endsAt?: string | null) => {
+  const start = startsAt ? new Date(startsAt).toLocaleString() : 'Anytime';
+  const end = endsAt ? new Date(endsAt).toLocaleString() : 'Anytime';
+  return `${start} - ${end}`;
+};
+
+export function AdminPromotionsTab() {
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [promotionForm, setPromotionForm] = useState<PromotionFormState>(emptyPromotionForm);
+  const [promoCodeForm, setPromoCodeForm] = useState<PromoCodeFormState>(emptyPromoCodeForm);
+  const [editingPromotionId, setEditingPromotionId] = useState<string | null>(null);
+  const [editingPromoCodeId, setEditingPromoCodeId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const categoryOptions = useMemo(
+    () => [...categories].sort((a, b) => a.name.localeCompare(b.name)),
+    [categories]
+  );
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [promos, codes, cats] = await Promise.all([
+          fetchAdminPromotions(),
+          fetchAdminPromoCodes(),
+          adminFetchCategories(),
+        ]);
+        setPromotions(promos);
+        setPromoCodes(codes);
+        setCategories(cats);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load promotions data.';
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const handlePromotionFormChange = (
+    field: keyof PromotionFormState,
+    value: string | boolean | string[]
+  ) => {
+    setPromotionForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePromoCodeFormChange = (
+    field: keyof PromoCodeFormState,
+    value: string | boolean | string[]
+  ) => {
+    setPromoCodeForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetPromotionForm = () => {
+    setPromotionForm(emptyPromotionForm);
+    setEditingPromotionId(null);
+  };
+
+  const resetPromoCodeForm = () => {
+    setPromoCodeForm(emptyPromoCodeForm);
+    setEditingPromoCodeId(null);
+  };
+
+  const startEditPromotion = (promo: Promotion) => {
+    setPromotionForm({
+      name: promo.name,
+      percentOff: promo.percentOff ? String(promo.percentOff) : '',
+      scope: promo.scope,
+      categorySlugs: promo.categorySlugs || [],
+      bannerEnabled: promo.bannerEnabled,
+      bannerText: promo.bannerText || '',
+      startsAt: toDateTimeLocal(promo.startsAt),
+      endsAt: toDateTimeLocal(promo.endsAt),
+      enabled: promo.enabled,
+    });
+    setEditingPromotionId(promo.id);
+  };
+
+  const startEditPromoCode = (code: PromoCode) => {
+    setPromoCodeForm({
+      code: code.code,
+      percentOff: code.percentOff ? String(code.percentOff) : '',
+      freeShipping: code.freeShipping,
+      scope: code.scope,
+      categorySlugs: code.categorySlugs || [],
+      startsAt: toDateTimeLocal(code.startsAt),
+      endsAt: toDateTimeLocal(code.endsAt),
+      enabled: code.enabled,
+    });
+    setEditingPromoCodeId(code.id);
+  };
+
+  const submitPromotion = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        name: promotionForm.name.trim(),
+        percentOff: Number(promotionForm.percentOff),
+        scope: promotionForm.scope,
+        categorySlugs: promotionForm.scope === 'categories' ? promotionForm.categorySlugs : [],
+        bannerEnabled: promotionForm.bannerEnabled,
+        bannerText: promotionForm.bannerText.trim(),
+        startsAt: fromDateTimeLocal(promotionForm.startsAt),
+        endsAt: fromDateTimeLocal(promotionForm.endsAt),
+        enabled: promotionForm.enabled,
+      };
+
+      if (editingPromotionId) {
+        const updated = await updateAdminPromotion(editingPromotionId, payload);
+        setPromotions((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      } else {
+        const created = await createAdminPromotion(payload);
+        setPromotions((prev) => [created, ...prev]);
+      }
+      resetPromotionForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save promotion.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitPromoCode = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        code: promoCodeForm.code.trim(),
+        percentOff: promoCodeForm.percentOff ? Number(promoCodeForm.percentOff) : null,
+        freeShipping: promoCodeForm.freeShipping,
+        scope: promoCodeForm.scope,
+        categorySlugs: promoCodeForm.scope === 'categories' ? promoCodeForm.categorySlugs : [],
+        startsAt: fromDateTimeLocal(promoCodeForm.startsAt),
+        endsAt: fromDateTimeLocal(promoCodeForm.endsAt),
+        enabled: promoCodeForm.enabled,
+      };
+
+      if (editingPromoCodeId) {
+        const updated = await updateAdminPromoCode(editingPromoCodeId, payload);
+        setPromoCodes((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      } else {
+        const created = await createAdminPromoCode(payload);
+        setPromoCodes((prev) => [created, ...prev]);
+      }
+      resetPromoCodeForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save promo code.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const togglePromotionEnabled = async (promo: Promotion) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateAdminPromotion(promo.id, { enabled: !promo.enabled });
+      setPromotions((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update promotion.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const togglePromoCodeEnabled = async (code: PromoCode) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateAdminPromoCode(code.id, { enabled: !code.enabled });
+      setPromoCodes((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update promo code.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removePromotion = async (promo: Promotion) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await deleteAdminPromotion(promo.id);
+      setPromotions((prev) => prev.filter((p) => p.id !== promo.id));
+      if (editingPromotionId === promo.id) resetPromotionForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete promotion.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removePromoCode = async (code: PromoCode) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await deleteAdminPromoCode(code.id);
+      setPromoCodes((prev) => prev.filter((c) => c.id !== code.id));
+      if (editingPromoCodeId === code.id) resetPromoCodeForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete promo code.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-600">Loading promotions...</div>;
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="px-6 pt-6">
+        <AdminSectionHeader title="Promotions" subtitle="Manage promotions and promo codes." />
+      </div>
+      <div className="px-6 pb-10 space-y-12">
+        {error && (
+          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <section className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Promotions</h3>
+            <p className="text-sm text-gray-600">
+              Only one promotion can be enabled at a time.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="rounded-lg border border-gray-200 p-4 space-y-4">
+              <div className="text-sm font-semibold text-gray-900">
+                {editingPromotionId ? 'Edit Promotion' : 'Create Promotion'}
+              </div>
+              <div className="space-y-3">
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Name</label>
+                <input
+                  type="text"
+                  value={promotionForm.name}
+                  onChange={(e) => handlePromotionFormChange('name', e.target.value)}
+                  placeholder="Summer Sale"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Percent off</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={promotionForm.percentOff}
+                  onChange={(e) => handlePromotionFormChange('percentOff', e.target.value)}
+                  placeholder="10%"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Scope</label>
+                <select
+                  value={promotionForm.scope}
+                  onChange={(e) => handlePromotionFormChange('scope', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="global">Global</option>
+                  <option value="categories">Categories</option>
+                </select>
+                {promotionForm.scope === 'categories' && (
+                  <div className="space-y-2">
+                    <div className="text-xs uppercase tracking-wide text-gray-500">Categories</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {categoryOptions.map((category) => {
+                        const checked = promotionForm.categorySlugs.includes(category.slug);
+                        return (
+                          <label key={category.slug} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...promotionForm.categorySlugs, category.slug]
+                                  : promotionForm.categorySlugs.filter((slug) => slug !== category.slug);
+                                handlePromotionFormChange('categorySlugs', next);
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <span>{category.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={promotionForm.bannerEnabled}
+                    onChange={(e) => handlePromotionFormChange('bannerEnabled', e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm text-gray-700">Show banner</span>
+                </div>
+                {promotionForm.bannerEnabled && (
+                  <input
+                    type="text"
+                    value={promotionForm.bannerText}
+                    onChange={(e) => handlePromotionFormChange('bannerText', e.target.value)}
+                    placeholder="Banner text"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                )}
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Starts at</label>
+                <input
+                  type="datetime-local"
+                  value={promotionForm.startsAt}
+                  onChange={(e) => handlePromotionFormChange('startsAt', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Ends at</label>
+                <input
+                  type="datetime-local"
+                  value={promotionForm.endsAt}
+                  onChange={(e) => handlePromotionFormChange('endsAt', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={promotionForm.enabled}
+                    onChange={(e) => handlePromotionFormChange('enabled', e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  Enabled
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={submitPromotion}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-semibold disabled:opacity-50"
+                >
+                  {editingPromotionId ? 'Update' : 'Create'}
+                </button>
+                {editingPromotionId && (
+                  <button
+                    type="button"
+                    onClick={resetPromotionForm}
+                    className="px-4 py-2 rounded-md border border-gray-300 text-sm font-semibold text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {promotions.length === 0 ? (
+                <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-600">
+                  No promotions yet.
+                </div>
+              ) : (
+                promotions.map((promo) => (
+                  <div key={promo.id} className="rounded-md border border-gray-200 p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-gray-900">{promo.name}</div>
+                        <div className="text-xs text-gray-500">{promo.percentOff}% off</div>
+                      </div>
+                      <span className={`text-xs font-semibold ${promo.enabled ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        {promo.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      Scope: {promo.scope === 'global' ? 'Global' : `Categories (${promo.categorySlugs.length})`}
+                    </div>
+                    <div className="text-xs text-gray-600">Schedule: {formatRange(promo.startsAt, promo.endsAt)}</div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => togglePromotionEnabled(promo)}
+                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                      >
+                        {promo.enabled ? 'Disable' : 'Enable'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => startEditPromotion(promo)}
+                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removePromotion(promo)}
+                        className="text-xs font-semibold text-red-600 border border-red-200 rounded px-2 py-1"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Promo Codes</h3>
+            <p className="text-sm text-gray-600">Create percentage and free-shipping codes.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="rounded-lg border border-gray-200 p-4 space-y-4">
+              <div className="text-sm font-semibold text-gray-900">
+                {editingPromoCodeId ? 'Edit Promo Code' : 'Create Promo Code'}
+              </div>
+              <div className="space-y-3">
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Code</label>
+                <input
+                  type="text"
+                  value={promoCodeForm.code}
+                  onChange={(e) => handlePromoCodeFormChange('code', e.target.value.toUpperCase())}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm uppercase tracking-wide"
+                />
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Percent off</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={promoCodeForm.percentOff}
+                  onChange={(e) => handlePromoCodeFormChange('percentOff', e.target.value)}
+                  placeholder="10%"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={promoCodeForm.freeShipping}
+                    onChange={(e) => handlePromoCodeFormChange('freeShipping', e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  Free shipping
+                </label>
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Scope</label>
+                <select
+                  value={promoCodeForm.scope}
+                  onChange={(e) => handlePromoCodeFormChange('scope', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="global">Global</option>
+                  <option value="categories">Categories</option>
+                </select>
+                {promoCodeForm.scope === 'categories' && (
+                  <div className="space-y-2">
+                    <div className="text-xs uppercase tracking-wide text-gray-500">Categories</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {categoryOptions.map((category) => {
+                        const checked = promoCodeForm.categorySlugs.includes(category.slug);
+                        return (
+                          <label key={category.slug} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...promoCodeForm.categorySlugs, category.slug]
+                                  : promoCodeForm.categorySlugs.filter((slug) => slug !== category.slug);
+                                handlePromoCodeFormChange('categorySlugs', next);
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <span>{category.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Starts at</label>
+                <input
+                  type="datetime-local"
+                  value={promoCodeForm.startsAt}
+                  onChange={(e) => handlePromoCodeFormChange('startsAt', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <label className="block text-xs uppercase tracking-wide text-gray-500">Ends at</label>
+                <input
+                  type="datetime-local"
+                  value={promoCodeForm.endsAt}
+                  onChange={(e) => handlePromoCodeFormChange('endsAt', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={promoCodeForm.enabled}
+                    onChange={(e) => handlePromoCodeFormChange('enabled', e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  Enabled
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={submitPromoCode}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-semibold disabled:opacity-50"
+                >
+                  {editingPromoCodeId ? 'Update' : 'Create'}
+                </button>
+                {editingPromoCodeId && (
+                  <button
+                    type="button"
+                    onClick={resetPromoCodeForm}
+                    className="px-4 py-2 rounded-md border border-gray-300 text-sm font-semibold text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {promoCodes.length === 0 ? (
+                <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-600">
+                  No promo codes yet.
+                </div>
+              ) : (
+                promoCodes.map((code) => (
+                  <div key={code.id} className="rounded-md border border-gray-200 p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-gray-900">{code.code.toUpperCase()}</div>
+                        <div className="text-xs text-gray-500">
+                          {code.percentOff ? `${code.percentOff}% off` : 'No percent'} •{' '}
+                          {code.freeShipping ? 'Free shipping' : 'Paid shipping'}
+                        </div>
+                      </div>
+                      <span className={`text-xs font-semibold ${code.enabled ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        {code.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      Scope: {code.scope === 'global' ? 'Global' : `Categories (${code.categorySlugs.length})`}
+                    </div>
+                    <div className="text-xs text-gray-600">Schedule: {formatRange(code.startsAt, code.endsAt)}</div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => togglePromoCodeEnabled(code)}
+                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                      >
+                        {code.enabled ? 'Disable' : 'Enable'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => startEditPromoCode(code)}
+                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removePromoCode(code)}
+                        className="text-xs font-semibold text-red-600 border border-red-200 rounded px-2 py-1"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
