@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -93,15 +91,17 @@
 
 @layer base {
   body {
-    @apply font-sans text-gray-900 bg-white;
+    @apply text-gray-900 bg-white;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.5;
   }
 
   button {
-    @apply font-serif;
+    font-family: inherit;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    font-family: inherit;
   }
 }
 

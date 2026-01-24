@@ -94,7 +94,7 @@ function SiteLayoutInner() {
               </button>
               <Link
                 to="/"
-                className="text-2xl font-medium text-gray-900 flex-1 text-center md:text-left truncate whitespace-nowrap" style={{ fontFamily: 'Cinzel, serif' }}
+                className="text-2xl font-medium text-gray-900 flex-1 text-center md:text-left truncate whitespace-nowrap"
               >
                 The Chesapeake Shell
               </Link>
@@ -104,7 +104,7 @@ function SiteLayoutInner() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors uppercase tracking-[0.12em] font-serif rounded-ui px-2 py-1"
+                  className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors uppercase tracking-[0.12em] rounded-ui px-2 py-1"
                 >
                   {link.label}
                 </Link>
@@ -142,7 +142,7 @@ function SiteLayoutInner() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setNavDrawerOpen(false)}
-                  className="block rounded-lg rounded-ui px-3 py-2 text-base font-semibold text-gray-800 hover:bg-gray-100 transition-colors uppercase tracking-[0.1em] font-serif"
+                  className="block rounded-lg rounded-ui px-3 py-2 text-base font-semibold text-gray-800 hover:bg-gray-100 transition-colors uppercase tracking-[0.1em]"
                 >
                   {link.label}
                 </Link>
@@ -159,7 +159,7 @@ function SiteLayoutInner() {
       <footer className="bg-white border-t border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex items-center gap-4 text-sm font-serif text-gray-600">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
               <Link to="/terms" className="hover:text-gray-900 transition-colors">
                 Terms
               </Link>
@@ -167,10 +167,10 @@ function SiteLayoutInner() {
                 Privacy
               </Link>
             </div>
-            <p className="text-sm font-serif text-gray-500">
+            <p className="text-sm text-gray-500">
               &copy; 2026 The Chesapeake Shell. All rights reserved.
             </p>
-            <p className="text-sm font-serif text-gray-500">
+            <p className="text-sm text-gray-500">
               Built By{' '}
               <a
                 href="https://modernizedvisions.agency"
