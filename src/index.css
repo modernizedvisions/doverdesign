@@ -1,4 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --sand: #F6F1E9;
+  --linen: #FBF9F5;
+  --warm-linen: #FBF9F5;
+  --stone: #E6DFD4;
+  --driftwood: #CBBFAF;
+  --sea-glass: #9FBFBB;
+  --deep-ocean: #2F4F4F;
+  --charcoal: #1F2933;
+  --gold-accent: #D9C7A1;
+  --soft-gold: #D9C7A1;
+  --shell-noise: radial-gradient(circle at 1px 1px, rgba(47, 79, 79, 0.05) 1px, transparent 0);
+}
 
 @tailwind base;
 @tailwind components;
@@ -93,15 +107,23 @@
 
 @layer base {
   body {
-    @apply font-sans text-gray-900 bg-white;
+    @apply font-sans text-[17px] leading-7;
+    color: var(--charcoal);
+    background: radial-gradient(circle at 20% 20%, rgba(159, 191, 187, 0.12), transparent 32%),
+      radial-gradient(circle at 80% 0%, rgba(203, 191, 175, 0.16), transparent 36%),
+      linear-gradient(180deg, var(--warm-linen), var(--sand));
+    letter-spacing: 0.01em;
   }
 
   button {
-    @apply font-serif;
+    @apply font-sans;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+  }
+  input, textarea, select {
+    border-radius: 12px;
   }
 }
 
@@ -157,5 +179,38 @@
   .marqueeTrack {
     animation: none !important;
     transform: none !important;
+  }
+}
+
+@layer components {
+  .rounded-shell {
+    border-radius: 18px !important;
+  }
+  .rounded-shell-lg {
+    border-radius: 24px !important;
+  }
+  .shell-card {
+    background: rgba(250, 248, 244, 0.9);
+    border: 1px solid rgba(200, 191, 178, 0.55);
+    border-radius: 24px;
+    box-shadow:
+      0 14px 48px rgba(47, 79, 79, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(8px);
+  }
+  .shell-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200, 191, 178, 0.7), transparent);
+  }
+  .shell-pattern {
+    background-image:
+      var(--shell-noise),
+      linear-gradient(120deg, rgba(143, 183, 179, 0.07), rgba(245, 241, 234, 0.5));
+    background-size: 22px 22px, cover;
+  }
+  .lux-shadow {
+    box-shadow:
+      0 28px 60px rgba(31, 41, 51, 0.16),
+      0 10px 30px rgba(47, 79, 79, 0.08);
   }
 }
