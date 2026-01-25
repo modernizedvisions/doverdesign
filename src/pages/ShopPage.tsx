@@ -388,18 +388,19 @@ export function ShopPage() {
   }, [categoryList]);
 
   return (
-    <div className="py-12 bg-white min-h-screen">
+    <div className="py-14 bg-linen min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mt-10 mb-6">
-          <h1 className="text-4xl sm:text-5xl font-serif font-bold tracking-wide text-gray-900">
-            THE COLLECTION
+        <div className="text-center mt-10 mb-8 space-y-3">
+          <p className="text-[11px] uppercase tracking-[0.32em] text-deep-ocean/80">The Collection</p>
+          <h1 className="text-4xl sm:text-5xl font-serif font-semibold tracking-[0.04em] text-deep-ocean">
+            The Collection
           </h1>
-          <p className="text-gray-600 text-lg mt-2 font-serif subtitle-text">
-            One-of-a-kind shell art, crafted with care on the Chesapeake Bay.
+          <p className="text-charcoal/80 text-lg mt-1 font-sans max-w-2xl mx-auto">
+            One-of-a-kind shell art, crafted for curated interiors.
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
+        <div className="flex flex-wrap justify-center gap-3 mb-10">
           {visibleCategories.map((category) => {
             const isActive = activeCategorySlug === category.slug;
             return (
@@ -410,10 +411,10 @@ export function ShopPage() {
                   searchParams.set('type', category.slug);
                   setSearchParams(searchParams, { replace: true });
                 }}
-                className={`px-4 py-1.5 rounded-full rounded-ui border text-sm transition ${
+                className={`px-4 py-2 rounded-shell border text-[11px] uppercase tracking-[0.22em] transition ${
                   isActive
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    ? 'bg-deep-ocean text-white border-deep-ocean shadow-md'
+                    : 'bg-white/80 text-deep-ocean border-driftwood/60 hover:bg-sand/70'
                 }`}
               >
                 {category.name}
@@ -442,15 +443,17 @@ export function ShopPage() {
 
               return (
                 <section key={category.slug} className="mb-10">
-                  <div className="text-center mb-4">
-                    <h2 className="text-3xl font-semibold tracking-wide text-gray-900 uppercase">
+                  <div className="text-center mb-6 space-y-2">
+                    <h2 className="text-2xl sm:text-3xl font-serif tracking-[0.03em] text-deep-ocean">
                       {title}
                     </h2>
                     {subtitle && (
-                      <p className="mt-1 text-sm font-serif font-medium text-slate-700 uppercase">{subtitle}</p>
+                      <p className="mt-1 text-sm font-sans text-charcoal/70">{subtitle}</p>
                     )}
                   </div>
-                  <ProductGrid products={items} />
+                  <div className="rounded-2xl border border-driftwood/40 bg-linen/90 shadow-sm p-4 sm:p-6">
+                    <ProductGrid products={items} />
+                  </div>
                 </section>
               );
             })}

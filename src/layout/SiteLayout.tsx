@@ -104,7 +104,7 @@ function SiteLayoutInner() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="text-xs font-semibold text-deep-ocean hover:text-charcoal transition-colors uppercase tracking-[0.24em] rounded-shell px-3 py-2 border border-transparent hover:border-driftwood/70 bg-white/60 hover:bg-sand/70"
+                  className="text-xs font-semibold text-deep-ocean hover:text-charcoal transition-colors uppercase tracking-[0.24em] px-2 py-1 mx-1"
                 >
                   {link.label}
                 </Link>
@@ -142,7 +142,7 @@ function SiteLayoutInner() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setNavDrawerOpen(false)}
-                  className="block rounded-shell px-3 py-3 text-sm font-semibold text-deep-ocean hover:bg-sand/70 transition-colors uppercase tracking-[0.2em] border border-transparent hover:border-driftwood/60"
+                  className="block px-3 py-3 text-sm font-semibold text-deep-ocean hover:bg-sand/70 transition-colors uppercase tracking-[0.2em]"
                 >
                   {link.label}
                 </Link>

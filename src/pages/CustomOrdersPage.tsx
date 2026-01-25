@@ -86,7 +86,7 @@ export default function CustomOrdersPage() {
   const formRef = useRef<HTMLDivElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedItem, setSelectedItem] = useState<CustomOrderExample | null>(null);
-  const contactBg = '#C0CBD8';
+  const contactBg = '#E6DFD4';
   const [examples, setExamples] = useState<CustomOrderExample[]>([]);
   const [isLoadingExamples, setIsLoadingExamples] = useState(true);
   const [examplesError, setExamplesError] = useState<string | null>(null);
@@ -546,13 +546,13 @@ export default function CustomOrdersPage() {
         <section className="px-4" style={{ backgroundColor: contactBg }}>
           <div ref={formRef} className="mx-auto w-full max-w-5xl py-12 md:py-16">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-2xl md:text-3xl font-semibold font-serif text-slate-900">Start Your Custom Request</h2>
-              <p className="mt-3 text-sm md:text-base text-slate-600 max-w-2xl mx-auto font-serif subtitle-text">
-                Pick a category (optional), then tell me what you are imagining.
+              <h2 className="text-2xl md:text-3xl font-serif font-semibold text-deep-ocean">Start Your Custom Request</h2>
+              <p className="mt-3 text-sm md:text-base text-charcoal/80 max-w-2xl mx-auto font-sans">
+                Pick a category (optional), then tell us what you are envisioning.
               </p>
             </div>
 
-            <div className="mx-auto mt-6 w-full max-w-3xl contact-form-card rounded-3xl p-6 md:p-8">
+            <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-driftwood/50 bg-linen shadow-sm p-6 md:p-8">
               {submitted ? (
                 <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center">
                   <h3 className="text-lg font-semibold font-serif text-emerald-900">Got it - we're excited!</h3>

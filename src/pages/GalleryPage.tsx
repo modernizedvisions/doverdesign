@@ -30,18 +30,19 @@ export function GalleryPage() {
   const isLoading = isLoadingGallery || isLoadingSold;
 
   return (
-    <div className="py-12 bg-gray-50 min-h-screen">
+    <div className="py-14 bg-linen min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-center text-3xl md:text-4xl font-semibold uppercase tracking-wide text-slate-900 mb-2">
-          Gallery
-        </h1>
-        <p className="text-center text-slate-600 text-sm md:text-base mb-10 font-serif subtitle-text">
-          Explore our collection of art pieces and sold works.
-        </p>
-        <div className="flex justify-center mb-8">
+        <div className="text-center space-y-3 mb-8">
+          <p className="text-[11px] uppercase tracking-[0.32em] text-deep-ocean/80">Gallery</p>
+          <h1 className="text-4xl md:text-5xl font-serif font-semibold tracking-[0.03em] text-deep-ocean">Gallery</h1>
+          <p className="text-center text-charcoal/80 text-base md:text-lg max-w-2xl mx-auto">
+            Explore our collection of art pieces and studio works.
+          </p>
+        </div>
+        <div className="flex justify-center mb-10">
           <Link
             to="/shop"
-            className="inline-flex items-center justify-center rounded-full rounded-ui bg-gray-900 px-6 py-2 text-sm font-medium font-serif text-white shadow-md transition hover:bg-gray-800"
+            className="inline-flex items-center justify-center rounded-shell bg-deep-ocean px-6 py-3 text-[12px] font-semibold uppercase tracking-[0.22em] text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
           >
             Shop The Collection
           </Link>
@@ -60,9 +61,9 @@ export function GalleryPage() {
               ) : (
                 <div className="gallery-grid grid grid-cols-2 lg:grid-cols-3 gap-6">
                   {galleryImages.map((item) => (
-                    <div key={item.id} className="relative group cursor-pointer">
+                    <div key={item.id} className="relative group cursor-pointer rounded-2xl border border-driftwood/30 bg-linen shadow-sm overflow-hidden">
                       <div
-                        className="aspect-[4/3] overflow-hidden rounded-lg bg-slate-100"
+                        className="aspect-[4/3] overflow-hidden rounded-2xl bg-linen"
                         onClick={() => setSelectedImage(item.imageUrl)}
                       >
                         <ProgressiveImage
@@ -87,9 +88,9 @@ export function GalleryPage() {
               {soldProducts.length > 0 && (
                 <div className="sold-grid grid grid-cols-2 lg:grid-cols-3 gap-6">
                   {soldProducts.map((item) => (
-                    <div key={item.id} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div key={item.id} className="group bg-linen rounded-2xl overflow-hidden border border-driftwood/30 shadow-sm hover:shadow-md transition-all">
                       <div
-                        className="relative aspect-square overflow-hidden bg-gray-100 cursor-pointer"
+                        className="relative aspect-square overflow-hidden bg-linen cursor-pointer"
                         onClick={() => setSelectedImage(item.imageUrl)}
                       >
                         {item.imageUrl ? (
@@ -97,7 +98,7 @@ export function GalleryPage() {
                             src={item.imageUrl}
                             alt={getSoldCardTitle(item)}
                             className="h-full w-full"
-                            imgClassName="w-full h-full object-cover"
+                            imgClassName="w-full h-full object-cover rounded-2xl"
                             loading="lazy"
                             decoding="async"
                           />
@@ -109,13 +110,13 @@ export function GalleryPage() {
                       </div>
                       <div className="p-3">
                         <div className="flex items-center justify-between gap-3 mb-1">
-                          <h3 className="text-sm font-serif font-medium text-slate-900 truncate">
+                          <h3 className="text-sm font-serif font-medium text-deep-ocean truncate">
                             {getSoldCardTitle(item)}
                           </h3>
-                          <span className="text-sm font-serif font-medium text-slate-800 whitespace-nowrap">SOLD</span>
+                          <span className="text-sm font-serif font-medium text-deep-ocean whitespace-nowrap">SOLD</span>
                         </div>
                         {item.collection && (
-                          <p className="text-xs text-slate-600">{item.collection}</p>
+                          <p className="text-xs text-charcoal/70">{item.collection}</p>
                         )}
                       </div>
                     </div>
