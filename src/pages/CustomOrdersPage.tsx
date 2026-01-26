@@ -3,7 +3,6 @@ import type { CSSProperties } from 'react';
 import { X } from 'lucide-react';
 import { fetchCustomOrderExamples } from '../lib/api';
 import type { CustomOrderExample } from '../lib/api';
-import { WaveDivider } from '../components/WaveDivider';
 import { ContactForm } from '../components/ContactForm';
 
 const heroImages: Array<{ id: string; url: string; alt: string }> = [
@@ -232,33 +231,23 @@ export default function CustomOrdersPage() {
         </div>
       </section>
 
-      <div
-        className="w-full leading-[0] m-0 p-0 overflow-hidden -mb-px"
-        style={{ backgroundColor: '#ffffff' }}
-        data-testid="divider-custom-orders-contact"
-      >
-        <WaveDivider direction="down" fill={contactBg} className="block" dataTestId="divider-custom-orders-contact" />
-      </div>
-
-      <div className="-mt-px">
-        <section className="px-4" style={{ backgroundColor: contactBg }}>
-          <div ref={formRef} className="mx-auto w-full max-w-[92vw] sm:max-w-6xl py-12 md:py-16">
-            <div className="space-y-8 text-center">
-              <div className="space-y-3">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-deep-ocean/75">Get in touch</p>
-                <p className="text-base sm:text-lg text-charcoal/80 leading-relaxed max-w-2xl mx-auto font-serif subtitle-text">
-                  Interested in a custom piece or looking for something specific? Send a message and we’ll reply shortly.
-                </p>
-              </div>
-              <div className="flex justify-center">
-                <div className="w-full max-w-4xl rounded-shell-lg border border-driftwood/60 bg-white/85 shadow-sm p-6 sm:p-8">
-                  <ContactForm backgroundColor="transparent" variant="embedded" />
-                </div>
+      <section className="px-4" style={{ backgroundColor: contactBg }}>
+        <div ref={formRef} className="mx-auto w-full max-w-[92vw] sm:max-w-6xl py-12 md:py-16">
+          <div className="space-y-8 text-center">
+            <div className="space-y-3">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-deep-ocean/75">Get in touch</p>
+              <p className="text-base sm:text-lg text-charcoal/80 leading-relaxed max-w-2xl mx-auto font-serif subtitle-text">
+                Interested in a custom piece or looking for something specific? Send a message and we’ll reply shortly.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <div className="w-full max-w-4xl rounded-shell-lg border border-driftwood/60 bg-white/85 shadow-sm p-6 sm:p-8">
+                <ContactForm backgroundColor="transparent" variant="embedded" />
               </div>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       {selectedItem && (
         <div

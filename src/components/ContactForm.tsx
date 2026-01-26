@@ -257,26 +257,28 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
   return (
     <div className="py-12" id="contact" style={{ backgroundColor }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-semibold text-slate-900">GET IN TOUCH</h2>
-          <p className="mt-3 text-[13px] sm:text-base text-slate-600 max-w-5xl mx-auto font-serif subtitle-text whitespace-nowrap">
+        <div className="text-center mb-8 px-2 max-sm:space-y-2">
+          <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 max-sm:text-xl max-sm:leading-tight max-sm:break-words">
+            GET IN TOUCH
+          </h2>
+          <p className="mt-3 text-[13px] sm:text-base text-slate-600 max-w-5xl mx-auto font-serif subtitle-text whitespace-nowrap max-sm:text-[12.5px] max-sm:leading-snug max-sm:whitespace-normal max-sm:break-words max-sm:max-w-full">
             Interested in a custom piece or looking for something specific? Send a message and we’ll reply shortly.
           </p>
         </div>
         <div
           className={
             variant === 'embedded'
-              ? 'w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8'
-              : 'w-full max-w-4xl mx-auto rounded-md contact-form-card border border-slate-200 shadow-lg bg-white overflow-hidden p-4 sm:p-6 md:p-8'
+              ? 'w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 max-sm:px-3 max-sm:max-w-full max-sm:overflow-hidden max-sm:box-border'
+              : 'w-full max-w-4xl mx-auto rounded-md contact-form-card border border-slate-200 shadow-lg bg-white overflow-hidden p-4 sm:p-6 md:p-8 max-sm:p-4 max-sm:max-w-full max-sm:overflow-hidden max-sm:box-border'
           }
         >
           <form onSubmit={handleSubmit} className={variant === 'embedded' ? 'space-y-6' : 'space-y-6'}>
-            <div className="flex justify-center">
-              <div className="inline-flex rounded-full rounded-ui border border-slate-200 bg-white p-1 shadow-sm">
+            <div className="flex justify-center max-sm:px-1">
+              <div className="inline-flex rounded-full rounded-ui border border-slate-200 bg-white p-1 shadow-sm max-sm:w-full max-sm:max-w-full max-sm:flex-nowrap max-sm:justify-center max-sm:items-center max-sm:box-border max-sm:overflow-hidden">
                 <button
                   type="button"
                   onClick={() => handleInquiryTypeChange('message')}
-                  className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition ${
+                  className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition whitespace-nowrap max-sm:px-3 max-sm:py-2.5 max-sm:text-[10px] ${
                     inquiryType === 'message'
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-700 hover:text-slate-900'
@@ -287,7 +289,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
                 <button
                   type="button"
                   onClick={() => handleInquiryTypeChange('custom_order')}
-                  className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition ${
+                  className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition whitespace-nowrap max-sm:px-3 max-sm:py-2.5 max-sm:text-[10px] ${
                     inquiryType === 'custom_order'
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-700 hover:text-slate-900'
@@ -342,7 +344,10 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
             </div>
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="name"
+                className="block text-sm font-semibold text-gray-700 mb-1 font-sans tracking-[0.12em]"
+              >
                 Name
               </label>
               <input
@@ -352,11 +357,14 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent font-sans font-semibold tracking-[0.12em] text-gray-900 placeholder:font-sans placeholder:font-semibold placeholder:tracking-[0.12em] placeholder:text-gray-500"
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-700 mb-1 font-sans tracking-[0.12em]"
+              >
                 Email
               </label>
               <input
@@ -366,11 +374,14 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent font-sans font-semibold tracking-[0.12em] text-gray-900 placeholder:font-sans placeholder:font-semibold placeholder:tracking-[0.12em] placeholder:text-gray-500"
               />
             </div>
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="message"
+                className="block text-sm font-semibold text-gray-700 mb-1 font-sans tracking-[0.12em]"
+              >
                 Message
               </label>
               <textarea
@@ -381,7 +392,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
                 value={formData.message}
                 onChange={handleChange}
                 placeholder="Tell us what you're looking for - custom ideas, questions, or details."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none font-sans font-semibold tracking-[0.12em] text-gray-900 placeholder:font-sans placeholder:font-semibold placeholder:tracking-[0.12em] placeholder:text-gray-500"
               />
             </div>
 
@@ -409,8 +420,12 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-1">
-                    <span>Share a photo (optional)</span>
-                    <span className="text-xs text-gray-500">Upload images, inspiration, or designs you'd like us to reference</span>
+                    <span className="font-sans font-semibold tracking-[0.12em] text-gray-800 text-[12px] sm:text-[13px]">
+                      Share a photo (optional)
+                    </span>
+                    <span className="text-xs text-gray-500 font-sans font-semibold tracking-[0.12em]">
+                      Upload images, inspiration, or designs you'd like us to reference
+                    </span>
                   </div>
                 )}
               </div>
@@ -433,9 +448,9 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
             <button
               type="submit"
               disabled={isSubmitting || isImageProcessing}
-              className="w-full bg-gray-900 text-white py-3 px-6 rounded-md font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gray-900 text-white py-3 px-6 rounded-md font-sans font-semibold uppercase tracking-[0.3em] text-[10px] sm:text-[11px] hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting || isImageProcessing ? 'Sending...' : 'Send Message'}
+              {isSubmitting || isImageProcessing ? 'Sending...' : 'SEND MESSAGE'}
             </button>
           </form>
         </div>

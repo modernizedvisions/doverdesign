@@ -104,14 +104,14 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
                     Custom Orders
                   </LuxuryButton>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid max-sm:grid-cols-1 grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 justify-items-center">
                   {[
                     { title: 'Hand-painted', desc: 'Every shell finished in-studio' },
                     { title: 'Gallery-grade', desc: 'UV protected & sealed' },
                     { title: 'Ships with care', desc: 'White-glove packaging' },
                   ].map((item) => (
                     <div key={item.title} className="shell-card px-4 py-3 text-center">
-                      <p className="text-xs uppercase tracking-[0.28em] text-deep-ocean/80">{item.title}</p>
+                      <p className="text-xs uppercase tracking-[0.28em] text-deep-ocean/80 whitespace-nowrap">{item.title}</p>
                     </div>
                   ))}
                 </div>
@@ -406,33 +406,38 @@ function RevealOnScroll({ children, delay = 0, className = '' }: { children: Rea
 
 function GalleryGrid({ items }: { items: Array<{ label: string; accent: string; tall?: boolean; image?: string | null }> }) {
   return (
-    <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
-      {items.map((item, index) => {
-        const toneClass = index % 2 === 0 ? 'bg-white/90' : 'bg-sand/70';
-        const bottomLabel = (item.label || '').split(/\s+/).slice(0, 2).join(' ');
-        return (
-          <RevealOnScroll key={`${item.label}-${index}`} delay={index * 40}>
-            <div
-              className={`group relative overflow-hidden rounded-shell-lg border border-driftwood/30 ${toneClass} shadow-sm transition-all duration-300 ease-out hover:shadow-md cursor-pointer aspect-[3/4] bg-linen`}
-            >
-              {item.image ? (
-                <img
-                  src={item.image}
-                  alt={item.label}
-                  className="h-full w-full object-cover rounded-shell-lg transition duration-500 group-hover:scale-[1.02]"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-sand via-linen to-sea-glass/20 shell-pattern rounded-shell-lg" />
-              )}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-2 sm:translate-x-0 shell-card bg-white/90 px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80">
-                {item.accent}
-              </div>
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
+              {items.map((item, index) => {
+                const toneClass = index % 2 === 0 ? 'bg-white/90' : 'bg-sand/70';
+                const bottomLabel = (item.label || '').split(/\s+/).slice(0, 2).join(' ');
+                return (
+                  <RevealOnScroll key={`${item.label}-${index}`} delay={index * 40}>
+                    <div className={`group relative rounded-shell-lg border border-driftwood/30 ${toneClass} shadow-sm transition-all duration-300 ease-out hover:shadow-md cursor-pointer bg-linen`}>
+                      <div className="aspect-[3/4] w-full overflow-hidden rounded-shell-lg">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.label}
+                            className="h-full w-full object-cover rounded-shell-lg transition duration-500 group-hover:scale-[1.02]"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-gradient-to-br from-sand via-linen to-sea-glass/20 shell-pattern rounded-shell-lg" />
+                        )}
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-2 sm:translate-x-0 shell-card bg-white/90 px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80 sm:block hidden">
+                          {item.accent}
+                        </div>
+                      </div>
+                      <div className="sm:hidden flex justify-center px-3 pb-3 pt-2">
+                        <span className="inline-flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-driftwood/30 shadow-sm px-3 py-1.5 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80 whitespace-nowrap">
+                          {bottomLabel}
+                        </span>
+                      </div>
+                    </div>
+                  </RevealOnScroll>
+                );
+              })}
             </div>
-          </RevealOnScroll>
-        );
-      })}
-    </div>
   );
 }
 
