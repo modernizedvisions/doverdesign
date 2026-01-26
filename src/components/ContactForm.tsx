@@ -259,7 +259,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-slate-900">GET IN TOUCH</h2>
-          <p className="mt-3 text-sm md:text-base text-slate-600 max-w-2xl mx-auto font-serif subtitle-text">
+          <p className="mt-3 text-[13px] sm:text-base text-slate-600 max-w-5xl mx-auto font-serif subtitle-text whitespace-nowrap">
             Interested in a custom piece or looking for something specific? Send a message and we’ll reply shortly.
           </p>
         </div>

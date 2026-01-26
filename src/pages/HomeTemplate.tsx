@@ -242,11 +242,6 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
         <SectionWrapper id="about" className="py-16 sm:py-20 bg-[var(--sand)]">
           <div className="grid gap-10 lg:grid-cols-[0.95fr,1.05fr] items-center">
             <RevealOnScroll delay={60} className="relative">
-              <div className="absolute -right-6 -top-6 hidden md:block">
-                <div className="shell-card px-4 py-3 text-xs uppercase tracking-[0.26em] text-deep-ocean/80">
-                  Boston coastal atelier
-                </div>
-              </div>
               <div className="rounded-shell-lg overflow-hidden shadow-2xl border border-driftwood/70 bg-gradient-to-br from-linen via-sand to-sea-glass/20 shell-pattern">
                 {resolvedAboutImage ? (
                   <img
@@ -293,7 +288,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
           />
           <div className="mt-10 rounded-shell-lg border border-driftwood/70 bg-white/80 lux-shadow">
             <div className="flex justify-center">
-              <div className="p-6 sm:p-8 bg-white/90 w-full max-w-3xl">
+              <div className="p-6 sm:p-8 bg-white/90 w-full max-w-4xl">
                 <ContactForm backgroundColor="transparent" variant="embedded" />
               </div>
             </div>

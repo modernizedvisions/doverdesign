@@ -39,12 +39,6 @@ export function AboutPage() {
 
       <section className="py-16 sm:py-20 bg-transparent">
         <div className="w-full max-w-[92vw] sm:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="text-center space-y-3">
-            <p className="text-xs uppercase tracking-[0.28em] text-deep-ocean/80">Get in touch</p>
-            <p className="text-base sm:text-lg text-charcoal/80 leading-relaxed max-w-2xl mx-auto font-serif subtitle-text">
-              Interested in a custom piece or looking for something specific? Send a message and we’ll reply shortly.
-            </p>
-          </div>
           <div className="rounded-shell-lg border border-driftwood/60 bg-white/85 shadow-sm">
             <div className="p-6 sm:p-8">
               <ContactForm backgroundColor="transparent" variant="embedded" />
