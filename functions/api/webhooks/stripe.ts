@@ -469,7 +469,7 @@ export const onRequestPost = async (context: {
 
         try {
           const html = renderOrderConfirmationEmailHtml({
-            brandName: 'The Chesapeake Shell',
+            brandName: 'Dover Designs',
             orderNumber: orderLabel,
             orderDate,
             customerName: shippingName || session.customer_details?.name || null,
@@ -485,7 +485,7 @@ export const onRequestPost = async (context: {
             primaryCtaLabel: 'View Order Details',
           });
           const text = renderOrderConfirmationEmailText({
-            brandName: 'The Chesapeake Shell',
+            brandName: 'Dover Designs',
             orderNumber: orderLabel,
             orderDate,
             customerName: shippingName || session.customer_details?.name || null,
@@ -501,7 +501,7 @@ export const onRequestPost = async (context: {
             primaryCtaLabel: 'View Order Details',
           });
 
-        const subject = `The Chesapeake Shell - Order Confirmed (${orderLabel})`;
+        const subject = `Dover Designs - Order Confirmed (${orderLabel})`;
         const customerTo = isValidEmailRecipient(customerEmail) ? customerEmail : null;
         if (customerEmail && !customerTo) {
           warnInvalidRecipient('shop_customer', customerEmail);
@@ -653,7 +653,7 @@ export const onRequestPost = async (context: {
             stripeUrl,
           });
 
-          const ownerSubject = `NEW SALE - The Chesapeake Shell (${orderLabel})`;
+          const ownerSubject = `NEW SALE - Dover Designs (${orderLabel})`;
         const ownerRecipient = isValidEmailRecipient(ownerTo) ? ownerTo : null;
         if (ownerTo && !ownerRecipient) {
           warnInvalidRecipient('shop_owner', ownerTo);
@@ -942,7 +942,7 @@ async function handleCustomInvoicePayment(args: {
 
   if (customerEmail) {
     try {
-      const subject = 'Payment received - The Chesapeake Shell';
+      const subject = 'Payment received - Dover Designs';
       const html = `
             <div style="font-family: Inter, Arial, sans-serif; color: #0f172a; padding: 12px; line-height: 1.5;">
               <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 700;">Thank you for your payment</h2>
@@ -1574,7 +1574,7 @@ async function handleCustomOrderPayment(args: {
 
     try {
       const html = renderOrderConfirmationEmailHtml({
-        brandName: 'The Chesapeake Shell',
+        brandName: 'Dover Designs',
         orderNumber: orderLabel,
         orderDate,
         customerName: customOrder.customer_name || shippingName || session.customer_details?.name || null,
@@ -1590,7 +1590,7 @@ async function handleCustomOrderPayment(args: {
         primaryCtaLabel: 'View Order Details',
       });
       const text = renderOrderConfirmationEmailText({
-        brandName: 'The Chesapeake Shell',
+        brandName: 'Dover Designs',
         orderNumber: orderLabel,
         orderDate,
         customerName: customOrder.customer_name || shippingName || session.customer_details?.name || null,
@@ -1606,7 +1606,7 @@ async function handleCustomOrderPayment(args: {
         primaryCtaLabel: 'View Order Details',
       });
 
-      const subject = `The Chesapeake Shell - Order Confirmed (${orderLabel})`;
+      const subject = `Dover Designs - Order Confirmed (${orderLabel})`;
       const customerTo = isValidEmailRecipient(confirmationCustomerEmail) ? confirmationCustomerEmail : null;
       if (confirmationCustomerEmail && !customerTo) {
         warnInvalidRecipient('custom_customer', confirmationCustomerEmail);
@@ -1762,7 +1762,7 @@ async function handleCustomOrderPayment(args: {
       stripeUrl,
     });
 
-    const ownerSubject = `NEW SALE - The Chesapeake Shell (${orderLabel})`;
+    const ownerSubject = `NEW SALE - Dover Designs (${orderLabel})`;
     const ownerRecipient = isValidEmailRecipient(ownerTo) ? ownerTo : null;
     if (ownerTo && !ownerRecipient) {
       warnInvalidRecipient('custom_owner', ownerTo);

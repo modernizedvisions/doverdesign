@@ -230,7 +230,7 @@ export async function onRequestPost(context: {
     }
 
     const html = renderCustomOrderPaymentLinkEmailHtml({
-      brandName: 'The Chesapeake Shell',
+      brandName: 'Dover Designs',
       orderLabel: displayId,
       ctaUrl: session.url,
       amountCents: amount,
@@ -242,7 +242,7 @@ export async function onRequestPost(context: {
       description: order.description || null,
     });
     const text = renderCustomOrderPaymentLinkEmailText({
-      brandName: 'The Chesapeake Shell',
+      brandName: 'Dover Designs',
       orderLabel: displayId,
       ctaUrl: session.url,
       amountCents: amount,
@@ -256,7 +256,7 @@ export async function onRequestPost(context: {
 
     console.log('[email] custom order send', {
       to: customerEmail,
-      subject: 'The Chesapeake Shell Custom Order Payment',
+      subject: 'Dover Designs Custom Order Payment',
       hasHtml: !!html,
       htmlLen: html.length,
       hasText: !!text,
@@ -270,7 +270,7 @@ export async function onRequestPost(context: {
     const emailResult = await sendEmail(
       {
         to: customerEmail,
-        subject: 'The Chesapeake Shell Custom Order Payment',
+        subject: 'Dover Designs Custom Order Payment',
         html,
         text,
       },
@@ -407,4 +407,3 @@ function resolveSiteUrl(env: {
   const raw = env.PUBLIC_SITE_URL || env.VITE_PUBLIC_SITE_URL || '';
   return raw ? raw.replace(/\/+$/, '') : '';
 }
-

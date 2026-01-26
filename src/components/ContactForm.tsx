@@ -304,10 +304,10 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
               {inquiryType === 'custom_order' ? (
                 <>
                   {categoryError && (
-                    <p className="text-center text-xs text-slate-500">{categoryError}</p>
+                    <p className="text-center text-xs text-slate-500 max-md:hidden">{categoryError}</p>
                   )}
                   {isLoadingCategories ? (
-                    <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-2">
+                    <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-2 max-md:hidden">
                       {Array.from({ length: 6 }).map((_, index) => (
                         <div
                           key={`contact-chip-skeleton-${index}`}
@@ -316,7 +316,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
                       ))}
                     </div>
                   ) : (
-                    <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-3">
+                    <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-3 max-md:hidden">
                       {categoryChips.map((chip) => {
                         const isSelected = selectedCategories.some((category) => category.id === chip.id);
                         return (

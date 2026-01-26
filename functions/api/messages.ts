@@ -35,7 +35,7 @@ type ParsedAttachment = {
   contentType?: string;
 };
 
-const SUBJECT = 'New Inquiry - The Chesapeake Shell';
+const SUBJECT = 'New Inquiry - Dover Designs';
 
 export async function onRequestPost(context: { env: MessageEnv; request: Request }): Promise<Response> {
   try {

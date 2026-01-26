@@ -38,7 +38,7 @@ export default function HomeHero({ heroImages = [], heroRotationEnabled = false 
         <div className="grid md:grid-cols-2 gap-10 items-center">
           <div className="order-2 md:order-1 text-center md:text-center">
             <h1 className="hidden md:block text-[20px] sm:text-[22px] md:text-[24px] font-semibold tracking-tight text-slate-900">
-              THE CHESAPEAKE SHELL
+              DOVER DESIGNS
             </h1>
             <p className="mt-3 max-w-lg mx-auto md:mx-auto text-base sm:text-lg text-slate-900 font-serif subtitle-text">
               Made by hand, one piece at a time - using shells, texture, and a little coastal magic. Browse what's available or reach out for a custom design.

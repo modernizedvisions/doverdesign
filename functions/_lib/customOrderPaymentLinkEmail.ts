@@ -168,7 +168,7 @@ export function renderCustomOrderPaymentLinkEmailText(
   const subtotalCents = resolvedSubtotal;
   const totalCents = resolvedTotal;
   const lines = [
-    `${params.brandName || 'The Chesapeake Shell'} Custom Order Payment`,
+    `${params.brandName || 'Dover Designs'} Custom Order Payment`,
     params.orderLabel ? `Order: ${params.orderLabel}` : null,
     params.description ? `Details: ${params.description}` : null,
     `Subtotal: ${formatMoney(subtotalCents)}`,

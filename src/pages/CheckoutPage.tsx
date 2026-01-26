@@ -382,7 +382,7 @@ export function CheckoutPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Chesapeake Shell</p>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Dover Designs</p>
             <h1 className="text-3xl font-bold text-gray-900">Secure Checkout</h1>
             <p className="text-gray-600 mt-1">Complete your purchase safely and securely.</p>
           </div>
