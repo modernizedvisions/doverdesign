@@ -43,9 +43,9 @@ const galleryItems = [
 ];
 
 const testimonials = [
-  { quote: 'The shell trio elevated our entry console instantly - calm, refined, unforgettable.', name: 'Charlotte M.', location: 'Beacon Hill, Boston' },
-  { quote: "She matched our paint deck and made a custom piece for our living room. It's art and memory in one.", name: 'Evelyn R.', location: 'Newport, RI' },
-  { quote: 'Luxury craftsmanship with the warmth of a studio visit. The gold detailing is exquisite.', name: 'Ian P.', location: 'Nantucket, MA' },
+  { quote: 'Could not recommend Dover Designs more! Love this piece — made such a great gift! Unique and high quality!', name: 'Megan' },
+  { quote: 'We were so incredibly happy with how these came out and will enjoy them for years. We will definitely buy from again in the future.', name: 'TJ' },
+  { quote: 'Rachel was quick to respond to my messages. The quality of the ornaments exceeded my expectations.', name: 'Alexis' },
 ];
 
 export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTemplateProps) {
@@ -74,24 +74,33 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
           <SectionWrapper>
             <div className="grid gap-10 lg:grid-cols-[1.05fr,0.95fr] items-center">
               <RevealOnScroll className="space-y-8">
-                <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.32em] text-deep-ocean/80">
-                  <span className="inline-flex items-center rounded-shell bg-white/85 px-3 py-1.5 border border-driftwood/60 shadow-sm">
-                    Dover Designs · Boston · Coastal Shell Atelier
-                  </span>
-                </div>
-                <div className="space-y-5">
-                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-[54px] leading-tight tracking-[0.04em] text-deep-ocean">
-                    Handcrafted Coastal Shell Art for Curated Interiors
+                <div className="space-y-5 text-center lg:text-left">
+                  <p className="text-[11px] uppercase tracking-[0.32em] text-deep-ocean/70 text-center">
+                    DESIGNED FOR PRIVATE HOMES AND CURATED INTERIORS
+                  </p>
+                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-[54px] leading-tight tracking-[0.05em] text-deep-ocean font-semibold">
+                    <span className="block">
+                      <span className="text-[1.06em] inline-block">H</span>andcrafted Coastal Shell
+                    </span>
+                    <span className="block">Art for Curated Interiors</span>
                   </h1>
-                  <p className="max-w-2xl text-lg text-charcoal/80">
-                    One-of-a-kind, hand-painted seashell designs inspired by the calm of the coast - thoughtfully finished to elevate modern living spaces.
+                  <p className="max-w-2xl mx-auto text-lg text-charcoal/75 text-center">
+                    One-of-a-kind, hand-painted shell pieces inspired by the calm of the coast, crafted to elevate modern living spaces.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
-                  <LuxuryButton to="/shop" variant="primary">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 lg:flex-row lg:items-start">
+                  <LuxuryButton
+                    to="/shop"
+                    variant="primary"
+                    className="w-full sm:w-full lg:w-auto lg:min-w-[260px] lg:h-[54px] px-10 sm:px-12 text-[13px] justify-center whitespace-nowrap box-border border border-transparent"
+                  >
                     Explore the Collection
                   </LuxuryButton>
-                  <LuxuryButton to="/custom-orders" variant="ghost">
+                  <LuxuryButton
+                    to="/custom-orders"
+                    variant="ghost"
+                    className="w-full sm:w-full lg:w-auto lg:min-w-[260px] lg:h-[54px] px-10 sm:px-12 text-[13px] justify-center whitespace-nowrap box-border"
+                  >
                     Custom Orders
                   </LuxuryButton>
                 </div>
@@ -101,15 +110,14 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
                     { title: 'Gallery-grade', desc: 'UV protected & sealed' },
                     { title: 'Ships with care', desc: 'White-glove packaging' },
                   ].map((item) => (
-                    <div key={item.title} className="shell-card px-4 py-3">
+                    <div key={item.title} className="shell-card px-4 py-3 text-center">
                       <p className="text-xs uppercase tracking-[0.28em] text-deep-ocean/80">{item.title}</p>
-                      <p className="text-sm mt-2 text-charcoal/80">{item.desc}</p>
                     </div>
                   ))}
                 </div>
               </RevealOnScroll>
               <RevealOnScroll delay={120} className="relative">
-                <div className="relative rounded-shell-lg overflow-hidden lux-shadow border border-driftwood/70 bg-white/70">
+                <div className="relative rounded-shell-lg overflow-hidden lux-shadow border border-driftwood/70 bg-white/70 mx-auto w-full max-w-xl lg:max-w-none">
                   <div className="absolute inset-0 bg-gradient-to-br from-sand/70 via-transparent to-sea-glass/15 pointer-events-none" />
                   <div className="aspect-[4/5] w-full flex items-end justify-start">
                     {resolvedHeroImage ? (
@@ -172,11 +180,11 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
             subtitle="Soft, artisanal finishes captured in lifestyle scenes and studio moments."
           />
           <GalleryGrid items={galleryWithSources} />
-          <div className="mt-10 flex flex-wrap gap-4">
-            <LuxuryButton to="/shop" variant="primary">
+          <div className="mt-12 flex flex-wrap justify-center gap-4">
+            <LuxuryButton to="/shop" variant="primary" className="px-8 py-3.5 text-[12px]">
               View in Shop
             </LuxuryButton>
-            <LuxuryButton to="/gallery" variant="outline">
+            <LuxuryButton to="/gallery" variant="ghost" className="px-8 py-3.5 text-[12px]">
               Full Gallery
             </LuxuryButton>
           </div>
@@ -189,22 +197,21 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
             subtitle="Words from interior designers and collectors who live with Dover pieces."
           />
           <div className="mt-10 rounded-shell-lg border border-sea-glass/30 bg-sea-glass/10 px-4 py-6 sm:px-6 sm:py-8 shadow-inner">
-            <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+            <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto pb-2 snap-x snap-mandatory items-center md:items-stretch">
               {testimonials.map((testimonial, index) => (
                 <RevealOnScroll
                   key={testimonial.name}
                   delay={index * 80}
-                  className="min-w-[260px] max-w-sm snap-center"
+                  className="w-full max-w-md md:min-w-[260px] md:max-w-sm snap-center"
                 >
-                  <div className="relative flex flex-col justify-between min-h-[220px] md:min-h-[260px] p-8 rounded-2xl overflow-hidden border border-driftwood/30 shadow-sm bg-linen">
+                  <div className="relative flex flex-col justify-between min-h-[220px] md:min-h-[260px] p-8 rounded-2xl overflow-hidden border border-driftwood/30 shadow-sm bg-linen text-center">
                     <p className="text-lg leading-relaxed text-deep-ocean [display:-webkit-box] [overflow:hidden] [text-overflow:ellipsis] [WebkitLineClamp:3] md:[WebkitLineClamp:4] [WebkitBoxOrient:vertical]">
                       "{testimonial.quote}"
                     </p>
-                    <div className="mt-4 text-xs uppercase tracking-[0.3em] text-driftwood flex items-center justify-between gap-2">
+                    <div className="mt-4 text-xs uppercase tracking-[0.3em] text-driftwood flex items-center justify-center gap-2">
                       <span>{testimonial.name}</span>
-                      <span className="text-[11px]">{testimonial.location}</span>
                     </div>
-                    <div className="mt-4 flex gap-1 text-soft-gold" aria-label="5 star rating">
+                    <div className="mt-4 flex justify-center gap-1 text-soft-gold" aria-label="5 star rating">
                       <span>★</span>
                       <span>★</span>
                       <span>★</span>
@@ -266,57 +273,21 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
 
         <SectionDivider />
 
-        <SectionWrapper id="contact" className="py-16 sm:py-20 bg-[var(--stone)]">
+        <SectionWrapper id="contact" className="py-16 sm:py-20 bg-transparent">
           <SectionHeading
             eyebrow="Contact"
             title="Soft luxury form experience"
             subtitle="Tell us about your space, palette, or the story you want a shell to hold."
           />
           <div className="mt-10 rounded-shell-lg border border-driftwood/70 bg-white/80 lux-shadow">
-            <div className="grid lg:grid-cols-[1.05fr,0.95fr] gap-0">
-              <div className="relative overflow-hidden border-b lg:border-b-0 lg:border-r border-driftwood/60">
-                <div className="absolute inset-0 bg-gradient-to-br from-sand/80 via-transparent to-sea-glass/20" />
-                <div className="p-8 space-y-4 relative">
-                  <p className="text-xs uppercase tracking-[0.28em] text-deep-ocean/80">Custom & inquiries</p>
-                  <h3 className="text-3xl font-serif tracking-[0.02em] text-deep-ocean">Let's create something bespoke</h3>
-                  <p className="text-sm leading-relaxed text-charcoal/80">
-                    Share inspiration, upload photos of your space, and outline your vision. We'll reply with options, finishes, and timelines.
-                  </p>
-                  <div className="flex flex-wrap gap-3 text-xs uppercase tracking-[0.22em] text-deep-ocean/80">
-                    <span className="rounded-shell bg-sand px-3 py-2 border border-driftwood/60">Palette matching</span>
-                    <span className="rounded-shell bg-sand px-3 py-2 border border-driftwood/60">Gold leaf detailing</span>
-                    <span className="rounded-shell bg-sand px-3 py-2 border border-driftwood/60">Framed display</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 bg-white/90">
+            <div className="flex justify-center">
+              <div className="p-6 sm:p-8 bg-white/90 w-full max-w-3xl">
                 <ContactForm backgroundColor="transparent" variant="embedded" />
               </div>
             </div>
           </div>
         </SectionWrapper>
 
-        <section className="pb-16 sm:pb-20 bg-[var(--stone)] w-full flex justify-center">
-          <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex justify-center">
-            <div className="shell-card flex flex-col gap-6 items-start sm:items-center sm:flex-row sm:justify-between px-6 py-6 sm:px-10 sm:py-8">
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.3em] text-deep-ocean/80">Ready to style</p>
-                <h3 className="text-2xl font-serif tracking-[0.02em] text-deep-ocean">Bring coastal luxury home</h3>
-                <p className="text-sm text-charcoal/80">
-                  Explore the current collection or request a bespoke piece for your project.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <LuxuryButton to="/shop" variant="primary">
-                  Shop Collection
-                </LuxuryButton>
-                <LuxuryButton to="/custom-orders" variant="ghost">
-                  Custom Orders
-                </LuxuryButton>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       <MobileStickyCta />
@@ -327,7 +298,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
 function SectionWrapper({ children, id, className }: { children: ReactNode; id?: string; className?: string }) {
   return (
     <section id={id} className={className}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">{children}</div>
+      <div className="w-full max-w-[92vw] sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">{children}</div>
     </section>
   );
 }
@@ -354,10 +325,12 @@ function LuxuryButton({
   to,
   variant = 'primary',
   children,
+  className,
 }: {
   to: string;
   variant?: 'primary' | 'ghost' | 'outline';
   children: ReactNode;
+  className?: string;
 }) {
   const styles = {
     primary: 'bg-deep-ocean text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl',
@@ -369,7 +342,7 @@ function LuxuryButton({
   return (
     <Link
       to={to}
-      className={`inline-flex items-center gap-2 rounded-shell px-6 py-3 uppercase tracking-[0.24em] text-[11px] transition-all duration-200 ${styles[variant]}`}
+      className={`inline-flex items-center gap-2 rounded-shell px-6 py-3 uppercase tracking-[0.24em] text-[11px] transition-all duration-200 ${styles[variant]} ${className ?? ''}`}
       aria-label={ariaLabel}
     >
       <span className="whitespace-nowrap">{children}</span>
@@ -426,13 +399,14 @@ function RevealOnScroll({ children, delay = 0, className = '' }: { children: Rea
 
 function GalleryGrid({ items }: { items: Array<{ label: string; accent: string; tall?: boolean; image?: string | null }> }) {
   return (
-    <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
+    <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
       {items.map((item, index) => {
         const toneClass = index % 2 === 0 ? 'bg-white/90' : 'bg-sand/70';
+        const bottomLabel = (item.label || '').split(/\s+/).slice(0, 2).join(' ');
         return (
           <RevealOnScroll key={`${item.label}-${index}`} delay={index * 40}>
             <div
-              className={`group relative overflow-hidden rounded-shell-lg border border-driftwood/30 ${toneClass} shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md cursor-pointer aspect-[3/4] bg-linen`}
+              className={`group relative overflow-hidden rounded-shell-lg border border-driftwood/30 ${toneClass} shadow-sm transition-all duration-300 ease-out hover:shadow-md cursor-pointer aspect-[3/4] bg-linen`}
             >
               {item.image ? (
                 <img
@@ -444,21 +418,7 @@ function GalleryGrid({ items }: { items: Array<{ label: string; accent: string; 
               ) : (
                 <div className="h-full w-full bg-gradient-to-br from-sand via-linen to-sea-glass/20 shell-pattern rounded-shell-lg" />
               )}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 bg-deep-ocean/20" />
-              <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
-              <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
-              <div className="absolute inset-x-0 bottom-0 px-4 pb-4 flex items-center justify-between gap-2">
-                <div className="shell-card bg-white/90 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-deep-ocean/90">
-                  {item.label}
-                </div>
-                <Link
-                  to="/shop"
-                  className="rounded-shell bg-deep-ocean text-white px-3 py-2 text-[10px] uppercase tracking-[0.26em] opacity-0 group-hover:opacity-100 transition-all duration-200 hover:-translate-y-0.5"
-                >
-                  View
-                </Link>
-              </div>
-              <div className="absolute top-2 right-2 shell-card bg-white/90 px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80">
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-2 sm:translate-x-0 shell-card bg-white/90 px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80">
                 {item.accent}
               </div>
             </div>

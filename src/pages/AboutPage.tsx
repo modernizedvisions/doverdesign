@@ -4,7 +4,7 @@ export function AboutPage() {
   return (
     <div className="bg-linen text-charcoal">
       <section className="py-16 sm:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[92vw] sm:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 space-y-3">
             <p className="text-[11px] uppercase tracking-[0.32em] text-deep-ocean/80">About Dover Designs</p>
             <h1 className="text-4xl sm:text-5xl font-serif font-semibold tracking-[0.03em] text-deep-ocean">About Dover Designs</h1>
@@ -41,4 +41,3 @@ export function AboutPage() {
     </div>
   );
 }
-

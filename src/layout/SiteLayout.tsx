@@ -94,8 +94,9 @@ function SiteLayoutInner() {
               </button>
               <Link
                 to="/"
-                className="text-2xl font-serif tracking-[0.08em] text-deep-ocean flex-1 text-center md:text-left truncate whitespace-nowrap"
+                className="text-2xl font-serif tracking-[0.08em] text-deep-ocean flex-1 text-center md:text-left truncate whitespace-nowrap inline-flex items-center gap-2"
               >
+                <img src="/logo.jpg" alt="Dover Designs logo" className="h-8 w-auto object-contain" />
                 Dover Designs
               </Link>
             </div>

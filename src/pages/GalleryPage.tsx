@@ -31,7 +31,7 @@ export function GalleryPage() {
 
   return (
     <div className="py-14 bg-linen min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[92vw] sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-3 mb-8">
           <p className="text-[11px] uppercase tracking-[0.32em] text-deep-ocean/80">Gallery</p>
           <h1 className="text-4xl md:text-5xl font-serif font-semibold tracking-[0.03em] text-deep-ocean">Gallery</h1>
@@ -59,7 +59,7 @@ export function GalleryPage() {
               {galleryImages.length === 0 ? (
                 <div className="text-gray-500">No images yet.</div>
               ) : (
-                <div className="gallery-grid grid grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="gallery-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {galleryImages.map((item) => (
                     <div key={item.id} className="relative group cursor-pointer rounded-2xl border border-driftwood/30 bg-linen shadow-sm overflow-hidden">
                       <div
@@ -86,7 +86,7 @@ export function GalleryPage() {
                 Sold Products
               </h2>
               {soldProducts.length > 0 && (
-                <div className="sold-grid grid grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="sold-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {soldProducts.map((item) => (
                     <div key={item.id} className="group bg-linen rounded-2xl overflow-hidden border border-driftwood/30 shadow-sm hover:shadow-md transition-all">
                       <div

@@ -389,7 +389,7 @@ export function ShopPage() {
 
   return (
     <div className="py-14 bg-linen min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[92vw] sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mt-10 mb-8 space-y-3">
           <p className="text-[11px] uppercase tracking-[0.32em] text-deep-ocean/80">The Collection</p>
           <h1 className="text-4xl sm:text-5xl font-serif font-semibold tracking-[0.04em] text-deep-ocean">
