@@ -10,16 +10,16 @@ export function AboutPage() {
             <h1 className="text-4xl sm:text-5xl font-serif font-semibold tracking-[0.03em] text-deep-ocean">About Dover Designs</h1>
           </div>
 
-          <div className="grid gap-10 lg:grid-cols-[1.05fr,0.95fr] items-start">
-            <div className="order-2 lg:order-1 space-y-5 text-base leading-relaxed">
+          <div className="grid gap-10 lg:grid-cols-[1.05fr,0.95fr] items-center">
+            <div className="order-2 lg:order-1 space-y-5 text-[15px] sm:text-lg leading-relaxed font-sans text-center max-w-2xl mx-auto tracking-[0.01em]">
               <p>
-                Dover Designs is a coastal shell art studio dedicated to creating refined, one-of-a-kind pieces for thoughtfully curated interiors. Each design is handcrafted using carefully selected natural shells, finished by hand, and styled to bring a sense of calm, warmth, and coastal elegance into modern living spaces.
+                Dover Designs crafts one-of-a-kind shell art for curated interiors, pairing natural shells with hand-applied finishes to bring calm, warm elegance into modern living spaces.
               </p>
               <p>
-                Inspired by shoreline textures, ocean-washed tones, and timeless interior design, Dover Designs bridges fine art and functional decor. From bespoke custom commissions to limited-run collections, every piece is created with intention, balance, and an eye for lasting beauty.
+                Inspired by shoreline textures and timeless design, each commission or limited collection is created with balance, intention, and a gallery-worthy finish meant to live beautifully for years.
               </p>
               <p>
-                Whether styling a single statement piece or designing a full interior moment, Dover Designs approaches every project as a collaboration — turning natural materials into meaningful, personal works of art.
+                From bespoke statements to cohesive sets, every piece is designed to layer effortlessly with heirloom objects and modern furnishings alike—quiet luxury that feels personal, collected, and enduring.
               </p>
             </div>
 
@@ -37,7 +37,21 @@ export function AboutPage() {
         </div>
       </section>
 
-      <ContactForm backgroundColor="transparent" />
+      <section className="py-16 sm:py-20 bg-transparent">
+        <div className="w-full max-w-[92vw] sm:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center space-y-3">
+            <p className="text-xs uppercase tracking-[0.28em] text-deep-ocean/80">Get in touch</p>
+            <p className="text-base sm:text-lg text-charcoal/80 leading-relaxed max-w-2xl mx-auto font-serif subtitle-text">
+              Interested in a custom piece or looking for something specific? Send a message and we’ll reply shortly.
+            </p>
+          </div>
+          <div className="rounded-shell-lg border border-driftwood/60 bg-white/85 shadow-sm">
+            <div className="p-6 sm:p-8">
+              <ContactForm backgroundColor="transparent" variant="embedded" />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

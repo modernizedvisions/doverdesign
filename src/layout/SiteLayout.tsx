@@ -96,8 +96,9 @@ function SiteLayoutInner() {
                 to="/"
                 className="text-2xl font-serif tracking-[0.08em] text-deep-ocean flex-1 text-center md:text-left truncate whitespace-nowrap inline-flex items-center gap-2"
               >
-                <img src="/logo.jpg" alt="Dover Designs logo" className="h-8 w-auto object-contain" />
-                Dover Designs
+                <img src="/logo.jpg" alt="Dover Designs logo" className="h-8 w-auto object-contain md:mr-1" />
+                <span className="md:hidden w-full text-center block">Dover Designs</span>
+                <span className="hidden md:inline">Dover Designs</span>
               </Link>
             </div>
             <div className="hidden md:flex items-center gap-6">

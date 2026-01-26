@@ -18,16 +18,16 @@ const picturePaths = [
 
 const services = [
   {
+    title: 'Curated Collections',
+    copy: 'Seasonal and limited-run coastal shell designs ready to style and gift.',
+  },
+  {
     title: 'Handcrafted Art',
     copy: 'Every shell is individually selected, painted, and finished by hand.',
   },
   {
     title: 'Custom Interior Pieces',
     copy: 'Designed to harmonize with your palette, finishes, and collected objects.',
-  },
-  {
-    title: 'Curated Collections',
-    copy: 'Seasonal and limited-run coastal shell designs ready to style and gift.',
   },
 ];
 
@@ -164,7 +164,19 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
                   <p className="text-sm leading-relaxed text-charcoal/80 flex-1">{service.copy}</p>
                 </div>
                 <div className="text-sm uppercase tracking-[0.3em] text-deep-ocean/80 mt-6">
-                  <span className="group-hover:underline decoration-[0.5px] underline-offset-4">Discover</span>
+                  <Link
+                    to={
+                      service.title === 'Curated Collections'
+                        ? '/shop'
+                        : service.title === 'Handcrafted Art'
+                          ? '/gallery'
+                          : '/custom-orders'
+                    }
+                    className="inline-flex items-center gap-2 group-hover:underline decoration-[0.5px] underline-offset-4"
+                  >
+                    <span>Discover</span>
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </RevealOnScroll>
             ))}
@@ -176,7 +188,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTem
         <SectionWrapper id="gallery" className="py-16 sm:py-20 bg-[var(--stone)]">
           <SectionHeading
             eyebrow="Gallery"
-            title="Visual proof of craft"
+            title="In the making"
             subtitle="Soft, artisanal finishes captured in lifestyle scenes and studio moments."
           />
           <GalleryGrid items={galleryWithSources} />

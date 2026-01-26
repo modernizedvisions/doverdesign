@@ -70,17 +70,17 @@ export function ProductCard({ product }: ProductCardProps) {
   const productHref = `/product/${product.id}`;
 
   return (
-    <div className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      <div className="relative aspect-square overflow-hidden bg-gray-100">
+    <div className="group bg-linen rounded-shell-lg overflow-hidden border border-driftwood/40 shadow-sm hover:shadow-lg transition-all duration-300">
+      <div className="relative aspect-square overflow-hidden bg-sand">
         {product.oneoff && inCart && (
-          <span className="absolute top-3 right-3 z-10 rounded-full bg-white/90 text-slate-900 border border-slate-200 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur">
+          <span className="absolute top-3 right-3 z-10 rounded-full bg-white/90 text-deep-ocean border border-driftwood/50 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur">
             In Your Cart
           </span>
         )}
         <Link
           to={productHref}
           aria-label={`View ${product.name}`}
-          className="block h-full w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="block h-full w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-deep-ocean focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           {rawSrc ? (
             <ProgressiveImage
@@ -89,7 +89,7 @@ export function ProductCard({ product }: ProductCardProps) {
               timeoutMs={2500}
               alt={product.name}
               className="h-full w-full"
-              imgClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              imgClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               loading="lazy"
               decoding="async"
             />
@@ -100,38 +100,38 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </Link>
       </div>
-      <div className="p-3">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h3 className="text-sm font-serif font-medium text-slate-900 truncate">{product.name}</h3>
+      <div className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-base font-serif font-semibold text-deep-ocean truncate">{product.name}</h3>
           {promoEligible && discountedCents !== basePriceCents && basePriceCents !== null ? (
             <div className="text-right whitespace-nowrap">
-              <div className="text-xs text-slate-500 line-through">{priceLabel}</div>
-              <div className="text-[20px] font-serif font-medium text-slate-800">{discountedLabel}</div>
+              <div className="text-xs text-charcoal/60 line-through">{priceLabel}</div>
+              <div className="text-lg font-serif font-semibold text-deep-ocean">{discountedLabel}</div>
             </div>
           ) : (
-            <span className="text-[20px] font-serif font-medium text-slate-800 whitespace-nowrap">{priceLabel}</span>
+            <span className="text-lg font-serif font-semibold text-deep-ocean whitespace-nowrap">{priceLabel}</span>
           )}
         </div>
 
         {isSold && (
-          <div className="mb-2">
-            <span className="inline-block px-2 py-1 bg-red-50 text-red-700 text-xs rounded">
+          <div className="mb-1">
+            <span className="inline-flex items-center rounded-full bg-red-50 text-red-700 text-xs px-3 py-1 border border-red-200">
               Sold
             </span>
           </div>
         )}
 
-        <div className="mt-3 grid grid-cols-2 gap-0">
+        <div className="flex flex-col sm:flex-row gap-3 mt-2">
           <button
             onClick={() => navigate(productHref)}
-            className="w-full bg-white border border-gray-300 text-gray-800 py-2 px-4 rounded-l-lg font-medium hover:border-gray-400 transition-colors"
+            className="w-full inline-flex items-center justify-center rounded-shell border border-driftwood/70 bg-white/85 text-deep-ocean px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] hover:bg-sand/70 transition-all"
           >
             View
           </button>
           <button
             onClick={handleAddToCart}
             disabled={isDisabled || !isPurchaseReady}
-            className="inline-flex items-center justify-center bg-white border border-gray-300 py-2 px-4 rounded-r-lg font-medium hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center rounded-shell bg-deep-ocean text-white px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Add to Cart"
           >
             <ShoppingCart className="h-5 w-5" />

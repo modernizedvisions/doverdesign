@@ -73,13 +73,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
         id: category.id,
         name: category.name,
       }));
-    return [
-      ...filtered,
-      {
-        id: 'custom-one-of-a-kind',
-        name: 'One-of-a-Kind Request',
-      },
-    ];
+    return filtered;
   }, [categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -304,44 +298,48 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
               </div>
             </div>
 
-            {inquiryType === 'custom_order' && (
-              <div className="space-y-3">
-                {categoryError && (
-                  <p className="text-center text-xs text-slate-500">{categoryError}</p>
-                )}
-                {isLoadingCategories ? (
-                  <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-2">
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <div
-                        key={`contact-chip-skeleton-${index}`}
-                        className="h-10 w-24 rounded-full bg-slate-200/70 animate-pulse"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-3">
-                    {categoryChips.map((chip) => {
-                      const isSelected = selectedCategories.some((category) => category.id === chip.id);
-                      return (
-                        <button
-                          key={chip.id}
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() => handleSelectCategory(chip)}
-                          className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] min-h-[40px] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c89f6e] ${
-                            isSelected
-                              ? 'border border-transparent bg-slate-900 text-white hover:bg-slate-800'
-                              : 'border border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-white'
-                          }`}
-                        >
-                          {chip.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="space-y-3 min-h-0 flex flex-col">
+              {inquiryType === 'custom_order' ? (
+                <>
+                  {categoryError && (
+                    <p className="text-center text-xs text-slate-500">{categoryError}</p>
+                  )}
+                  {isLoadingCategories ? (
+                    <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-2">
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <div
+                          key={`contact-chip-skeleton-${index}`}
+                          className="h-10 w-24 rounded-full bg-slate-200/70 animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-3">
+                      {categoryChips.map((chip) => {
+                        const isSelected = selectedCategories.some((category) => category.id === chip.id);
+                        return (
+                          <button
+                            key={chip.id}
+                            type="button"
+                            aria-pressed={isSelected}
+                            onClick={() => handleSelectCategory(chip)}
+                            className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] min-h-[40px] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c89f6e] ${
+                              isSelected
+                                ? 'border border-transparent bg-slate-900 text-white hover:bg-slate-800'
+                                : 'border border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-white'
+                            }`}
+                          >
+                            {chip.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div aria-hidden className="h-0" />
+              )}
+            </div>
 
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
