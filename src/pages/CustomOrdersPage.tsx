@@ -231,18 +231,21 @@ export default function CustomOrdersPage() {
         </div>
       </section>
 
-      <section className="px-4" style={{ backgroundColor: contactBg }}>
-        <div ref={formRef} className="mx-auto w-full max-w-[92vw] sm:max-w-6xl py-12 md:py-16">
-          <div className="space-y-8 text-center">
-            <div className="space-y-3">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-deep-ocean/75">Get in touch</p>
-              <p className="text-base sm:text-lg text-charcoal/80 leading-relaxed max-w-2xl mx-auto font-serif subtitle-text">
-                Interested in a custom piece or looking for something specific? Send a message and we’ll reply shortly.
+      <section id="contact" className="py-16 sm:py-20" style={{ backgroundColor: contactBg }}>
+        <div ref={formRef} className="w-full max-w-[92vw] sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+          <div className="space-y-8">
+            <div className="space-y-3 max-w-3xl">
+              <p className="text-xs uppercase tracking-[0.32em] text-deep-ocean/75">Contact</p>
+              <h2 className="text-3xl sm:text-4xl font-serif tracking-[0.03em] text-deep-ocean">Soft luxury form experience</h2>
+              <p className="text-base text-charcoal/80 leading-relaxed">
+                Tell us about your space, palette, or the story you want a shell to hold.
               </p>
             </div>
-            <div className="flex justify-center">
-              <div className="w-full max-w-4xl rounded-shell-lg border border-driftwood/60 bg-white/85 shadow-sm p-6 sm:p-8">
-                <ContactForm backgroundColor="transparent" variant="embedded" />
+            <div className="mt-10 rounded-shell-lg border border-driftwood/70 bg-white lux-shadow">
+              <div className="flex justify-center">
+                <div className="p-6 sm:p-8 bg-white w-full max-w-4xl">
+                  <ContactForm backgroundColor="transparent" variant="embedded" />
+                </div>
               </div>
             </div>
           </div>

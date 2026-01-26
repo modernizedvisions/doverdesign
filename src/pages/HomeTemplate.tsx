@@ -8,13 +8,20 @@ export type HomeTemplateProps = {
   galleryImageUrls?: string[];
 };
 
-const picturePaths = [
-  '/pictures/screenshot1.jpg',
-  '/pictures/screenshot2.jpg',
-  '/pictures/screenshot3.jpg',
-  '/pictures/screenshot4.jpg',
-  '/pictures/screenshot5.jpg',
+const heroDefault = '/pictures/hero_picture.jpg';
+
+const galleryDefaults = [
+  '/pictures/gallery_1.jpg',
+  '/pictures/gallery_2.jpg',
+  '/pictures/gallery_3.jpg',
+  '/pictures/gallery_4.jpg',
+  '/pictures/gallery_5.jpg',
+  '/pictures/gallery_6.jpg',
+  '/pictures/gallery_7.jpg',
+  '/pictures/gallery_8.jpg',
 ];
+
+const artistDefault = '/pictures/artist_section.jpg';
 
 const services = [
   {
@@ -32,14 +39,14 @@ const services = [
 ];
 
 const galleryItems = [
-  { label: 'Shell art product image', accent: 'Sea-glass wash', tall: true },
-  { label: 'Studio painting process', accent: 'Warm linen', tall: false },
-  { label: 'Framed interior display', accent: 'Charcoal trims', tall: true },
-  { label: 'Shell art product image', accent: 'Gold edge', tall: false },
-  { label: 'Framed interior display', accent: 'Driftwood frame', tall: false },
-  { label: 'Studio painting process', accent: 'In-progress', tall: true },
-  { label: 'Shell art product image', accent: 'Sable shell', tall: false },
-  { label: 'Framed interior display', accent: 'Mantel styling', tall: false },
+  { label: 'COASTAL CALM', accent: 'COASTAL CALM', tall: true },
+  { label: 'COOL TIDES', accent: 'COOL TIDES', tall: false },
+  { label: 'SEA SPECTRUM', accent: 'SEA SPECTRUM', tall: true },
+  { label: 'LIGHT WASH', accent: 'LIGHT WASH', tall: false },
+  { label: 'SOFT GOLD', accent: 'SOFT GOLD', tall: false },
+  { label: 'COASTAL DINING', accent: 'COASTAL DINING', tall: true },
+  { label: 'PAINTED VIEW', accent: 'PAINTED VIEW', tall: false },
+  { label: 'DEEP TIDES', accent: 'DEEP TIDES', tall: false },
 ];
 
 const testimonials = [
@@ -49,9 +56,9 @@ const testimonials = [
 ];
 
 export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTemplateProps) {
-  const resolvedHeroImage = heroImageUrl ?? picturePaths[0];
-  const resolvedGalleryImages = galleryImageUrls?.length ? galleryImageUrls : picturePaths;
-  const resolvedAboutImage = resolvedGalleryImages[1] ?? resolvedHeroImage ?? picturePaths[1];
+  const resolvedHeroImage = heroImageUrl ?? heroDefault;
+  const resolvedGalleryImages = galleryImageUrls?.length ? galleryImageUrls : galleryDefaults;
+  const resolvedAboutImage = artistDefault || resolvedGalleryImages[1] || resolvedHeroImage || galleryDefaults[1];
   const galleryWithSources = useMemo(
     () =>
       galleryItems.map((item, index) => ({

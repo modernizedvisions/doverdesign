@@ -94,10 +94,10 @@ function SiteLayoutInner() {
               </button>
               <Link
                 to="/"
-                className="text-2xl font-serif tracking-[0.08em] text-deep-ocean flex-1 text-center md:text-left truncate whitespace-nowrap inline-flex items-center gap-2 max-md:flex-col max-md:items-center max-md:justify-center max-md:gap-1"
+                className="text-2xl font-serif tracking-[0.08em] text-deep-ocean flex-1 text-center md:text-left truncate whitespace-nowrap inline-flex items-center gap-2 max-md:flex-row max-md:items-center max-md:justify-center"
               >
-                <img src="/logo.jpg" alt="Dover Designs logo" className="h-8 w-auto object-contain md:mr-1 max-md:mb-1" />
-                <span className="md:hidden w-full text-center block">Dover Designs</span>
+                <img src="/logo.jpg" alt="Dover Designs logo" className="h-8 w-auto object-contain md:mr-1" />
+                <span className="md:hidden inline-block text-center">Dover Designs</span>
                 <span className="hidden md:inline">Dover Designs</span>
               </Link>
             </div>
