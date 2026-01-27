@@ -70,12 +70,10 @@ export function ProductCard({ product }: ProductCardProps) {
   const productHref = `/product/${product.id}`;
 
   return (
-    <div className="group bg-linen rounded-shell-lg overflow-hidden border border-driftwood/40 shadow-sm hover:shadow-lg transition-all duration-300">
-      <div className="relative aspect-square overflow-hidden bg-sand">
+    <div className="group lux-card bg-white/90 overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
+      <div className="relative aspect-square overflow-hidden rounded-shell-lg bg-sand">
         {product.oneoff && inCart && (
-          <span className="absolute top-3 right-3 z-10 rounded-full bg-white/90 text-deep-ocean border border-driftwood/50 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur">
-            In Your Cart
-          </span>
+          <span className="absolute top-3 right-3 z-10 lux-pill shadow-sm">In Your Cart</span>
         )}
         <Link
           to={productHref}
@@ -94,7 +92,7 @@ export function ProductCard({ product }: ProductCardProps) {
               decoding="async"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-gray-400">
+            <div className="flex h-full w-full items-center justify-center text-charcoal/50">
               No image
             </div>
           )}
@@ -115,7 +113,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {isSold && (
           <div className="mb-1">
-            <span className="inline-flex items-center rounded-full bg-red-50 text-red-700 text-xs px-3 py-1 border border-red-200">
+            <span className="lux-pill bg-red-50 text-red-700 border-red-200">
               Sold
             </span>
           </div>
@@ -124,14 +122,14 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex flex-col sm:flex-row gap-3 mt-2">
           <button
             onClick={() => navigate(productHref)}
-            className="w-full inline-flex items-center justify-center rounded-shell border border-driftwood/70 bg-white/85 text-deep-ocean px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] hover:bg-sand/70 transition-all"
+            className="lux-button--ghost w-full justify-center"
           >
             View
           </button>
           <button
             onClick={handleAddToCart}
             disabled={isDisabled || !isPurchaseReady}
-            className="w-full inline-flex items-center justify-center rounded-shell bg-deep-ocean text-white px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="lux-button w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Add to Cart"
           >
             <ShoppingCart className="h-5 w-5" />

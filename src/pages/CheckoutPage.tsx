@@ -371,24 +371,24 @@ export function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <p className="text-gray-600">Preparing your checkout...</p>
+      <div className="min-h-screen bg-linen flex items-center justify-center px-4">
+        <p className="text-charcoal/80">Preparing your checkout...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-linen py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Dover Designs</p>
-            <h1 className="text-3xl font-bold text-gray-900">Secure Checkout</h1>
-            <p className="text-gray-600 mt-1">Complete your purchase safely and securely.</p>
+            <p className="lux-eyebrow">Dover Designs</p>
+            <h1 className="text-3xl font-serif font-semibold text-deep-ocean">Secure Checkout</h1>
+            <p className="lux-subtitle mt-1">Complete your purchase safely and securely.</p>
           </div>
           <button
             onClick={() => navigate('/shop')}
-            className="bg-white border border-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium hover:border-gray-400 transition-colors"
+            className="lux-button--ghost"
           >
             Back to Shop
           </button>
@@ -398,15 +398,15 @@ export function CheckoutPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-1">
-            <div className="rounded-xl bg-white shadow-sm border border-gray-100 p-4 space-y-4">
+            <div className="lux-card bg-white/90 p-4 space-y-4">
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">Order Preview</p>
-                <h2 className="text-base font-semibold text-gray-900">Items in your cart</h2>
+                <p className="lux-eyebrow">Order Preview</p>
+                <h2 className="text-base font-serif font-semibold text-deep-ocean">Items in your cart</h2>
               </div>
 
               <div className="space-y-3">
                 {previewItems.length === 0 && (
-                  <div className="text-sm text-gray-600">No items to display.</div>
+                  <div className="text-sm text-charcoal/70">No items to display.</div>
                 )}
                 {previewItemsWithPricing.map((item) => (
                   <div key={`${item.id}-${item.name}`} className="flex gap-3">
@@ -414,29 +414,29 @@ export function CheckoutPage() {
                       <img
                         src={item.imageUrl}
                         alt={item.name || 'Item'}
-                        className="w-14 h-14 rounded-md object-cover bg-gray-100 border border-gray-100"
+                        className="w-14 h-14 rounded-shell object-cover bg-sand border border-driftwood/60"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-14 h-14 rounded-md bg-gray-100 border border-gray-100" />
+                      <div className="w-14 h-14 rounded-shell bg-sand border border-driftwood/60" />
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{item.name || 'Item'}</p>
-                        <span className="text-sm font-semibold text-gray-900">{formatMoney(item.lineTotal)}</span>
+                        <p className="text-sm font-semibold text-deep-ocean truncate">{item.name || 'Item'}</p>
+                        <span className="text-sm font-semibold text-deep-ocean">{formatMoney(item.lineTotal)}</span>
                       </div>
                       {item.collection && (
-                        <p className="text-[11px] uppercase tracking-wide text-gray-500">{item.collection}</p>
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-charcoal/60">{item.collection}</p>
                       )}
                       {item.description && (
-                        <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                        <p className="text-xs text-charcoal/70 line-clamp-2">{item.description}</p>
                       )}
-                      <div className="text-xs text-gray-500 mt-0.5 flex items-baseline gap-2">
+                      <div className="text-xs text-charcoal/70 mt-0.5 flex items-baseline gap-2">
                         <span>Qty: {item.quantity || 1}</span>
                         {item.appliedPercent > 0 ? (
                           <>
-                            <span className="line-through text-slate-400">{formatMoney(item.priceCents)}</span>
-                            <span className="text-slate-700">{formatMoney(item.unitPrice)}</span>
+                            <span className="line-through text-charcoal/50">{formatMoney(item.priceCents)}</span>
+                            <span className="text-deep-ocean">{formatMoney(item.unitPrice)}</span>
                           </>
                         ) : (
                           <span>{formatMoney(item.priceCents)}</span>
@@ -447,14 +447,14 @@ export function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="border-t border-gray-200 pt-4 space-y-2">
+              <div className="border-t border-driftwood/70 pt-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs uppercase tracking-wide text-gray-500">Promo Code</label>
+                  <label className="lux-label">Promo Code</label>
                   {promoSummary?.code ? (
                     <button
                       type="button"
                       onClick={handleClearPromo}
-                      className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                      className="text-xs font-semibold text-deep-ocean hover:underline"
                     >
                       Remove
                     </button>
@@ -466,22 +466,22 @@ export function CheckoutPage() {
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value)}
                     placeholder="Enter promo code"
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm capitalize"
+                    className="lux-input flex-1 capitalize"
                   />
                   <button
                     type="button"
                     onClick={handleApplyPromo}
                     disabled={isApplyingPromo || !promoInput.trim()}
-                    className="px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-900 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="lux-button--ghost px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isApplyingPromo ? 'Applying...' : 'Apply'}
                   </button>
                 </div>
                 {promoSummary?.code ? (
-                  <div className="text-xs text-slate-600">
-                    Applied: <span className="font-semibold text-slate-900">{promoSummary.code.toUpperCase()}</span>
+                  <div className="text-xs text-charcoal/70">
+                    Applied: <span className="font-semibold text-deep-ocean">{promoSummary.code.toUpperCase()}</span>
                     {promoSummary.source ? (
-                      <span className="text-slate-500"> - {promoSummary.source}</span>
+                      <span className="text-charcoal/60"> - {promoSummary.source}</span>
                     ) : null}
                   </div>
                 ) : null}
@@ -490,28 +490,28 @@ export function CheckoutPage() {
                 ) : null}
               </div>
 
-              <div className="border-t border-gray-200 pt-3 space-y-1 text-sm">
-                <div className="flex justify-between text-gray-700">
+              <div className="border-t border-driftwood/70 pt-3 space-y-2 text-sm">
+                <div className="flex justify-between text-charcoal/80">
                   <span>Subtotal</span>
-                  <span className="font-medium">{formatMoney(subtotalCents || 0)}</span>
+                  <span className="font-medium text-deep-ocean">{formatMoney(subtotalCents || 0)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-charcoal/80">
                   <span>Shipping</span>
-                  <span className="font-medium">{formatMoney(effectiveShippingCents)}</span>
+                  <span className="font-medium text-deep-ocean">{formatMoney(effectiveShippingCents)}</span>
                 </div>
                 {promoSummary?.percentOff ? (
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between text-charcoal/80">
                     <span>Promotion</span>
                     <span className="font-medium">{promoSummary.percentOff}% off</span>
                   </div>
                 ) : null}
                 {promoSummary?.freeShippingApplied ? (
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between text-charcoal/80">
                     <span>Free shipping</span>
                     <span className="font-medium">Applied</span>
                   </div>
                 ) : null}
-                <div className="flex justify-between pt-2 border-t border-gray-200 text-base font-semibold text-gray-900">
+                <div className="flex justify-between pt-2 border-t border-driftwood/70 text-base font-semibold text-deep-ocean">
                   <span>Total</span>
                   <span>{formatMoney(totalCents)}</span>
                 </div>
@@ -520,27 +520,27 @@ export function CheckoutPage() {
           </div>
 
           <div className="md:col-span-2">
-            <div className="rounded-xl bg-white shadow-sm border border-gray-100 p-4 sm:p-6 space-y-4">
+            <div className="lux-card bg-white/92 p-4 sm:p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Payment</h2>
-                {isMountingStripe && <p className="text-sm text-gray-500">Loading Stripeâ€¦</p>}
+                <h2 className="text-lg font-serif font-semibold text-deep-ocean">Payment</h2>
+                {isMountingStripe && <p className="text-sm text-charcoal/70">Loading Stripe...</p>}
               </div>
               <div
                 id="embedded-checkout"
                 ref={stripeContainerRef}
-                className="rounded-lg border border-dashed border-gray-200 min-h-[360px]"
+                className="rounded-shell-lg border border-driftwood/70 border-dashed bg-white/80 min-h-[360px]"
               />
-              <p className="text-xs text-gray-500">
-                Secure payment is handled by Stripe. Youâ€™ll receive a confirmation as soon as the purchase completes.
+              <p className="text-xs text-charcoal/70">
+                Secure payment is handled by Stripe. You’ll receive a confirmation as soon as the purchase completes.
               </p>
             </div>
           </div>
         </div>
 
         {!product && !error && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center mt-6">
-            <p className="text-gray-700">Select a product to begin checkout.</p>
-            <Link to="/shop" className="text-gray-900 font-semibold underline">
+          <div className="lux-card bg-white/92 p-6 text-center mt-6">
+            <p className="text-charcoal/80">Select a product to begin checkout.</p>
+            <Link to="/shop" className="lux-button--ghost mt-3 inline-flex">
               Back to Shop
             </Link>
           </div>

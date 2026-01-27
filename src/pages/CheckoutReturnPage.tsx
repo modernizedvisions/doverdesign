@@ -58,25 +58,25 @@ export function CheckoutReturnPage() {
   const renderContent = () => {
     if (status === 'loading') {
       return (
-        <div className="text-center text-gray-600">Confirming your payment...</div>
+        <div className="text-center text-charcoal/70">Confirming your payment...</div>
       );
     }
 
     if (status === 'success' && session) {
       return (
         <>
-          <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">Thank you!</h1>
-          <p className="text-gray-600 text-center mb-6">
+          <h1 className="text-3xl font-serif font-semibold text-deep-ocean text-center mb-3">Thank you!</h1>
+          <p className="text-charcoal/80 text-center mb-6">
             {session.customerEmail
               ? `A confirmation has been sent to ${session.customerEmail}.`
               : 'Your payment was successful.'}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <div className="md:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="md:col-span-2 lux-card bg-white/92 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
+                <h2 className="text-lg font-serif font-semibold text-deep-ocean">Order Summary</h2>
               </div>
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-driftwood/60">
                 {session.lineItems && session.lineItems.length > 0 ? (
                   session.lineItems
                     .filter((item) => !item.isShipping)
@@ -92,31 +92,31 @@ export function CheckoutReturnPage() {
                               <img
                                 src={item.imageUrl}
                                 alt={item.productName || 'Item'}
-                                className="w-14 h-14 rounded-md object-cover bg-gray-100 border border-gray-100"
+                                className="w-14 h-14 rounded-shell object-cover bg-sand border border-driftwood/60"
                                 loading="lazy"
                               />
                             ) : (
-                              <div className="w-14 h-14 rounded-md bg-gray-100 border border-gray-100" />
+                              <div className="w-14 h-14 rounded-shell bg-sand border border-driftwood/60" />
                             )}
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{item.productName}</p>
+                              <p className="text-sm font-semibold text-deep-ocean truncate">{item.productName}</p>
                               {showQuantity && (
-                                <p className="text-xs text-gray-600">Qty: {quantity}</p>
+                                <p className="text-xs text-charcoal/70">Qty: {quantity}</p>
                               )}
                             </div>
                           </div>
-                          <div className="text-sm font-semibold text-gray-900 text-right">
+                          <div className="text-sm font-semibold text-deep-ocean text-right">
                             {session.currency ? formatCurrency(item.lineTotal, session.currency) : item.lineTotal}
                           </div>
                         </div>
                       );
                     })
                 ) : (
-                  <p className="text-sm text-gray-600">No line items found.</p>
+                  <p className="text-sm text-charcoal/70">No line items found.</p>
                 )}
               </div>
               {session.currency && session.shippingAmount !== null && (
-                <div className="mt-4 flex items-center justify-between text-sm text-gray-700">
+                <div className="mt-4 flex items-center justify-between text-sm text-charcoal/80">
                   <span>Shipping</span>
                   <span className="font-medium">
                     {formatCurrency(session.shippingAmount ?? 0, session.currency)}
@@ -124,9 +124,9 @@ export function CheckoutReturnPage() {
                 </div>
               )}
               {session.currency && session.amountTotal != null && (
-                <div className="mt-2 pt-4 border-t border-gray-200 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-900">Order total</span>
-                  <span className="text-base font-bold text-gray-900">
+                <div className="mt-2 pt-4 border-t border-driftwood/70 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-deep-ocean">Order total</span>
+                  <span className="text-base font-bold text-deep-ocean">
                     {formatCurrency(session.amountTotal, session.currency)}
                   </span>
                 </div>
@@ -134,13 +134,13 @@ export function CheckoutReturnPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Shipping</h3>
+              <div className="lux-card bg-white/92 p-4">
+                <h3 className="text-sm font-semibold text-deep-ocean mb-2 uppercase tracking-[0.16em]">Shipping</h3>
                 {session.shipping ? (
-                  <div className="text-sm text-gray-700 space-y-1">
+                  <div className="text-sm text-charcoal/80 space-y-1">
                     {session.shipping.name && <p className="font-medium">{session.shipping.name}</p>}
                     {session.shipping.address && (
-                      <div className="text-gray-600">
+                      <div className="text-charcoal/70">
                         {session.shipping.address.line1 && <p>{session.shipping.address.line1}</p>}
                         {session.shipping.address.line2 && <p>{session.shipping.address.line2}</p>}
                         {(session.shipping.address.city || session.shipping.address.state || session.shipping.address.postal_code) && (
@@ -155,13 +155,13 @@ export function CheckoutReturnPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-600">No shipping details available.</p>
+                  <p className="text-sm text-charcoal/70">No shipping details available.</p>
                 )}
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Payment</h3>
-                <div className="text-sm text-gray-700 space-y-1">
+              <div className="lux-card bg-white/92 p-4">
+                <h3 className="text-sm font-semibold text-deep-ocean mb-2 uppercase tracking-[0.16em]">Payment</h3>
+                <div className="text-sm text-charcoal/80 space-y-1">
                   <p>
                     Payment method:{' '}
                     {session.paymentMethodLabel ||
@@ -181,7 +181,7 @@ export function CheckoutReturnPage() {
           <div className="flex justify-center gap-3 mt-6">
             <Link
               to="/shop"
-              className="bg-gray-900 text-white px-5 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              className="lux-button"
             >
               Continue Shopping
             </Link>
@@ -193,14 +193,14 @@ export function CheckoutReturnPage() {
     if (status === 'pending') {
       return (
         <>
-          <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">Payment Processing</h1>
-          <p className="text-gray-600 text-center mb-6">
+          <h1 className="text-3xl font-serif font-semibold text-deep-ocean text-center mb-3">Payment Processing</h1>
+          <p className="text-charcoal/80 text-center mb-6">
             We&apos;re finalizing your payment. You can safely close this tab; we&apos;ll email you once it completes.
           </p>
           <div className="flex justify-center">
             <Link
               to="/shop"
-              className="bg-gray-900 text-white px-5 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              className="lux-button"
             >
               Back to Shop
             </Link>
@@ -211,20 +211,20 @@ export function CheckoutReturnPage() {
 
     return (
       <>
-        <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">Payment Failed</h1>
-        <p className="text-gray-600 text-center mb-6">
+        <h1 className="text-3xl font-serif font-semibold text-deep-ocean text-center mb-3">Payment Failed</h1>
+        <p className="text-charcoal/80 text-center mb-6">
           We couldn&apos;t confirm your payment. Please try again or use a different card.
         </p>
         <div className="flex justify-center gap-3">
           <Link
             to="/checkout"
-            className="bg-gray-900 text-white px-5 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+            className="lux-button"
           >
             Retry Checkout
           </Link>
           <Link
             to="/shop"
-            className="bg-white border border-gray-300 text-gray-800 px-5 py-3 rounded-lg font-medium hover:border-gray-400 transition-colors"
+            className="lux-button--ghost"
           >
             Back to Shop
           </Link>
@@ -234,10 +234,10 @@ export function CheckoutReturnPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-linen py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {error && <BannerMessage message={error} type="error" />}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <div className="lux-card bg-white/94 p-8">
           {renderContent()}
         </div>
       </div>
