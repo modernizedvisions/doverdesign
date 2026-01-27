@@ -9,11 +9,6 @@ import { useUIStore } from '../store/uiStore';
 import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 import { getDiscountedCents, isPromotionEligible, usePromotions } from '@/lib/promotions';
 
-const sizeOptions = ['Small', 'Medium', 'Large'];
-const finishOptions = ['Gold Edge', 'Natural Edge', 'Matte Seal'];
-const displayOptions = ['Wall Mount', 'Table Display', 'Gift Set'];
-const giftOptions = ['Yes — include gift wrap', 'No — standard packaging'];
-
 export function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -28,11 +23,7 @@ export function ProductDetailPage() {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const relatedRef = useRef<HTMLDivElement | null>(null);
-  const [selectedSize, setSelectedSize] = useState(sizeOptions[1]);
-  const [selectedFinish, setSelectedFinish] = useState(finishOptions[0]);
-  const [selectedDisplay, setSelectedDisplay] = useState(displayOptions[1]);
-  const [selectedGift, setSelectedGift] = useState(giftOptions[1]);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity] = useState(1);
 
   useEffect(() => {
     const load = async () => {
@@ -134,9 +125,7 @@ export function ProductDetailPage() {
               >
                 Back
               </button>
-              {product?.collection ? (
-                <span className="lux-pill">{product.collection}</span>
-              ) : null}
+              <span />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-[1.05fr,0.95fr] gap-10 lg:gap-14 items-start">
@@ -197,7 +186,7 @@ export function ProductDetailPage() {
               </div>
 
               <div className="space-y-5 bg-white/75 border border-driftwood/60 rounded-shell-lg p-6 sm:p-8 lux-shadow">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <p className="lux-eyebrow">Product Studio</p>
                   <h1 className="font-serif text-3xl sm:text-4xl leading-tight text-deep-ocean">
                     {loadingProduct ? 'Loading...' : product?.name}
@@ -219,90 +208,7 @@ export function ProductDetailPage() {
                   <p className="text-base leading-relaxed text-charcoal/80">{product?.description}</p>
                 </div>
 
-                <div className="grid gap-4">
-                  <OptionField label="Size">
-                    <select
-                      className="lux-input"
-                      value={selectedSize}
-                      onChange={(e) => setSelectedSize(e.target.value)}
-                    >
-                      {sizeOptions.map((opt) => (
-                        <option key={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </OptionField>
-
-                  <OptionField label="Finish">
-                    <select
-                      className="lux-input"
-                      value={selectedFinish}
-                      onChange={(e) => setSelectedFinish(e.target.value)}
-                    >
-                      {finishOptions.map((opt) => (
-                        <option key={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </OptionField>
-
-                  <OptionField label="Display Style">
-                    <select
-                      className="lux-input"
-                      value={selectedDisplay}
-                      onChange={(e) => setSelectedDisplay(e.target.value)}
-                    >
-                      {displayOptions.map((opt) => (
-                        <option key={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </OptionField>
-
-                  <OptionField label="Gift Ready">
-                    <select
-                      className="lux-input"
-                      value={selectedGift}
-                      onChange={(e) => setSelectedGift(e.target.value)}
-                    >
-                      {giftOptions.map((opt) => (
-                        <option key={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </OptionField>
-
-                  <OptionField label="Quantity">
-                    <div className="lux-quantity">
-                      <button
-                        type="button"
-                        className="lux-button--ghost px-3 py-2 rounded-full"
-                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                        disabled={product?.oneoff || !canPurchase || quantity <= 1}
-                      >
-                        -
-                      </button>
-                      <span className="min-w-[32px] text-center text-sm font-semibold text-deep-ocean">
-                        {product?.oneoff ? 1 : quantity}
-                      </span>
-                      <button
-                        type="button"
-                        className="lux-button--ghost px-3 py-2 rounded-full"
-                        onClick={() =>
-                          setQuantity((q) =>
-                            maxQty !== null ? Math.min(maxQty, q + 1) : q + 1
-                          )
-                        }
-                        disabled={product?.oneoff || !canPurchase || (maxQty !== null && quantity >= maxQty)}
-                      >
-                        +
-                      </button>
-                    </div>
-                    {product?.oneoff ? (
-                      <p className="text-xs text-charcoal/70 mt-1">One-of-a-kind piece - Qty fixed at 1</p>
-                    ) : maxQty !== null ? (
-                      <p className="text-xs text-charcoal/70 mt-1">Available: {maxQty}</p>
-                    ) : null}
-                  </OptionField>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <button
                     onClick={handleAddToCart}
                     disabled={
@@ -331,7 +237,7 @@ export function ProductDetailPage() {
                 </div>
 
                 <div className="lux-divider-soft" />
-                <p className="text-xs uppercase tracking-[0.22em] text-deep-ocean/70">
+                <p className="text-xs uppercase tracking-[0.22em] text-deep-ocean/70 text-center">
                   Crafted to order - Carefully packaged - Ships from Boston
                 </p>
               </div>
@@ -465,15 +371,6 @@ export function ProductDetailPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function OptionField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <label className="lux-label">{label}</label>
-      {children}
     </div>
   );
 }
