@@ -113,7 +113,6 @@ export function ProductDetailPage() {
   return (
     <div className="bg-linen text-charcoal min-h-screen">
       <div className="relative isolate overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 shell-pattern opacity-60" />
 
         <section className="pt-10 pb-14">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
