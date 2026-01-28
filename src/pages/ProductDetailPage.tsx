@@ -23,7 +23,7 @@ export function ProductDetailPage() {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const relatedRef = useRef<HTMLDivElement | null>(null);
-  const [quantity] = useState(1);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const load = async () => {
