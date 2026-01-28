@@ -94,11 +94,7 @@ function SiteLayoutInner() {
               </button>
               <Link
                 to="/"
-<<<<<<< HEAD
-                className="text-2xl font-medium text-gray-900 flex-1 text-center md:text-left truncate whitespace-nowrap"
-=======
                 className="text-2xl font-serif tracking-[0.08em] text-deep-ocean flex-1 text-center md:text-left truncate whitespace-nowrap inline-flex items-center gap-2 max-md:flex-row max-md:items-center max-md:justify-center"
->>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
               >
                 <img src="/logo.jpg" alt="Dover Designs logo" className="h-8 w-auto object-contain md:mr-1" />
                 <span className="md:hidden inline-block text-center">Dover Designs</span>
@@ -110,11 +106,7 @@ function SiteLayoutInner() {
                 <Link
                   key={link.to}
                   to={link.to}
-<<<<<<< HEAD
-                  className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors uppercase tracking-[0.12em] rounded-ui px-2 py-1"
-=======
                   className="text-xs font-semibold text-deep-ocean hover:text-charcoal transition-colors uppercase tracking-[0.24em] px-2 py-1 mx-1"
->>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
                 >
                   {link.label}
                 </Link>
@@ -152,11 +144,7 @@ function SiteLayoutInner() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setNavDrawerOpen(false)}
-<<<<<<< HEAD
-                  className="block rounded-lg rounded-ui px-3 py-2 text-base font-semibold text-gray-800 hover:bg-gray-100 transition-colors uppercase tracking-[0.1em]"
-=======
                   className="block px-3 py-3 text-sm font-semibold text-deep-ocean hover:bg-sand/70 transition-colors uppercase tracking-[0.2em]"
->>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
                 >
                   {link.label}
                 </Link>
@@ -173,30 +161,18 @@ function SiteLayoutInner() {
       <footer className="bg-charcoal border-t border-driftwood/50 py-8 text-linen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-2 text-center">
-<<<<<<< HEAD
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <Link to="/terms" className="hover:text-gray-900 transition-colors">
-=======
             <div className="flex items-center gap-4 text-sm font-serif text-linen/80">
               <Link to="/terms" className="hover:text-linen transition-colors">
->>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
                 Terms
               </Link>
               <Link to="/privacy" className="hover:text-linen transition-colors">
                 Privacy
               </Link>
             </div>
-<<<<<<< HEAD
-            <p className="text-sm text-gray-500">
-              &copy; 2026 The Chesapeake Shell. All rights reserved.
-            </p>
-            <p className="text-sm text-gray-500">
-=======
             <p className="text-sm font-serif text-linen/80">
               &copy; 2026 Dover Designs. All rights reserved.
             </p>
             <p className="text-sm font-serif text-linen/80">
->>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
               Built By{' '}
               <a
                 href="https://modernizedvisions.agency"
