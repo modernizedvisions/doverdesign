@@ -2,18 +2,11 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    fontFamily: {
-      sans: ['ui-sans-serif', 'system-ui', 'sans-serif'],
-      serif: ['ui-sans-serif', 'system-ui', 'sans-serif'],
-    },
     extend: {
-<<<<<<< HEAD
-=======
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'serif'],
         sans: ['Inter', 'sans-serif'],
       },
->>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
       colors: {
         sand: '#F6F1E9',
         linen: '#FBF9F5',
