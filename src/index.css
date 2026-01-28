@@ -329,4 +329,26 @@
     @apply inline-flex items-center gap-3 rounded-shell px-3 py-2 border bg-white/70;
     border-color: rgba(203, 191, 175, 0.7);
   }
+
+  /* Shared section typography */
+  .section-eyebrow {
+    @apply text-[11px] uppercase tracking-[0.32em];
+    color: rgba(47, 79, 79, 0.85);
+  }
+
+  .section-heading {
+    @apply font-serif font-semibold text-4xl md:text-5xl tracking-[0.03em] leading-tight text-deep-ocean;
+  }
+
+  .section-subtext {
+    @apply text-center text-base md:text-lg leading-relaxed max-w-2xl mx-auto;
+    color: rgba(31, 41, 51, 0.85);
+  }
+
+  /* Shared section container */
+  .section-shell {
+    @apply bg-transparent text-[var(--charcoal)];
+    position: relative;
+    z-index: 1;
+  }
 }

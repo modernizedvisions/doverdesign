@@ -55,55 +55,40 @@ export default function CustomOrdersPage() {
     <main className="w-full bg-linen text-charcoal relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 shell-pattern opacity-60" />
       <section className="px-4 relative">
-        <div className="mx-auto w-full max-w-[92vw] sm:max-w-6xl py-12 md:py-16">
-          <div className="mx-auto max-w-2xl text-center space-y-3">
-            <p className="lux-eyebrow">Custom Studio</p>
-            <h1 className="text-3xl md:text-4xl font-serif font-semibold tracking-[0.02em] text-deep-ocean">
-              Coastal shell art, tailored to your story.
-            </h1>
-            <p className="text-sm md:text-base text-charcoal/80 max-w-5xl mx-auto font-serif leading-relaxed">
-              Hand-painted shell pieces designed around your palette, names, dates, and the coastal details that matter most.
-            </p>
-          </div>
-
-          <div className="mt-12 flex justify-center">
-            <div className="lux-card bg-white/92 w-full max-w-4xl text-center px-8 py-12 md:px-14 md:py-14">
-              <div className="space-y-3 max-w-2xl mx-auto">
-                <p className="lux-eyebrow">Made with intention</p>
-                <h2 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ocean">Your Custom, Curated</h2>
-                <p className="lux-subtitle">
-                  Every piece begins with your story — from color and coastal mood to names, dates, and meaningful details. We’ll share a proof before finishing, so everything feels just right.
-                </p>
-              </div>
-              <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-                <button
-                  type="button"
-                  onClick={handleScrollToForm}
-                  className="lux-button w-full sm:w-auto justify-center"
-                >
-                  Start Your Request
-                </button>
-                <button
-                  type="button"
-                  onClick={handleScrollToGallery}
-                  className="lux-button--ghost w-full sm:w-auto justify-center"
-                >
-                  Browse Past Customs
-                </button>
-              </div>
+        <div className="section-shell mx-auto w-full max-w-[92vw] sm:max-w-6xl py-12 md:py-16">
+          <div className="dd-card-shell bg-white p-8 sm:p-12 space-y-6 max-w-4xl mx-auto text-center rounded-shell-lg shadow-2xl border border-driftwood/70">
+            <div className="space-y-3">
+              <p className="section-eyebrow">Made with intention</p>
+              <h1 className="section-heading">Custom Orders</h1>
+              <p className="section-subtext">
+                Every piece begins with your story — from color and coastal mood to names, dates, and meaningful details. We’ll share a proof before finishing, so everything feels just right.
+              </p>
+            </div>
+            <div className="pt-1 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+              <button
+                type="button"
+                onClick={handleScrollToForm}
+                className="lux-button w-full sm:w-auto justify-center"
+              >
+                Start Your Request
+              </button>
+              <button
+                type="button"
+                onClick={handleScrollToGallery}
+                className="lux-button--ghost w-full sm:w-auto justify-center"
+              >
+                Browse Past Customs
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       <section className="px-4">
-        <div ref={galleryRef} className="mx-auto w-full max-w-[92vw] sm:max-w-6xl py-12 md:py-16 md:pt-10">
-          <div className="mx-auto max-w-2xl text-center space-y-3">
-            <p className="lux-eyebrow">Past work</p>
-            <h2 className="text-3xl md:text-4xl font-serif font-semibold text-deep-ocean">Past custom pieces</h2>
-            <p className="lux-subtitle max-w-2xl mx-auto">
-              Click any piece to view it larger and see what it was made for.
-            </p>
+        <div ref={galleryRef} className="section-shell mx-auto w-full max-w-[92vw] sm:max-w-6xl py-12 md:py-16 md:pt-10">
+          <div className="section-shell mx-auto max-w-2xl text-center space-y-3">
+            <p className="section-eyebrow">PREVIOUS WORK</p>
+            <h2 className="section-heading">Past Custom Pieces</h2>
           </div>
 
           {examplesError && (
@@ -157,8 +142,9 @@ export default function CustomOrdersPage() {
         </div>
       </section>
 
-      <section id="contact" className="py-16 sm:py-20" style={{ backgroundColor: contactBg }}>
-        <div ref={formRef} className="w-full max-w-[92vw] sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+      <section id="contact" className="relative py-16 sm:py-20" style={{ backgroundColor: contactBg }}>
+        <div className="absolute inset-0" aria-hidden="true" />
+        <div ref={formRef} className="relative w-full max-w-[92vw] sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
           <div className="space-y-8">
             <div className="space-y-3 max-w-3xl">
               <p className="lux-eyebrow">Contact</p>
@@ -167,9 +153,9 @@ export default function CustomOrdersPage() {
                 Tell us about your space, palette, or the story you want a shell to hold.
               </p>
             </div>
-            <div className="mt-10 lux-card bg-white/92">
+            <div className="mt-10 lux-card bg-white">
               <div className="flex justify-center">
-                <div className="p-6 sm:p-8 bg-white/95 w-full max-w-4xl">
+                <div className="p-6 sm:p-8 bg-white w-full max-w-4xl dd-form-serif">
                   <ContactForm backgroundColor="transparent" variant="embedded" />
                 </div>
               </div>
