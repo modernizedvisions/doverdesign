@@ -82,6 +82,9 @@ const normalizeOrigin = (request: Request) => {
   return origin.replace(/\/$/, '');
 };
 
+const normalizeSiteUrl = (value?: string | null) =>
+  value ? value.trim().replace(/\/+$/, '') : '';
+
 const normalizeCategoryKey = (value: string) =>
   value
     .toLowerCase()
@@ -355,7 +358,7 @@ export const onRequestPost = async (context: {
     }
 
     const stripe = createStripeClient(stripeSecretKey);
-    const baseUrl = env.VITE_PUBLIC_SITE_URL || normalizeOrigin(request);
+    const baseUrl = normalizeSiteUrl(env.VITE_PUBLIC_SITE_URL) || normalizeOrigin(request);
     if (!baseUrl) {
       console.error('Missing VITE_PUBLIC_SITE_URL in env');
       return json({ error: 'Server configuration error: missing site URL' }, 500);
