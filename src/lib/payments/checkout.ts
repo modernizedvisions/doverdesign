@@ -36,6 +36,8 @@ export interface CheckoutSessionInfo {
   lineItems: {
     productName: string;
     quantity: number;
+    unitAmount?: number | null;
+    lineSubtotal?: number | null;
     lineTotal: number;
     imageUrl?: string | null;
     oneOff?: boolean;
@@ -119,6 +121,8 @@ export async function fetchCheckoutSession(sessionId: string): Promise<CheckoutS
       ? data.line_items.map((li: any) => ({
           productName: li.productName ?? 'Item',
           quantity: li.quantity ?? 0,
+          unitAmount: li.unitAmount ?? null,
+          lineSubtotal: li.lineSubtotal ?? null,
           lineTotal: li.lineTotal ?? 0,
           imageUrl: li.imageUrl ?? null,
           oneOff: li.oneOff ?? false,

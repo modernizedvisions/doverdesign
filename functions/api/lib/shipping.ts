@@ -1,6 +1,6 @@
 import type Stripe from 'stripe';
 
-type LineItemLike = Pick<Stripe.LineItem, 'description' | 'amount_total' | 'quantity' | 'price'> & {
+type LineItemLike = Pick<Stripe.LineItem, 'description' | 'amount_total' | 'amount_subtotal' | 'quantity' | 'price'> & {
   price?: Stripe.Price | null;
   metadata?: Record<string, string> | null;
 };
@@ -50,6 +50,7 @@ export const extractShippingCentsFromLineItems = (lineItems: LineItemLike[]): nu
     .reduce((sum, line) => {
       const quantity = line.quantity ?? 1;
       const lineTotal =
+        line.amount_subtotal ??
         line.amount_total ??
         ((line.price?.unit_amount ?? 0) * quantity);
       return sum + Math.round(Number(lineTotal || 0));

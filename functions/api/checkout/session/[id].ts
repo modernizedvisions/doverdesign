@@ -225,10 +225,15 @@ export const onRequestGet = async (context: {
         const matchedProduct = keyMatch || priceMatch || null;
         const isShipping = isShippingLineItem(li) && !matchedProduct;
         const isCustomOrder = /custom order/i.test(productName) && !matchedProduct;
-        const lineTotal = li.amount_total ?? 0;
+        const quantity = li.quantity ?? 0;
+        const unitAmount = li.price?.unit_amount ?? 0;
+        const lineSubtotal = li.amount_subtotal ?? unitAmount * quantity;
+        const lineTotal = li.amount_total ?? lineSubtotal;
         return {
           productName,
-          quantity: li.quantity ?? 0,
+          quantity,
+          unitAmount,
+          lineSubtotal,
           lineTotal,
           imageUrl: isCustomOrder ? customOrderImageUrl : pickPrimaryImage(matchedProduct),
           oneOff: matchedProduct ? matchedProduct.is_one_off === 1 : false,

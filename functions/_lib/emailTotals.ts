@@ -3,7 +3,7 @@ import { extractShippingCentsFromLineItems, isShippingLineItem } from '../api/li
 
 export type LineItemLike = Pick<
   Stripe.LineItem,
-  'description' | 'amount_total' | 'price' | 'quantity'
+  'description' | 'amount_total' | 'amount_subtotal' | 'price' | 'quantity'
 > & {
   price?: Stripe.Price | null;
   quantity?: number | null;
@@ -167,6 +167,7 @@ function sumNonShippingLines(lineItems: LineItemLike[]): number | null {
     .reduce((sum, line) => {
       const qty = line.quantity ?? 1;
       const lineTotal =
+        line.amount_subtotal ??
         line.amount_total ??
         ((line.price?.unit_amount ?? 0) * qty);
       return sum + Math.round(Number(lineTotal || 0));

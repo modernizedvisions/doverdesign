@@ -1100,7 +1100,7 @@ async function handleCustomInvoicePayment(args: {
         return {
           name,
           quantity: line.quantity ?? 1,
-          amountCents: line.amount_total ?? 0,
+          amountCents: line.amount_subtotal ?? line.amount_total ?? 0,
           imageUrl,
         } as EmailItem;
       });
@@ -1327,7 +1327,10 @@ function mapLineItemsToEmailItems(lineItems: Stripe.LineItem[], currency: string
     return {
       name,
       quantity: line.quantity ?? 1,
-      amountCents: line.amount_total ?? (line.price?.unit_amount ?? 0) * (line.quantity ?? 1),
+      amountCents:
+        line.amount_subtotal ??
+        line.amount_total ??
+        (line.price?.unit_amount ?? 0) * (line.quantity ?? 1),
       imageUrl,
     } as EmailItem;
   });
@@ -1362,7 +1365,10 @@ async function mapLineItemsToEmailItemsWithImages(
     return {
       name,
       quantity: line.quantity ?? 1,
-      amountCents: line.amount_total ?? (line.price?.unit_amount ?? 0) * (line.quantity ?? 1),
+      amountCents:
+        line.amount_subtotal ??
+        line.amount_total ??
+        (line.price?.unit_amount ?? 0) * (line.quantity ?? 1),
       imageUrl,
       productId,
     };

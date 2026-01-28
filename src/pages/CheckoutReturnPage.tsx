@@ -111,7 +111,9 @@ export function CheckoutReturnPage() {
                             </div>
                           </div>
                           <div className="text-sm font-semibold text-deep-ocean text-right">
-                            {session.currency ? formatCurrency(item.lineTotal, session.currency) : item.lineTotal}
+                            {session.currency
+                              ? formatCurrency(item.lineSubtotal ?? item.lineTotal, session.currency)
+                              : item.lineSubtotal ?? item.lineTotal}
                           </div>
                         </div>
                       );
