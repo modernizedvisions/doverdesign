@@ -113,6 +113,8 @@ export function ProductDetailPage() {
   return (
     <div className="bg-linen text-charcoal min-h-screen">
       <div className="relative isolate overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 shell-pattern opacity-60" />
+        <div className="pointer-events-none absolute inset-x-0 -top-24 h-48 bg-[radial-gradient(circle_at_top,_rgba(159,191,187,0.18),_transparent_55%)]" />
 
         <section className="pt-10 pb-14">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -123,6 +125,7 @@ export function ProductDetailPage() {
               >
                 Back
               </button>
+              <span />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-[1.05fr,0.95fr] gap-10 lg:gap-14 items-start">
