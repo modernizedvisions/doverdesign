@@ -18,13 +18,17 @@ export interface CheckoutPromoSummary {
 export interface CheckoutSessionInfo {
   id: string;
   amountTotal: number | null;
+  amountSubtotal: number | null;
+  amountShipping: number | null;
+  amountTax: number | null;
+  amountDiscount: number | null;
   currency: string | null;
+  paymentStatus?: string | null;
   customerEmail: string | null;
   paymentMethodType?: string | null;
   paymentMethodLabel?: string | null;
   paymentLast4?: string | null;
   paymentBrand?: string | null;
-  shippingAmount?: number | null;
   shipping: {
     name: string | null;
     address: Record<string, string | null> | null;
@@ -99,13 +103,17 @@ export async function fetchCheckoutSession(sessionId: string): Promise<CheckoutS
   return {
     id: data.id as string,
     amountTotal: data.amount_total ?? null,
+    amountSubtotal: data.amount_subtotal ?? null,
+    amountShipping: data.amount_shipping ?? null,
+    amountTax: data.amount_tax ?? null,
+    amountDiscount: data.amount_discount ?? null,
     currency: data.currency ?? null,
+    paymentStatus: data.payment_status ?? null,
     customerEmail: data.customer_email ?? null,
     paymentMethodType: data.payment_method_type ?? null,
     paymentMethodLabel: data.payment_method_label ?? null,
     paymentLast4: data.card_last4 ?? data.payment_last4 ?? null,
     paymentBrand: data.card_brand ?? data.payment_brand ?? null,
-    shippingAmount: data.shipping_amount ?? null,
     shipping: data.shipping ?? null,
     lineItems: Array.isArray(data.line_items)
       ? data.line_items.map((li: any) => ({

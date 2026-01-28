@@ -12,11 +12,15 @@ export type LineItemLike = Pick<
 export type EmailTotalsArgs = {
   order?: {
     total_cents?: number | null;
+    amount_total_cents?: number | null;
     subtotal_cents?: number | null;
     amount_subtotal_cents?: number | null;
     amount_cents?: number | null;
     shipping_cents?: number | null;
+    amount_shipping_cents?: number | null;
     shipping_amount?: number | null;
+    amount_tax_cents?: number | null;
+    amount_discount_cents?: number | null;
   } | null;
   session?: Stripe.Checkout.Session | null;
   lineItems?: LineItemLike[];
@@ -47,20 +51,6 @@ export function deriveShippingCentsFromSession(args: {
     return { shippingCents: clamp(Number(fromTotalDetails)), source: 'session.total_details.amount_shipping' };
   }
 
-  const amountTotal = Number((session as any)?.amount_total);
-  const amountSubtotal = Number((session as any)?.amount_subtotal);
-  const discount = Number((session?.total_details as any)?.amount_discount ?? 0);
-  const tax = Number((session?.total_details as any)?.amount_tax ?? 0);
-  if (Number.isFinite(amountTotal) && Number.isFinite(amountSubtotal)) {
-    const computed = amountTotal - amountSubtotal + discount - tax;
-    if (Number.isFinite(computed) && computed >= 0) {
-      return {
-        shippingCents: clamp(computed),
-        source: 'derived_total_minus_subtotal_plus_discount_minus_tax',
-      };
-    }
-  }
-
   const shippingFromLines = extractShippingCentsFromLineItems(lineItems);
   if (Number.isFinite(shippingFromLines) && Number(shippingFromLines) >= 0) {
     return { shippingCents: clamp(Number(shippingFromLines)), source: 'shipping_line_items' };
@@ -73,7 +63,9 @@ export function deriveShippingCentsFromSession(args: {
  * Canonical breakdown for email totals:
  * - itemsSubtotalCents: non-shipping line items only
  * - shippingCents: shipping only
- * - totalCents: subtotal + shipping
+ * - taxCents: tax amount (if any)
+ * - discountCents: discounts (if any)
+ * - totalCents: Stripe session total
  */
 export function resolveEmailMoneyTotals(args: EmailTotalsArgs) {
   const session = args.session;
@@ -89,6 +81,7 @@ export function resolveEmailMoneyTotals(args: EmailTotalsArgs) {
   const shippingCents =
     coalesceCents([
       derivedShipping.shippingCents,
+      args.order?.amount_shipping_cents,
       args.order?.shipping_cents,
       args.order?.shipping_amount,
     ]) ?? 0;
@@ -104,17 +97,31 @@ export function resolveEmailMoneyTotals(args: EmailTotalsArgs) {
 
   const totalCents =
     coalesceCents([
+      args.order?.amount_total_cents,
       args.order?.total_cents,
+      args.order?.amount_cents,
       (session as any)?.amount_total,
-      itemsSubtotalCents !== null ? itemsSubtotalCents + shippingCents : null,
     ]) || 0;
 
-  const normalizedSubtotal =
-    itemsSubtotalCents !== null ? itemsSubtotalCents : Math.max(0, totalCents - shippingCents);
+  const taxCents =
+    coalesceCents([
+      args.order?.amount_tax_cents,
+      (session?.total_details as any)?.amount_tax,
+    ]) ?? 0;
+
+  const discountCents =
+    coalesceCents([
+      args.order?.amount_discount_cents,
+      (session?.total_details as any)?.amount_discount,
+    ]) ?? 0;
+
+  const normalizedSubtotal = itemsSubtotalCents ?? 0;
 
   return {
     itemsSubtotalCents: normalizedSubtotal,
     shippingCents,
+    taxCents,
+    discountCents,
     totalCents,
     shippingSource: derivedShipping.source,
   };
@@ -126,6 +133,8 @@ export function resolveStandardEmailTotals(args: EmailTotalsArgs) {
   return {
     subtotalCents: totals.itemsSubtotalCents,
     shippingCents: totals.shippingCents,
+    taxCents: totals.taxCents,
+    discountCents: totals.discountCents,
     totalCents: totals.totalCents,
     shippingSource: totals.shippingSource,
   };
@@ -136,6 +145,8 @@ export function resolveCustomEmailTotals(args: EmailTotalsArgs) {
   return {
     subtotalCents: totals.itemsSubtotalCents,
     shippingCents: totals.shippingCents,
+    taxCents: totals.taxCents,
+    discountCents: totals.discountCents,
     totalCents: totals.totalCents,
     shippingSource: totals.shippingSource,
   };

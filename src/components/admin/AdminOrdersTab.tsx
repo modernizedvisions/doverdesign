@@ -64,7 +64,7 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
                       <div className="text-xs text-gray-500">{order.customerEmail || 'No email'}</div>
                     </td>
                     <td className="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">
-                      ${(order.totalCents / 100).toFixed(2)}
+                      ${(((order.amountTotalCents ?? order.totalCents) || 0) / 100).toFixed(2)}
                     </td>
                     <td className="px-4 py-4 text-center whitespace-nowrap">
                       <button
@@ -113,7 +113,7 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
                     </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{order.items?.length || 0} items</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${(order.totalCents / 100).toFixed(2)}
+                        ${(((order.amountTotalCents ?? order.totalCents) || 0) / 100).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         <button

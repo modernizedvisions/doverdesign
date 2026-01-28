@@ -74,10 +74,10 @@ function SiteLayoutInner() {
   }, [isNavDrawerOpen, isNavDrawerVisible]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="bg-white/80 border-b border-gray-200 sticky top-0 z-30">
+    <div className="min-h-screen flex flex-col bg-linen">
+      <header className="bg-linen/90 backdrop-blur border-b border-driftwood/70 sticky top-0 z-30 shadow-sm">
         {showPromoBanner && (
-          <div className="bg-[#f2cad8] text-slate-900 text-sm font-semibold text-center py-2 px-4 tracking-wide">
+          <div className="bg-sea-glass/25 text-deep-ocean text-sm font-semibold text-center py-2 px-4 tracking-wide border-b border-driftwood/60">
             {promotion?.bannerText}
           </div>
         )}
@@ -86,17 +86,23 @@ function SiteLayoutInner() {
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
                 type="button"
-                className="md:hidden p-2 rounded-lg rounded-ui hover:bg-gray-100 transition-colors"
+                className="md:hidden p-2 rounded-shell hover:bg-sand/70 transition-colors border border-driftwood/70 bg-white/80"
                 aria-label="Open navigation menu"
                 onClick={() => setNavDrawerOpen(true)}
               >
-                <Menu className="h-6 w-6 text-gray-900" />
+                <Menu className="h-6 w-6 text-deep-ocean" />
               </button>
               <Link
                 to="/"
+<<<<<<< HEAD
                 className="text-2xl font-medium text-gray-900 flex-1 text-center md:text-left truncate whitespace-nowrap"
+=======
+                className="text-2xl font-serif tracking-[0.08em] text-deep-ocean flex-1 text-center md:text-left truncate whitespace-nowrap inline-flex items-center gap-2 max-md:flex-row max-md:items-center max-md:justify-center"
+>>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
               >
-                The Chesapeake Shell
+                <img src="/logo.jpg" alt="Dover Designs logo" className="h-8 w-auto object-contain md:mr-1" />
+                <span className="md:hidden inline-block text-center">Dover Designs</span>
+                <span className="hidden md:inline">Dover Designs</span>
               </Link>
             </div>
             <div className="hidden md:flex items-center gap-6">
@@ -104,7 +110,11 @@ function SiteLayoutInner() {
                 <Link
                   key={link.to}
                   to={link.to}
+<<<<<<< HEAD
                   className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors uppercase tracking-[0.12em] rounded-ui px-2 py-1"
+=======
+                  className="text-xs font-semibold text-deep-ocean hover:text-charcoal transition-colors uppercase tracking-[0.24em] px-2 py-1 mx-1"
+>>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
                 >
                   {link.label}
                 </Link>
@@ -121,19 +131,19 @@ function SiteLayoutInner() {
       {isNavDrawerVisible && (
         <>
           <div
-            className={`fixed inset-0 bg-black bg-opacity-50 z-40 drawer-overlay motion-safe-only ${isNavDrawerActive ? 'is-open' : 'is-closed'}`}
+            className={`fixed inset-0 bg-charcoal/60 backdrop-blur-sm z-40 drawer-overlay motion-safe-only ${isNavDrawerActive ? 'is-open' : 'is-closed'}`}
             onClick={() => setNavDrawerOpen(false)}
           />
-          <div className={`fixed left-0 top-0 h-full w-full max-w-xs bg-white shadow-xl z-50 flex flex-col menu-panel motion-safe-only ${isNavDrawerActive ? 'is-open' : 'is-closed'}`}>
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-[0.08em]">Menu</h2>
+          <div className={`fixed left-0 top-0 h-full w-full max-w-xs bg-linen shadow-xl z-50 flex flex-col menu-panel motion-safe-only ${isNavDrawerActive ? 'is-open' : 'is-closed'}`}>
+            <div className="p-4 border-b border-driftwood/70 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-deep-ocean uppercase tracking-[0.08em]">Menu</h2>
               <button
                 type="button"
-                className="p-2 rounded-full rounded-ui hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-shell hover:bg-sand/70 transition-colors border border-driftwood/70 bg-white/80"
                 aria-label="Close navigation menu"
                 onClick={() => setNavDrawerOpen(false)}
               >
-                <X className="h-5 w-5 text-gray-700" />
+                <X className="h-5 w-5 text-deep-ocean" />
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -142,7 +152,11 @@ function SiteLayoutInner() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setNavDrawerOpen(false)}
+<<<<<<< HEAD
                   className="block rounded-lg rounded-ui px-3 py-2 text-base font-semibold text-gray-800 hover:bg-gray-100 transition-colors uppercase tracking-[0.1em]"
+=======
+                  className="block px-3 py-3 text-sm font-semibold text-deep-ocean hover:bg-sand/70 transition-colors uppercase tracking-[0.2em]"
+>>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
                 >
                   {link.label}
                 </Link>
@@ -152,29 +166,41 @@ function SiteLayoutInner() {
         </>
       )}
 
-      <main className="flex-1 bg-white">
+      <main className="flex-1 bg-linen">
         <Outlet />
       </main>
 
-      <footer className="bg-white border-t border-gray-200 py-8">
+      <footer className="bg-charcoal border-t border-driftwood/50 py-8 text-linen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-2 text-center">
+<<<<<<< HEAD
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <Link to="/terms" className="hover:text-gray-900 transition-colors">
+=======
+            <div className="flex items-center gap-4 text-sm font-serif text-linen/80">
+              <Link to="/terms" className="hover:text-linen transition-colors">
+>>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
                 Terms
               </Link>
-              <Link to="/privacy" className="hover:text-gray-900 transition-colors">
+              <Link to="/privacy" className="hover:text-linen transition-colors">
                 Privacy
               </Link>
             </div>
+<<<<<<< HEAD
             <p className="text-sm text-gray-500">
               &copy; 2026 The Chesapeake Shell. All rights reserved.
             </p>
             <p className="text-sm text-gray-500">
+=======
+            <p className="text-sm font-serif text-linen/80">
+              &copy; 2026 Dover Designs. All rights reserved.
+            </p>
+            <p className="text-sm font-serif text-linen/80">
+>>>>>>> d37b4caaad1d17e72ef4a3f220961c2ff9eec2dd
               Built By{' '}
               <a
                 href="https://modernizedvisions.agency"
-                className="underline decoration-1 underline-offset-2 hover:text-gray-700 transition-colors"
+                className="underline decoration-1 underline-offset-2 hover:text-gold-accent transition-colors"
               >
                 Modernized Visions
               </a>
@@ -187,4 +213,3 @@ function SiteLayoutInner() {
     </div>
   );
 }
-

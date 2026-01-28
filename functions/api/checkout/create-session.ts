@@ -377,22 +377,23 @@ export const onRequestPost = async (context: {
     }
 
     try {
-      const shippingLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
-        shippingCentsEffective > 0
-          ? [
-              {
-                price_data: {
-                  currency: 'usd',
-                  product_data: {
-                    name: 'Shipping',
-                    metadata: { mv_line_type: 'shipping' },
-                  },
-                  unit_amount: shippingCentsEffective,
-                },
-                quantity: 1,
-              },
-            ]
-          : [];
+      // Stripe Dashboard Prereqs (Tax):
+      // [ ] Enable Stripe Tax
+      // [ ] Add tax registrations for required jurisdictions
+      // [ ] Set default product tax code (txcd_99999999 for tangible goods)
+      // [ ] Configure shipping tax treatment / shipping tax code
+      const shippingOptions: Stripe.Checkout.SessionCreateParams.ShippingOption[] = [
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            display_name: 'Shipping',
+            fixed_amount: {
+              amount: shippingCentsEffective,
+              currency: 'usd',
+            },
+          },
+        },
+      ];
       const promoSource =
         maxPercentApplied === 0 && !freeShippingApplied
           ? ''
@@ -407,7 +408,7 @@ export const onRequestPost = async (context: {
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         ui_mode: 'embedded',
-        line_items: [...lineItems, ...shippingLineItems],
+        line_items: lineItems,
         return_url: `${baseUrl}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
         metadata: {
           shipping_cents: String(shippingCentsEffective),
@@ -420,9 +421,14 @@ export const onRequestPost = async (context: {
         consent_collection: {
           promotions: 'auto',
         },
+        automatic_tax: {
+          enabled: true,
+        },
         shipping_address_collection: {
           allowed_countries: ['US', 'CA'],
         },
+        shipping_options: shippingOptions,
+        billing_address_collection: 'auto',
         expires_at: expiresAt,
       });
 

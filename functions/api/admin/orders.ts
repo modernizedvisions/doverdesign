@@ -16,6 +16,13 @@ type OrderRow = {
   display_order_id?: string | null;
   stripe_payment_intent_id: string | null;
   total_cents: number | null;
+  amount_total_cents?: number | null;
+  amount_subtotal_cents?: number | null;
+  amount_shipping_cents?: number | null;
+  amount_tax_cents?: number | null;
+  amount_discount_cents?: number | null;
+  currency?: string | null;
+  shipping_cents?: number | null;
   customer_email: string | null;
   shipping_name: string | null;
   shipping_address_json: string | null;
@@ -65,6 +72,13 @@ export const onRequestGet = async (context: { env: { DB: D1Database }; request: 
     const promoSourceColumn = columnNames.includes('promo_source') ? 'promo_source' : null;
     const isSeenColumn = columnNames.includes('is_seen') ? 'is_seen' : null;
     const seenAtColumn = columnNames.includes('seen_at') ? 'seen_at' : null;
+    const currencyColumn = columnNames.includes('currency') ? 'currency' : null;
+    const amountTotalColumn = columnNames.includes('amount_total_cents') ? 'amount_total_cents' : null;
+    const amountSubtotalColumn = columnNames.includes('amount_subtotal_cents') ? 'amount_subtotal_cents' : null;
+    const amountShippingColumn = columnNames.includes('amount_shipping_cents') ? 'amount_shipping_cents' : null;
+    const amountTaxColumn = columnNames.includes('amount_tax_cents') ? 'amount_tax_cents' : null;
+    const amountDiscountColumn = columnNames.includes('amount_discount_cents') ? 'amount_discount_cents' : null;
+    const shippingCentsColumn = columnNames.includes('shipping_cents') ? 'shipping_cents' : null;
 
     const selectSql = `
       SELECT
@@ -72,9 +86,16 @@ export const onRequestGet = async (context: { env: { DB: D1Database }; request: 
         ${displayIdColumn ? `${displayIdColumn} AS display_order_id` : 'NULL AS display_order_id'},
         stripe_payment_intent_id,
         total_cents,
+        ${amountTotalColumn ? `${amountTotalColumn} AS amount_total_cents` : 'NULL AS amount_total_cents'},
+        ${amountSubtotalColumn ? `${amountSubtotalColumn} AS amount_subtotal_cents` : 'NULL AS amount_subtotal_cents'},
+        ${amountShippingColumn ? `${amountShippingColumn} AS amount_shipping_cents` : 'NULL AS amount_shipping_cents'},
+        ${amountTaxColumn ? `${amountTaxColumn} AS amount_tax_cents` : 'NULL AS amount_tax_cents'},
+        ${amountDiscountColumn ? `${amountDiscountColumn} AS amount_discount_cents` : 'NULL AS amount_discount_cents'},
+        ${currencyColumn ? `${currencyColumn} AS currency` : 'NULL AS currency'},
         ${emailColumn ? `${emailColumn} AS customer_email` : 'NULL AS customer_email'},
         shipping_name,
         shipping_address_json,
+        ${shippingCentsColumn ? `${shippingCentsColumn} AS shipping_cents` : 'NULL AS shipping_cents'},
         ${cardLast4Column ? `${cardLast4Column} AS card_last4` : 'NULL AS card_last4'},
         ${cardBrandColumn ? `${cardBrandColumn} AS card_brand` : 'NULL AS card_brand'},
         ${promoCodeColumn ? `${promoCodeColumn} AS promo_code` : 'NULL AS promo_code'},
@@ -112,7 +133,7 @@ export const onRequestGet = async (context: { env: { DB: D1Database }; request: 
     : 'id';
 
   const hasImageUrlsJson = productCols.has('image_urls_json');
-  const hasShippingCents = columnNames.includes('shipping_cents');
+  const hasShippingCents = columnNames.includes('shipping_cents') || columnNames.includes('amount_shipping_cents');
   const orderIds = (orderRows || []).map((o) => o.id);
   const itemColumns = await context.env.DB.prepare(`PRAGMA table_info(order_items);`).all<{ name: string }>();
   const itemCols = new Set((itemColumns.results || []).map((c) => c.name));
@@ -159,8 +180,14 @@ export const onRequestGet = async (context: { env: { DB: D1Database }; request: 
       id: o.id,
       displayOrderId: o.display_order_id ?? null,
       createdAt: o.created_at,
-      totalCents: o.total_cents ?? 0,
-      shippingCents: hasShippingCents ? (o as any).shipping_cents ?? 0 : 0,
+      totalCents: o.amount_total_cents ?? o.total_cents ?? 0,
+      amountTotalCents: o.amount_total_cents ?? null,
+      amountSubtotalCents: o.amount_subtotal_cents ?? null,
+      amountShippingCents: o.amount_shipping_cents ?? (o as any).shipping_cents ?? null,
+      amountTaxCents: o.amount_tax_cents ?? null,
+      amountDiscountCents: o.amount_discount_cents ?? null,
+      currency: o.currency ?? null,
+      shippingCents: hasShippingCents ? (o.amount_shipping_cents ?? (o as any).shipping_cents ?? 0) : 0,
       customerEmail: o.customer_email,
       shippingName: o.shipping_name,
       customerName: o.shipping_name,

@@ -13,6 +13,12 @@ export type AdminOrder = {
   displayOrderId?: string | null;
   createdAt: string;
   totalCents: number;
+  amountTotalCents?: number | null;
+  amountSubtotalCents?: number | null;
+  amountShippingCents?: number | null;
+  amountTaxCents?: number | null;
+  amountDiscountCents?: number | null;
+  currency?: string | null;
   customerEmail: string | null;
   shippingName: string | null;
   customerName: string | null;

@@ -1,11 +1,4 @@
--- Adds message metadata fields + custom order examples table
-ALTER TABLE messages ADD COLUMN type TEXT NOT NULL DEFAULT 'message';
-ALTER TABLE messages ADD COLUMN category_id TEXT;
-ALTER TABLE messages ADD COLUMN category_name TEXT;
-ALTER TABLE messages ADD COLUMN inspo_example_id TEXT;
-ALTER TABLE messages ADD COLUMN inspo_title TEXT;
-ALTER TABLE messages ADD COLUMN inspo_image_url TEXT;
-
+-- Adds custom order examples table (message metadata columns are already present in production).
 CREATE TABLE IF NOT EXISTS custom_order_examples (
   id TEXT PRIMARY KEY,
   image_url TEXT NOT NULL,

@@ -1,1 +1,2 @@
-ALTER TABLE order_items ADD COLUMN image_url TEXT;
+-- Column already exists in production; no-op to allow migration to apply safely.
+SELECT 1;

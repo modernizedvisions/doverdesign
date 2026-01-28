@@ -7,9 +7,16 @@ interface OrderDetailsModalProps {
   onClose: () => void;
 }
 
-const formatCurrency = (cents: number | null | undefined) => {
+const formatCurrency = (cents: number | null | undefined, currency: string = 'usd') => {
   const amount = (cents ?? 0) / 100;
-  return `$${amount.toFixed(2)}`;
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(amount);
+  } catch {
+    return `$${amount.toFixed(2)}`;
+  }
 };
 
 export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalProps) {
@@ -110,18 +117,26 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
         (i.productId ? itemImages[i.productId] : undefined),
     }));
 
-  const lineTotal = (qty: number, priceCents: number) => formatCurrency((qty || 0) * (priceCents || 0));
-  const subtotalCents = items.reduce((sum, item) => sum + (item.priceCents || 0) * (item.quantity || 1), 0);
-  const totalCents = order.totalCents ?? subtotalCents;
-  const inferredShippingFromTotal = totalCents - subtotalCents;
-  const shippingCents =
-    order.shippingCents && order.shippingCents > 0
+  const currency = order.currency || 'usd';
+  const lineTotal = (qty: number, priceCents: number) => formatCurrency((qty || 0) * (priceCents || 0), currency);
+  const itemsSubtotalCents = items.reduce((sum, item) => sum + (item.priceCents || 0) * (item.quantity || 1), 0);
+  const hasCanonicalTotals =
+    typeof order.amountTotalCents === 'number' ||
+    typeof order.amountSubtotalCents === 'number' ||
+    typeof order.amountShippingCents === 'number' ||
+    typeof order.amountTaxCents === 'number' ||
+    typeof order.amountDiscountCents === 'number';
+  const legacyShippingCents =
+    typeof order.shippingCents === 'number'
       ? order.shippingCents
       : shippingFromItems > 0
       ? shippingFromItems
-      : inferredShippingFromTotal > 0
-      ? inferredShippingFromTotal
       : 0;
+  const subtotalCents = hasCanonicalTotals ? order.amountSubtotalCents ?? itemsSubtotalCents : itemsSubtotalCents;
+  const shippingCents = hasCanonicalTotals ? order.amountShippingCents ?? legacyShippingCents : legacyShippingCents;
+  const taxCents = hasCanonicalTotals ? order.amountTaxCents ?? 0 : null;
+  const discountCents = hasCanonicalTotals ? order.amountDiscountCents ?? 0 : null;
+  const totalCents = order.amountTotalCents ?? order.totalCents ?? 0;
 
   const formattedAddress = hasShipping
     ? [
@@ -202,7 +217,7 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
                           {getDisplayItemName(item)}
                         </div>
                         <div className="text-xs text-slate-600">
-                          Qty: {item.quantity || 0} — {formatCurrency(item.priceCents)}
+                          Qty: {item.quantity || 0} — {formatCurrency(item.priceCents, currency)}
                         </div>
                       </div>
                     </div>
@@ -219,15 +234,27 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Subtotal</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(subtotalCents)}</span>
+                  <span className="font-medium text-slate-900">{formatCurrency(subtotalCents, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Shipping</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(shippingCents)}</span>
+                  <span className="font-medium text-slate-900">{formatCurrency(shippingCents, currency)}</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Tax</span>
+                  <span className="font-medium text-slate-900">
+                    {taxCents === null ? '—' : formatCurrency(taxCents, currency)}
+                  </span>
+                </div>
+                {discountCents && discountCents > 0 ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">Discount</span>
+                    <span className="font-medium text-slate-900">-{formatCurrency(discountCents, currency)}</span>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between pt-1 border-t border-slate-200">
                   <span className="font-semibold text-slate-900">Total</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(totalCents)}</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(totalCents, currency)}</span>
                 </div>
               </div>
             </section>

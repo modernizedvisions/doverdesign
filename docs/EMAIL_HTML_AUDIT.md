@@ -6,15 +6,15 @@ Scope: Customer order confirmation email rendering and send path (Resend + Strip
 
 - `functions/_lib/email.ts` - `sendEmail(args, env)`; provider is Resend via `fetch('https://api.resend.com/emails')`; payload includes `from`, `to[]`, `subject`, `html`, `text`, `reply_to`, `attachments`.
 - `functions/api/webhooks/stripe.ts` - `onRequestPost` (Stripe webhook):
-  - Customer confirmation (shop order): `sendEmail` to `customerEmail`, subject `The Chesapeake Shell - Order Confirmed (${orderLabel})`, `html` + `text` from `renderOrderConfirmationEmailHtml/Text`.
-  - Owner new sale (shop order): `sendEmail` to `ownerTo`, subject `NEW SALE - The Chesapeake Shell (${orderLabel})`, `html` + `text` from `renderOwnerNewSaleEmailHtml/Text`.
-  - Custom invoice payment (customer): `sendEmail` to `customerEmail`, subject `Payment received - The Chesapeake Shell`, `html` + `text` inline.
+  - Customer confirmation (shop order): `sendEmail` to `customerEmail`, subject `Dover Designs - Order Confirmed (${orderLabel})`, `html` + `text` from `renderOrderConfirmationEmailHtml/Text`.
+  - Owner new sale (shop order): `sendEmail` to `ownerTo`, subject `NEW SALE - Dover Designs (${orderLabel})`, `html` + `text` from `renderOwnerNewSaleEmailHtml/Text`.
+  - Custom invoice payment (customer): `sendEmail` to `customerEmail`, subject `Payment received - Dover Designs`, `html` + `text` inline.
   - Custom invoice payment (owner): `sendEmail` to `ownerTo`, subject from `renderOwnerInvoicePaidEmail` in `functions/_lib/emailTemplates.ts`.
-  - Custom order payment (customer): `sendEmail` to `confirmationCustomerEmail`, subject `The Chesapeake Shell - Order Confirmed (${orderLabel})`, `html` + `text` from `renderOrderConfirmationEmailHtml/Text`.
-  - Custom order payment (owner): `sendEmail` to `ownerTo`, subject `NEW SALE - The Chesapeake Shell (${orderLabel})`, `html` + `text` from `renderOwnerNewSaleEmailHtml/Text`.
-- `functions/api/admin/custom-orders/[id]/send-payment-link.ts` - customer payment link email: subject `The Chesapeake Shell - Custom Order`, `html` + `text` inline.
-- `functions/api/custom-invoices/create.ts` - customer invoice email: subject `Invoice from The Chesapeake Shell - ${amountFormatted}`, `html` + `text` inline.
-- `functions/api/messages.ts` - owner inquiry email: subject `New Inquiry - The Chesapeake Shell`, `html` + `text` + optional attachment.
+  - Custom order payment (customer): `sendEmail` to `confirmationCustomerEmail`, subject `Dover Designs - Order Confirmed (${orderLabel})`, `html` + `text` from `renderOrderConfirmationEmailHtml/Text`.
+  - Custom order payment (owner): `sendEmail` to `ownerTo`, subject `NEW SALE - Dover Designs (${orderLabel})`, `html` + `text` from `renderOwnerNewSaleEmailHtml/Text`.
+- `functions/api/admin/custom-orders/[id]/send-payment-link.ts` - customer payment link email: subject `Dover Designs - Custom Order`, `html` + `text` inline.
+- `functions/api/custom-invoices/create.ts` - customer invoice email: subject `Invoice from Dover Designs - ${amountFormatted}`, `html` + `text` inline.
+- `functions/api/messages.ts` - owner inquiry email: subject `New Inquiry - Dover Designs`, `html` + `text` + optional attachment.
 - `functions/api/email/test.ts` - test endpoint for owner new sale template.
 
 ## 2) Trigger event and path (customer confirmation)
@@ -78,4 +78,3 @@ Ranked suspects based on current wiring:
   - Logs template render failures with `[email] template render failed` when `EMAIL_DEBUG=1`.
 
 **Enable:** set `EMAIL_DEBUG=1` in the runtime environment (Cloudflare Pages/Workers env vars).
-

@@ -18,18 +18,21 @@ export type OwnerNewSaleParams = {
   items: OwnerNewSaleItem[];
   subtotal: string;
   shipping: string;
+  tax: string;
+  discount?: string | null;
   total: string;
   adminUrl: string;
   stripeUrl?: string | null;
 };
 
 export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string {
-  const brand = 'The Chesapeake Shell';
+  const brand = 'Dover Designs';
   const orderLabel = params.orderNumber || 'Order';
-  const baseFont = "'Playfair Display', Georgia, 'Times New Roman', serif";
-  const baseColor = '#111827';
-  const mutedColor = '#6b7280';
-  const borderColor = '#e5e7eb';
+  const baseFont = "'Inter', 'Helvetica Neue', Arial, sans-serif";
+  const serifFont = "'Cormorant Garamond', Georgia, 'Times New Roman', serif";
+  const baseColor = '#2F4F4F';
+  const mutedColor = '#5f6f75';
+  const borderColor = '#E6DFD4';
   const primaryCtaLabel = 'View in Admin';
 
   const itemRows =
@@ -58,6 +61,7 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
       </tr>
     `;
 
+  const hasDiscount = typeof params.discount === 'string' && params.discount.trim().length > 0;
   const totalsRows = `
       <tr>
         <td class="totals-label" align="right">Subtotal</td>
@@ -67,6 +71,19 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
         <td class="totals-label" align="right">Shipping</td>
         <td class="totals-value" align="right">${escapeHtml(params.shipping)}</td>
       </tr>
+      <tr>
+        <td class="totals-label" align="right">Tax</td>
+        <td class="totals-value" align="right">${escapeHtml(params.tax)}</td>
+      </tr>
+      ${
+        hasDiscount
+          ? `
+      <tr>
+        <td class="totals-label" align="right">Discount</td>
+        <td class="totals-value" align="right">-${escapeHtml(params.discount || '')}</td>
+      </tr>`
+          : ''
+      }
       <tr class="total-row">
         <td align="right">Total</td>
         <td align="right">${escapeHtml(params.total)}</td>
@@ -101,27 +118,27 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { margin:0; padding:0; background:#ffffff; }
+    body { margin:0; padding:0; background:#FBF9F5; }
     table { border-collapse:collapse; }
     img { border:0; line-height:100%; }
     body, table, td, a, p, div, span { font-family:${baseFont}; }
-    .container { width:100%; background:#ffffff; }
-    .inner { width:600px; max-width:600px; }
-    .pad { padding:32px 16px; }
+    .container { width:100%; background:#FBF9F5; }
+    .inner { width:600px; max-width:600px; background:#ffffff; border-radius:28px; border:1px solid ${borderColor}; overflow:hidden; box-shadow:0 24px 56px rgba(31,41,51,0.12); }
+    .pad { padding:32px 24px; }
     .section { padding-bottom:24px; }
-    .brand { font-size:20px; font-weight:600; color:${baseColor}; }
+    .brand { font-size:20px; font-weight:600; color:${baseColor}; font-family:${serifFont}; letter-spacing:0.04em; }
     .order-label { font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:${mutedColor}; white-space:nowrap; }
-    .title { font-size:28px; font-weight:600; color:${baseColor}; margin:0 0 6px; }
+    .title { font-size:28px; font-weight:600; color:${baseColor}; margin:0 0 6px; font-family:${serifFont}; letter-spacing:0.02em; }
     .subtitle { font-size:14px; color:${mutedColor}; margin:0; }
-    .button { display:inline-block; padding:12px 20px; background:${baseColor}; color:#ffffff; text-decoration:none; border-radius:9999px; font-size:14px; font-weight:600; }
-    .subhead { font-size:14px; letter-spacing:0.12em; text-transform:uppercase; color:${mutedColor}; margin:0 0 8px; }
+    .button { display:inline-block; padding:12px 22px; background:${baseColor}; color:#ffffff; text-decoration:none; border-radius:9999px; font-size:14px; font-weight:600; letter-spacing:0.08em; }
+    .subhead { font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:${mutedColor}; margin:0 0 8px; }
     .item-row td { padding:12px 0; border-bottom:1px solid #ededed; vertical-align:top; }
     .item-info { width:100%; }
     .item-media { display:inline-block; width:56px; height:56px; vertical-align:top; }
     .item-text { display:inline-block; vertical-align:top; margin-left:12px; max-width:420px; }
-    .item-img { width:56px; height:56px; border:1px solid ${borderColor}; object-fit:cover; display:block; }
-    .item-placeholder { width:56px; height:56px; border:1px solid ${borderColor}; background:#f3f4f6; display:block; }
-    .item-name { font-size:16px; font-weight:600; color:${baseColor}; }
+    .item-img { width:56px; height:56px; border:1px solid ${borderColor}; object-fit:cover; display:block; border-radius:14px; }
+    .item-placeholder { width:56px; height:56px; border:1px solid ${borderColor}; background:#f3f4f6; display:block; border-radius:14px; }
+    .item-name { font-size:16px; font-weight:600; color:${baseColor}; font-family:${serifFont}; }
     .item-qty { font-size:13px; font-weight:500; color:${mutedColor}; }
     .item-price { font-size:15px; font-weight:600; color:${baseColor}; white-space:nowrap; }
     .item-empty { padding:12px 0; font-size:14px; color:${mutedColor}; }
@@ -145,7 +162,7 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
           <tr>
             <td class="section" colspan="2">
               <p class="title">New Sale!</p>
-              <p class="subtitle">A new order has been placed on The Chesapeake Shell.</p>
+              <p class="subtitle">A new order has been placed on Dover Designs.</p>
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">
                 <tr>
                   <td bgcolor="${baseColor}" style="border-radius:9999px;">
@@ -199,7 +216,7 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
 
 export function renderOwnerNewSaleEmailText(params: OwnerNewSaleParams): string {
   const lines = [
-    'NEW SALE - The Chesapeake Shell',
+    'NEW SALE - Dover Designs',
     `Order: ${params.orderNumber}`,
     `Type: ${params.orderTypeLabel}`,
     `Status: ${params.statusLabel}`,
@@ -219,6 +236,8 @@ export function renderOwnerNewSaleEmailText(params: OwnerNewSaleParams): string 
     '',
     `Subtotal: ${params.subtotal}`,
     `Shipping: ${params.shipping}`,
+    `Tax: ${params.tax}`,
+    params.discount ? `Discount: -${params.discount}` : null,
     `Total: ${params.total}`,
     '',
     `Admin: ${params.adminUrl}`,

@@ -33,7 +33,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code);
 CREATE INDEX IF NOT EXISTS idx_promo_codes_enabled ON promo_codes(enabled);
 
 -- Orders promo metadata (run once; will error if re-applied).
-ALTER TABLE orders ADD COLUMN promo_code TEXT;
-ALTER TABLE orders ADD COLUMN promo_percent_off INTEGER;
-ALTER TABLE orders ADD COLUMN promo_free_shipping INTEGER;
-ALTER TABLE orders ADD COLUMN promo_source TEXT;
+-- Columns already exist in production; no-op to allow migration to apply safely.
+SELECT 1;

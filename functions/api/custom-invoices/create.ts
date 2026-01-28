@@ -145,7 +145,7 @@ async function sendInvoiceEmail(args: {
   invoiceUrl: string;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const amountFormatted = formatAmount(args.amountCents, args.currency);
-  const subject = `Invoice from The Chesapeake Shell - ${amountFormatted}`;
+  const subject = `Invoice from Dover Designs - ${amountFormatted}`;
 
   const html = `
     <div style="font-family: Inter, Arial, sans-serif; color: #0f172a; padding: 12px; line-height: 1.5;">

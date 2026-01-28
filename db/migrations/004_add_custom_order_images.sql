@@ -1,1 +1,2 @@
-ALTER TABLE custom_orders ADD COLUMN image_url TEXT;
+-- Column already present in production; no-op migration.
+SELECT 1;

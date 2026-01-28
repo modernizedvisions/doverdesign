@@ -74,6 +74,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     const baseUrl = (env.PUBLIC_SITE_URL || '').replace(/\/+$/, '');
     if (!baseUrl) return json({ error: 'Server configuration error: missing PUBLIC_SITE_URL' }, 500);
 
+    // NOTE: Custom invoices are treated as non-taxable; Stripe Tax not enabled here.
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
       mode: 'payment',

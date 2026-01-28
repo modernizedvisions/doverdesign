@@ -53,3 +53,11 @@ Use the reported `whsec_...` as `STRIPE_WEBHOOK_SECRET` in `.dev.vars`.
   - Ensure the D1 row for that product has a non-null `stripe_price_id` (and price).
 
 Reminder: Add-to-cart can work without Stripe, but checkout requires these keys and Stripe price IDs. Only use test keys until you’re ready for live payments.
+
+## Stripe Dashboard Prereqs (Tax)
+- [ ] Enable Stripe Tax in the Dashboard.
+- [ ] Add tax registrations for jurisdictions where you must collect tax.
+- [ ] Set the default product tax code for physical goods (txcd_99999999).
+- [ ] Decide shipping tax treatment and set a shipping preset tax code if shipping is taxable.
+
+Note: Code changes alone cannot fix missing registrations or missing tax codes. Custom invoice Checkout sessions are currently treated as non-taxable and do not enable `automatic_tax`.

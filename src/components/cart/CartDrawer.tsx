@@ -67,111 +67,116 @@ export function CartDrawer() {
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 drawer-overlay motion-safe-only ${isActive ? 'is-open' : 'is-closed'}`}
+        className={`fixed inset-0 bg-charcoal/60 backdrop-blur-sm z-40 drawer-overlay motion-safe-only ${isActive ? 'is-open' : 'is-closed'}`}
         onClick={() => setCartDrawerOpen(false)}
       />
-      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50 flex flex-col drawer-panel motion-safe-only ${isActive ? 'is-open' : 'is-closed'}`}>
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-xl font-bold">Your Cart</h2>
+      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-linen shadow-2xl z-50 flex flex-col drawer-panel motion-safe-only ${isActive ? 'is-open' : 'is-closed'}`}>
+        <div className="p-5 border-b border-driftwood/70 flex items-center justify-between bg-white/90">
+          <div>
+            <p className="lux-eyebrow">Cart</p>
+            <h2 className="text-xl font-serif text-deep-ocean">Your selection</h2>
+          </div>
           <button
             onClick={() => setCartDrawerOpen(false)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="lux-button--ghost px-3 py-2 rounded-full"
+            aria-label="Close cart"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {items.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Your cart is empty</p>
+            <div className="text-center py-10">
+              <p className="text-charcoal/70">Your cart is empty</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {items.map((item) => (
-                <div key={item.productId} className="flex gap-4 pb-4 border-b border-gray-200">
-                  {item.imageUrl && (
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-20 h-20 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{item.name}</h3>
-                    <div className="text-sm text-gray-600">
-                      {isPromotionEligible(promotion, item) ? (
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xs text-slate-500 line-through">
-                            ${(item.priceCents / 100).toFixed(2)}
-                          </span>
-                          <span className="text-sm text-slate-900">
-                            ${(getDiscountedCents(item.priceCents, promotion?.percentOff || 0) / 100).toFixed(2)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span>${(item.priceCents / 100).toFixed(2)}</span>
-                      )}
-                    </div>
-                    {item.oneoff && (
-                      <span className="inline-block mt-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                        One-of-a-kind
-                      </span>
-                    )}
-                    <div className="mt-2 flex items-center gap-2">
-                    {item.oneoff ? (
-                      <span className="text-sm text-gray-500">Qty: 1</span>
+            items.map((item) => (
+              <div key={item.productId} className="flex gap-4 pb-4 border-b border-driftwood/50 last:border-b-0">
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-20 h-20 object-cover rounded-shell border border-driftwood/60 bg-white/80"
+                  />
+                )}
+                <div className="flex-1">
+                  <h3 className="font-serif font-semibold text-deep-ocean leading-snug">{item.name}</h3>
+                  <div className="text-sm text-charcoal/80 mt-1">
+                    {isPromotionEligible(promotion, item) ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs text-charcoal/60 line-through">
+                          ${(item.priceCents / 100).toFixed(2)}
+                        </span>
+                        <span className="text-sm text-deep-ocean">
+                          ${(getDiscountedCents(item.priceCents, promotion?.percentOff || 0) / 100).toFixed(2)}
+                        </span>
+                      </div>
                     ) : (
-                      <div className="flex items-center gap-2">
+                      <span>${(item.priceCents / 100).toFixed(2)}</span>
+                    )}
+                  </div>
+                  {item.oneoff && (
+                    <span className="lux-pill mt-2 inline-flex">One-of-a-kind</span>
+                  )}
+                  <div className="mt-3 flex items-center gap-3">
+                    {item.oneoff ? (
+                      <span className="text-sm text-charcoal/70">Qty: 1</span>
+                    ) : (
+                      <div className="lux-quantity">
                         <button
                           onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          className="p-1 hover:bg-gray-100 rounded"
+                          className="lux-button--ghost px-2 py-1 rounded-full"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
-                        <span className="w-8 text-center">{item.quantity}</span>
+                        <span className="w-8 text-center text-sm font-semibold text-deep-ocean">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                           disabled={item.quantityAvailable !== null && item.quantityAvailable !== undefined && item.quantity >= item.quantityAvailable}
-                          className="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
                     )}
-                      <button
-                        onClick={() => removeItem(item.productId)}
-                        className="ml-auto p-1 hover:bg-red-50 text-red-600 rounded"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => removeItem(item.productId)}
+                      className="ml-auto lux-button--ghost px-3 py-2 rounded-full text-red-700 border-red-200"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
 
         {items.length > 0 && (
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-5 border-t border-driftwood/70 bg-white/90 space-y-3">
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold text-gray-900">${(effectiveSubtotal / 100).toFixed(2)}</span>
+              <div className="flex justify-between text-charcoal/80">
+                <span>Subtotal</span>
+                <span className="font-semibold text-deep-ocean">${(effectiveSubtotal / 100).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Shipping</span>
-                <span className="font-semibold text-gray-900">${(shippingCents / 100).toFixed(2)}</span>
+              <div className="flex justify-between text-charcoal/80">
+                <span>Shipping</span>
+                <span className="font-semibold text-deep-ocean">${(shippingCents / 100).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between pt-2 border-t border-gray-200 text-base font-bold">
+              <div className="flex justify-between text-charcoal/70 text-xs">
+                <span>Tax</span>
+                <span>Calculated at checkout</span>
+              </div>
+              <div className="lux-divider-soft" />
+              <div className="flex justify-between text-base font-semibold text-deep-ocean">
                 <span>Total</span>
                 <span>${(totalCents / 100).toFixed(2)}</span>
               </div>
             </div>
             <button
               onClick={handleCheckout}
-              className="w-full bg-gray-900 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              className="lux-button w-full justify-center"
             >
               Checkout
             </button>

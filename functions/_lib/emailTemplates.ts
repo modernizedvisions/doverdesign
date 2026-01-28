@@ -32,17 +32,17 @@ type BaseEmailModel = {
 };
 
 export function renderOwnerNewOrderEmail(model: BaseEmailModel) {
-  const subject = `New Order - The Chesapeake Shell (${model.orderLabel})`;
+  const subject = `New Order - Dover Designs (${model.orderLabel})`;
   return buildEmail({ ...model, title: 'New Order Received', subject });
 }
 
 export function renderOwnerCustomOrderPaidEmail(model: BaseEmailModel) {
-  const subject = `Custom Order Paid - The Chesapeake Shell (${model.orderLabel})`;
+  const subject = `Custom Order Paid - Dover Designs (${model.orderLabel})`;
   return buildEmail({ ...model, title: 'Custom Order Paid', subject });
 }
 
 export function renderOwnerInvoicePaidEmail(model: BaseEmailModel & { invoiceId: string }) {
-  const subject = `Invoice Paid - The Chesapeake Shell (${model.invoiceId || model.orderLabel})`;
+  const subject = `Invoice Paid - Dover Designs (${model.invoiceId || model.orderLabel})`;
   return buildEmail({
     ...model,
     title: 'Invoice Paid',

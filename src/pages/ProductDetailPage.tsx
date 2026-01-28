@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
@@ -5,7 +6,6 @@ import { fetchProductById, fetchRelatedProducts } from '../lib/api';
 import { Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
-import { ProductReviews } from '@/components/product/ProductReviews';
 import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 import { getDiscountedCents, isPromotionEligible, usePromotions } from '@/lib/promotions';
 
@@ -14,7 +14,6 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const addItem = useCartStore((state) => state.addItem);
   const isOneOffInCart = useCartStore((state) => state.isOneOffInCart);
-  const isProductInCart = useCartStore((state) => state.isProductInCart);
   const setCartDrawerOpen = useUIStore((state) => state.setCartDrawerOpen);
   const { promotion } = usePromotions();
 
@@ -24,6 +23,7 @@ export function ProductDetailPage() {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const relatedRef = useRef<HTMLDivElement | null>(null);
+  const [quantity] = useState(1);
 
   useEffect(() => {
     const load = async () => {
@@ -52,6 +52,7 @@ export function ProductDetailPage() {
 
   useEffect(() => {
     setCurrentIndex(0);
+    setQuantity(1);
   }, [productId]);
 
   const handlePrev = () => {
@@ -72,6 +73,8 @@ export function ProductDetailPage() {
     product?.priceCents !== undefined && product?.priceCents !== null && promoEligible && promotion
       ? getDiscountedCents(product.priceCents, promotion.percentOff)
       : product?.priceCents ?? null;
+  const maxQty = product?.quantityAvailable ?? null;
+  const effectiveQty = product?.oneoff ? 1 : quantity;
 
   const handleAddToCart = () => {
     if (!product || !hasPrice || isSold) return;
@@ -80,7 +83,7 @@ export function ProductDetailPage() {
       productId: product.id,
       name: product.name,
       priceCents: product.priceCents ?? 0,
-      quantity: 1,
+      quantity: effectiveQty,
       imageUrl: product.thumbnailUrl || product.imageUrl,
       oneoff: product.oneoff,
       stripeProductId: product.stripeProductId ?? null,
@@ -96,10 +99,10 @@ export function ProductDetailPage() {
 
   if (!loadingProduct && !product) {
     return (
-      <div className="py-16 bg-gray-50 min-h-screen">
+      <div className="py-16 bg-linen min-h-screen">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-          <h1 className="text-3xl font-semibold text-gray-900">Product not found</h1>
-          <Link to="/shop" className="text-gray-700 underline">
+          <h1 className="text-3xl font-serif text-deep-ocean">Product not found</h1>
+          <Link to="/shop" className="lux-button--ghost inline-flex">
             Back to Shop
           </Link>
         </div>
@@ -108,198 +111,266 @@ export function ProductDetailPage() {
   }
 
   return (
-    <div className="bg-white min-h-screen">
-      <section className="py-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <button onClick={() => navigate(-1)} className="text-sm text-gray-600 hover:text-gray-900">
-              Back
-            </button>
-          </div>
+    <div className="bg-linen text-charcoal min-h-screen">
+      <div className="relative isolate overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 shell-pattern opacity-60" />
+        <div className="pointer-events-none absolute inset-x-0 -top-24 h-48 bg-[radial-gradient(circle_at_top,_rgba(159,191,187,0.18),_transparent_55%)]" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
-            <div>
-              <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                {loadingProduct ? (
-                  <div className="w-full h-full animate-pulse bg-gray-200" />
-                ) : images.length ? (
-                  <>
-                    <img
-                      src={images[currentIndex]}
-                      alt={product?.name || 'Product'}
-                      className="w-full h-full object-cover"
-                      decoding="async"
-                    />
-                    {images.length > 1 && (
-                      <>
-                        <button
-                          onClick={handlePrev}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur rounded-full p-2 shadow hover:bg-white"
-                        >
-                          <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={handleNext}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur rounded-full p-2 shadow hover:bg-white"
-                        >
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
-                )}
-              </div>
-
-              <div className="mt-4 flex gap-2 overflow-x-auto">
-                {images.map((url, idx) => (
-                  <button
-                    key={url}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`w-20 h-20 rounded-md overflow-hidden border bg-slate-100 ${idx === currentIndex ? 'border-gray-900' : 'border-gray-200'}`}
-                  >
-                    <ProgressiveImage
-                      src={url}
-                      alt={`${product?.name}-thumb-${idx}`}
-                      className="h-full w-full"
-                      imgClassName="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </button>
-                ))}
-              </div>
+        <section className="pt-10 pb-14">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-6 flex items-center justify-between">
+              <button
+                onClick={() => navigate(-1)}
+                className="lux-button--ghost px-4 py-2 uppercase tracking-[0.18em] text-[10px]"
+              >
+                Back
+              </button>
+              <span />
             </div>
 
-            <div className="space-y-4">
-              <h1 className="text-3xl font-semibold text-gray-900">{loadingProduct ? 'Loading...' : product?.name}</h1>
-              {product?.priceCents !== undefined && product?.priceCents !== null && (
-                <div className="text-[20px] font-serif font-medium text-slate-800">
-                  {promoEligible && discountedPriceCents !== product.priceCents ? (
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-sm text-slate-500 line-through">
-                        {formatPrice(product.priceCents)}
-                      </span>
-                      <span className="text-[22px] text-slate-900">{formatPrice(discountedPriceCents)}</span>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-[1.05fr,0.95fr] gap-10 lg:gap-14 items-start">
+              <div className="space-y-4">
+                <div className="relative aspect-square rounded-shell-lg overflow-hidden bg-white/70 border border-driftwood/60 lux-shadow">
+                  {loadingProduct ? (
+                    <div className="w-full h-full animate-pulse bg-sand" />
+                  ) : images.length ? (
+                    <>
+                      <img
+                        src={images[currentIndex]}
+                        alt={product?.name || 'Product'}
+                        className="w-full h-full object-cover"
+                        decoding="async"
+                      />
+                      {images.length > 1 && (
+                        <>
+                          <button
+                            onClick={handlePrev}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 lux-button--ghost px-3 py-2 rounded-full"
+                            aria-label="Previous image"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleNext}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 lux-button--ghost px-3 py-2 rounded-full"
+                            aria-label="Next image"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </>
                   ) : (
-                    <span>{formatPrice(product.priceCents)}</span>
+                    <div className="w-full h-full flex items-center justify-center text-charcoal/50">No image</div>
                   )}
                 </div>
-              )}
-              <p className="text-gray-700 leading-relaxed">{product?.description}</p>
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!canPurchase || (product?.oneoff && isOneOffInCart(product.id))}
-                  className="flex-1 bg-white border border-gray-300 text-gray-800 py-3 rounded-lg font-semibold hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Add to Cart
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {!loadingRelated && related.length > 0 && (
-        <section className="py-10 bg-gray-50">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-900">More from this collection</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => relatedRef.current?.scrollBy({ left: -260, behavior: 'smooth' })}
-                  className="p-2 rounded-full border border-gray-300 bg-white hover:border-gray-400"
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => relatedRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
-                  className="p-2 rounded-full border border-gray-300 bg-white hover:border-gray-400"
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div ref={relatedRef} className="flex gap-4 overflow-x-auto pb-2">
-              {related.map((item) => (
-                <div key={item.id} className="w-64 flex-shrink-0 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="aspect-square bg-gray-100 overflow-hidden">
-                    <ProgressiveImage
-                      src={item.imageUrl || item.imageUrls?.[0]}
-                      alt={item.name}
-                      className="h-full w-full"
-                      imgClassName="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                  <div className="p-4 space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                    {item.priceCents !== undefined && item.priceCents !== null && (
-                      <div className="text-sm font-bold text-gray-900">
-                        {isPromotionEligible(promotion, item) ? (
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-xs text-slate-500 line-through">
-                              {formatPrice(item.priceCents)}
-                            </span>
-                            <span>{formatPrice(getDiscountedCents(item.priceCents, promotion?.percentOff || 0))}</span>
-                          </div>
-                        ) : (
-                          <span>{formatPrice(item.priceCents)}</span>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => navigate(`/product/${item.id}`)}
-                        className="flex-1 bg-gray-900 text-white py-2 rounded-md text-sm hover:bg-gray-800 transition-colors"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (!item.priceCents || item.isSold) return;
-                          if (item.oneoff && isOneOffInCart(item.id)) return;
-                          addItem({
-                            productId: item.id,
-                            name: item.name,
-                            priceCents: item.priceCents,
-                            quantity: 1,
-                            imageUrl: item.thumbnailUrl || item.imageUrl,
-                            oneoff: item.oneoff,
-                            stripeProductId: item.stripeProductId ?? null,
-                            stripePriceId: item.stripePriceId ?? null,
-                          });
-                          setCartDrawerOpen(true);
-                        }}
-                        disabled={
-                          !item.priceCents ||
-                          item.isSold ||
-                          (item.oneoff && isOneOffInCart(item.id))
-                        }
-                        className="flex-1 flex items-center justify-center bg-white border border-gray-300 text-gray-700 py-2 rounded-md hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ShoppingCart className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+                  {images.map((url, idx) => (
+                    <button
+                      key={url}
+                      onClick={() => setCurrentIndex(idx)}
+                      className={`w-20 h-20 rounded-shell border ${idx === currentIndex ? 'border-deep-ocean shadow-md' : 'border-driftwood/60'} overflow-hidden bg-white/80 transition`}
+                    >
+                      <ProgressiveImage
+                        src={url}
+                        alt={`${product?.name}-thumb-${idx}`}
+                        className="h-full w-full"
+                        imgClassName="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div className="space-y-5 bg-white/75 border border-driftwood/60 rounded-shell-lg p-6 sm:p-8 lux-shadow">
+                <div className="space-y-3">
+                  <p className="lux-eyebrow">Product Studio</p>
+                  <h1 className="font-serif text-3xl sm:text-4xl leading-tight text-deep-ocean">
+                    {loadingProduct ? 'Loading...' : product?.name}
+                  </h1>
+                  {product?.priceCents !== undefined && product?.priceCents !== null && (
+                    <div className="text-[22px] font-serif font-semibold text-deep-ocean flex items-baseline gap-3">
+                      {promoEligible && discountedPriceCents !== product.priceCents ? (
+                        <>
+                          <span className="text-sm text-charcoal/60 line-through">
+                            {formatPrice(product.priceCents)}
+                          </span>
+                          <span className="text-[24px] text-deep-ocean">{formatPrice(discountedPriceCents)}</span>
+                        </>
+                      ) : (
+                        <span>{formatPrice(product.priceCents)}</span>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-base leading-relaxed text-charcoal/80">{product?.description}</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={
+                      !canPurchase ||
+                      (product?.oneoff && isOneOffInCart(product.id)) ||
+                      (!product?.oneoff && maxQty !== null && effectiveQty > maxQty)
+                    }
+                    className="lux-button w-full justify-center"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Add to Cart
+                  </button>
+                  <Link
+                    to="/custom-orders"
+                    className="lux-button--ghost w-full justify-center"
+                  >
+                    Custom Request
+                  </Link>
+                </div>
+
+                <div className="lux-panel bg-linen/80 px-5 py-4 space-y-2">
+                  <h3 className="text-lg font-serif font-semibold text-deep-ocean">Designed with intention</h3>
+                  <p className="text-sm leading-relaxed text-charcoal/80">
+                    Each shell is hand-finished and composed to reflect coastal calm and personal meaning. Subtle variations in shape, tone, and edge are part of what makes every piece one of a kind.
+                  </p>
+                </div>
+
+                <div className="lux-divider-soft" />
+                <p className="text-xs uppercase tracking-[0.22em] text-deep-ocean/70 text-center">
+                  Crafted to order - Carefully packaged - Ships from Boston
+                </p>
+              </div>
             </div>
           </div>
         </section>
-      )}
 
-      <section className="py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ProductReviews />
+        {!loadingRelated && related.length > 0 && (
+          <section className="pb-14">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="lux-eyebrow">More from this collection</p>
+                  <h2 className="lux-heading text-2xl sm:text-3xl">Curated for you</h2>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => relatedRef.current?.scrollBy({ left: -260, behavior: 'smooth' })}
+                    className="lux-button--ghost px-3 py-2 rounded-full"
+                    aria-label="Scroll left"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => relatedRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
+                    className="lux-button--ghost px-3 py-2 rounded-full"
+                    aria-label="Scroll right"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div ref={relatedRef} className="flex gap-4 overflow-x-auto pb-2">
+                {related.map((item) => (
+                  <div
+                    key={item.id}
+                    className="w-64 flex-shrink-0 lux-card overflow-hidden bg-white/90"
+                  >
+                    <div className="aspect-square overflow-hidden rounded-shell-lg bg-sand">
+                      <ProgressiveImage
+                        src={item.imageUrl || item.imageUrls?.[0]}
+                        alt={item.name}
+                        className="h-full w-full"
+                        imgClassName="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="p-4 space-y-2">
+                      <h3 className="text-lg font-serif font-semibold text-deep-ocean truncate">{item.name}</h3>
+                      {item.priceCents !== undefined && item.priceCents !== null && (
+                        <div className="text-sm font-semibold text-deep-ocean">
+                          {isPromotionEligible(promotion, item) ? (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-xs text-charcoal/60 line-through">
+                                {formatPrice(item.priceCents)}
+                              </span>
+                              <span>{formatPrice(getDiscountedCents(item.priceCents, promotion?.percentOff || 0))}</span>
+                            </div>
+                          ) : (
+                            <span>{formatPrice(item.priceCents)}</span>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => navigate(`/product/${item.id}`)}
+                          className="lux-button--ghost w-full justify-center"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!item.priceCents || item.isSold) return;
+                            if (item.oneoff && isOneOffInCart(item.id)) return;
+                            addItem({
+                              productId: item.id,
+                              name: item.name,
+                              priceCents: item.priceCents,
+                              quantity: 1,
+                              imageUrl: item.thumbnailUrl || item.imageUrl,
+                              oneoff: item.oneoff,
+                              stripeProductId: item.stripeProductId ?? null,
+                              stripePriceId: item.stripePriceId ?? null,
+                            });
+                            setCartDrawerOpen(true);
+                          }}
+                          disabled={
+                            !item.priceCents ||
+                            item.isSold ||
+                            (item.oneoff && isOneOffInCart(item.id))
+                          }
+                          className="lux-button w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+
+      {canPurchase && (
+        <div className="fixed md:hidden bottom-0 inset-x-0 z-40 px-3 pb-4">
+          <div className="bg-white/95 border border-driftwood/70 rounded-shell-lg shadow-2xl p-3 flex items-center gap-3">
+            {product?.priceCents !== undefined && product?.priceCents !== null && (
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-[0.22em] text-charcoal/70">Total</p>
+                <p className="text-lg font-serif font-semibold text-deep-ocean">
+                  {promoEligible && discountedPriceCents !== product.priceCents
+                    ? formatPrice(discountedPriceCents)
+                    : formatPrice(product.priceCents)}
+                </p>
+              </div>
+            )}
+            <button
+              onClick={handleAddToCart}
+              disabled={
+                !canPurchase ||
+                (product?.oneoff && isOneOffInCart(product.id)) ||
+                (!product?.oneoff && maxQty !== null && effectiveQty > maxQty)
+              }
+              className="lux-button flex-1 justify-center"
+            >
+              Add to Cart
+            </button>
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }

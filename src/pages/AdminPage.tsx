@@ -997,13 +997,13 @@ export function AdminPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+        <div className="max-w-md w-full bg-white/90 rounded-2xl border border-driftwood/60 shadow-lg p-8 text-charcoal">
+          <h2 className="text-2xl font-serif font-semibold text-deep-ocean mb-6 text-center tracking-[0.04em]">
             Admin Login
           </h2>
           <form onSubmit={handleLogin}>
             <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1 tracking-[0.12em] uppercase">
                 Password
               </label>
               <input
@@ -1012,7 +1012,7 @@ export function AdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 ref={passwordInputRef}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                className="w-full px-4 py-2 border border-driftwood/60 rounded-lg bg-white focus:ring-2 focus:ring-deep-ocean focus:border-transparent font-sans font-semibold tracking-[0.12em]"
                 required
               />
             </div>
@@ -1033,7 +1033,7 @@ export function AdminPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gray-900 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="w-full rounded-full bg-deep-ocean text-white py-3 px-6 font-semibold uppercase tracking-[0.24em] hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50"
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
@@ -1045,100 +1045,49 @@ export function AdminPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50 py-12 overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[var(--warm-linen)] via-[var(--sand)] to-[var(--linen)] text-charcoal py-12 overflow-x-hidden">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-3xl font-serif font-semibold tracking-[0.04em] text-deep-ocean">Admin Dashboard</h1>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 rounded-full border border-driftwood/70 bg-white/80 text-deep-ocean uppercase tracking-[0.16em] text-[11px] hover:-translate-y-0.5 hover:shadow transition-all"
           >
             Logout
           </button>
         </div>
 
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="flex gap-4 justify-start md:justify-center overflow-x-auto whitespace-nowrap -mx-4 px-4 md:mx-0 md:px-0">
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'orders'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Orders
-              {unseenOrders > 0 && (
-                <span className="notif-circle ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[11px] font-semibold leading-none text-white">
-                  {unseenOrders > 9 ? '9+' : String(unseenOrders)}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('shop')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'shop'
-                  ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Shop
-            </button>
-            <button
-              onClick={() => setActiveTab('messages')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'messages'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Messages
-              {unreadMessages > 0 && (
-                <span className="notif-circle ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[11px] font-semibold leading-none text-white">
-                  {unreadMessages > 9 ? '9+' : String(unreadMessages)}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('promotions')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'promotions'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Promotions
-            </button>
-            <button
-              onClick={() => setActiveTab('customOrders')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'customOrders'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Custom Orders
-          </button>
-          <button
-            onClick={() => setActiveTab('images')}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-              activeTab === 'images'
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            >
-              Images
-            </button>
-            <button
-              onClick={() => setActiveTab('sold')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'sold'
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Sold Products
-            </button>
+        <div className="mb-6 border-b border-driftwood/50 pb-2">
+          <nav className="flex gap-3 justify-start md:justify-center overflow-x-auto whitespace-nowrap -mx-4 px-4 md:mx-0 md:px-0">
+            {[
+              { key: 'orders', label: 'Orders', badge: unseenOrders },
+              { key: 'shop', label: 'Shop' },
+              { key: 'messages', label: 'Messages', badge: unreadMessages },
+              { key: 'promotions', label: 'Promotions' },
+              { key: 'customOrders', label: 'Custom Orders' },
+              { key: 'images', label: 'Images' },
+              { key: 'sold', label: 'Sold Products' },
+            ].map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] uppercase tracking-[0.2em] transition-all ${
+                    isActive
+                      ? 'bg-deep-ocean text-white shadow-md'
+                      : 'bg-white/80 text-deep-ocean border border-driftwood/60 hover:bg-sand/80'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.badge && tab.badge > 0 && (
+                    <span className="notif-circle inline-flex h-5 w-5 items-center justify-center rounded-full bg-softGold text-[11px] font-semibold leading-none text-charcoal">
+                      {tab.badge > 9 ? '9+' : String(tab.badge)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </nav>
         </div>
 

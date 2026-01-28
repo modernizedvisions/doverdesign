@@ -36,8 +36,8 @@ export async function onRequestPost(context: { request: Request; env: EmailEnv }
     statusLabel: 'PAID',
     customerName: 'Sample Customer',
     customerEmail: 'customer@example.com',
-    shippingAddress: 'Sample Customer\n123 Bay St\nChesapeake, VA 23320\nUS',
-    billingAddress: 'Sample Customer\n123 Bay St\nChesapeake, VA 23320\nUS',
+    shippingAddress: 'Sample Customer\n123 Bay St\nBoston, MA 02110\nUS',
+    billingAddress: 'Sample Customer\n123 Bay St\nBoston, MA 02110\nUS',
     paymentMethod: 'Card ending in 4242',
     items: [
       { name: 'Ornament Shell', qtyLabel: 'x1', lineTotal: '$45.00', imageUrl: 'https://placehold.co/56x56' },
@@ -45,7 +45,8 @@ export async function onRequestPost(context: { request: Request; env: EmailEnv }
     ],
     subtotal: '$109.00',
     shipping: '$5.00',
-    total: '$114.00',
+    tax: '$8.00',
+    total: '$122.00',
     adminUrl,
     stripeUrl: 'https://dashboard.stripe.com/test/payments/pi_sample',
   });
@@ -65,7 +66,8 @@ export async function onRequestPost(context: { request: Request; env: EmailEnv }
     ],
     subtotal: '$109.00',
     shipping: '$5.00',
-    total: '$114.00',
+    tax: '$8.00',
+    total: '$122.00',
     adminUrl,
     stripeUrl: 'https://dashboard.stripe.com/test/payments/pi_sample',
   });
@@ -73,7 +75,7 @@ export async function onRequestPost(context: { request: Request; env: EmailEnv }
   const result = await sendEmail(
     {
       to,
-      subject: 'NEW SALE - The Chesapeake Shell (TEST)',
+      subject: 'NEW SALE - Dover Designs (TEST)',
       text,
       html,
     },

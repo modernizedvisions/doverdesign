@@ -182,16 +182,18 @@ export async function onRequestPost(context: {
         quantity: 1,
       },
     ];
-    if (shippingCents > 0) {
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'Shipping' },
-          unit_amount: shippingCents,
+    const shippingOptions: Stripe.Checkout.SessionCreateParams.ShippingOption[] = [
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          display_name: 'Shipping',
+          fixed_amount: {
+            amount: shippingCents,
+            currency: 'usd',
+          },
         },
-        quantity: 1,
-      });
-    }
+      },
+    ];
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -203,6 +205,11 @@ export async function onRequestPost(context: {
         enabled: true,
       },
       line_items: lineItems,
+      shipping_options: shippingOptions,
+      billing_address_collection: 'auto',
+      automatic_tax: {
+        enabled: true,
+      },
       success_url: `${baseUrl}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/shop?customOrderCanceled=1&co=${encodeURIComponent(displayId)}`,
       metadata: {
@@ -230,7 +237,7 @@ export async function onRequestPost(context: {
     }
 
     const html = renderCustomOrderPaymentLinkEmailHtml({
-      brandName: 'The Chesapeake Shell',
+      brandName: 'Dover Designs',
       orderLabel: displayId,
       ctaUrl: session.url,
       amountCents: amount,
@@ -242,7 +249,7 @@ export async function onRequestPost(context: {
       description: order.description || null,
     });
     const text = renderCustomOrderPaymentLinkEmailText({
-      brandName: 'The Chesapeake Shell',
+      brandName: 'Dover Designs',
       orderLabel: displayId,
       ctaUrl: session.url,
       amountCents: amount,
@@ -256,7 +263,7 @@ export async function onRequestPost(context: {
 
     console.log('[email] custom order send', {
       to: customerEmail,
-      subject: 'The Chesapeake Shell Custom Order Payment',
+      subject: 'Dover Designs Custom Order Payment',
       hasHtml: !!html,
       htmlLen: html.length,
       hasText: !!text,
@@ -270,7 +277,7 @@ export async function onRequestPost(context: {
     const emailResult = await sendEmail(
       {
         to: customerEmail,
-        subject: 'The Chesapeake Shell Custom Order Payment',
+        subject: 'Dover Designs Custom Order Payment',
         html,
         text,
       },
@@ -407,4 +414,3 @@ function resolveSiteUrl(env: {
   const raw = env.PUBLIC_SITE_URL || env.VITE_PUBLIC_SITE_URL || '';
   return raw ? raw.replace(/\/+$/, '') : '';
 }
-

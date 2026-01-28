@@ -1,1 +1,2 @@
-ALTER TABLE custom_orders ADD COLUMN shipping_cents INTEGER NOT NULL DEFAULT 0;
+-- Column already exists in production; no-op to allow migration to apply safely.
+SELECT 1;

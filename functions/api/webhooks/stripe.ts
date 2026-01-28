@@ -103,6 +103,28 @@ function warnInvalidRecipient(kind: string, to: string) {
   console.warn('[email] invalid recipient; skipping send', { kind, to });
 }
 
+type CanonicalTotals = {
+  amountTotal: number;
+  amountSubtotal: number;
+  amountShipping: number;
+  amountTax: number;
+  amountDiscount: number;
+  currency: string;
+};
+
+function resolveCanonicalTotals(session: Stripe.Checkout.Session): CanonicalTotals {
+  const toCents = (value: unknown) => (Number.isFinite(Number(value)) ? Math.round(Number(value)) : 0);
+  const totalDetails = session.total_details as Stripe.Checkout.Session.TotalDetails | null;
+  return {
+    amountTotal: toCents(session.amount_total),
+    amountSubtotal: toCents(session.amount_subtotal),
+    amountShipping: toCents(totalDetails?.amount_shipping),
+    amountTax: toCents(totalDetails?.amount_tax),
+    amountDiscount: toCents(totalDetails?.amount_discount),
+    currency: session.currency || 'usd',
+  };
+}
+
 export const onRequestPost = async (context: {
   request: Request;
   env: Env;
@@ -148,9 +170,11 @@ export const onRequestPost = async (context: {
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
+      const eventType = event.type;
       const sessionSummary = event.data.object as Stripe.Checkout.Session;
-      console.log('[stripe webhook] checkout.session.completed', { sessionId: sessionSummary.id });
+      console.log('[stripe webhook] checkout.session', { eventType, sessionId: sessionSummary.id });
       const stripeClient = createStripeClient(env.STRIPE_SECRET_KEY);
       const session = await stripeClient.checkout.sessions.retrieve(sessionSummary.id, {
         expand: [
@@ -165,7 +189,7 @@ export const onRequestPost = async (context: {
         expand: ['data.price.product'],
       });
       const rawLineItems = lineItemsResp.data || [];
-      console.log('[stripe webhook] line_items', { sessionId: session.id, count: rawLineItems.length });
+      console.log('[stripe webhook] line_items', { eventType, sessionId: session.id, count: rawLineItems.length });
       const sessionWithLines = { ...session, line_items: { data: rawLineItems } as any };
 
       const paymentIntent =
@@ -254,8 +278,10 @@ export const onRequestPost = async (context: {
         }
       }
 
-      console.log('checkout.session.completed summary', {
+      console.log('checkout.session summary', {
+        eventType,
         sessionId: session.id,
+        paymentStatus: session.payment_status,
         hasCustomerEmail: !!customerEmail,
         shippingName,
         hasShippingAddress: !!shippingAddress,
@@ -280,26 +306,22 @@ export const onRequestPost = async (context: {
         hasCustomOrderId: !!customOrderId,
         hasInvoiceId: !!invoiceId,
       });
-      const shippingFromMetadata = Number(session.metadata?.shipping_cents ?? NaN);
-      const shippingContext = Number.isFinite(shippingFromMetadata) && shippingFromMetadata >= 0 ? shippingFromMetadata : null;
-      const totalsForEmailPreLog = resolveEmailMoneyTotals({
-        session,
-        lineItems: rawLineItems,
-        shippingCentsFromContext: shippingContext,
-      });
-      const shippingCents = totalsForEmailPreLog.shippingCents;
-      const shippingSource = totalsForEmailPreLog.shippingSource;
+      const canonicalTotals = resolveCanonicalTotals(session);
+      const shippingFromLines = extractShippingCentsFromLineItems(rawLineItems);
+      const shippingCents =
+        canonicalTotals.amountShipping > 0 ? canonicalTotals.amountShipping : shippingFromLines;
+      const isPaid = session.payment_status === 'paid';
       if (env.SHIPPING_DEBUG === '1' || env.EMAIL_DEBUG === '1' || (env as any).DEBUG_EMAILS === '1') {
         console.log('[shipping] webhook', {
+          eventType,
           sessionId: session.id,
-          amount_total: session.amount_total,
-          amount_subtotal: (session as any)?.amount_subtotal,
-          amount_shipping: (session.total_details as any)?.amount_shipping,
-          amount_tax: (session.total_details as any)?.amount_tax,
-          amount_discount: (session.total_details as any)?.amount_discount,
-          shippingFromMetadata,
+          amount_total: canonicalTotals.amountTotal,
+          amount_subtotal: canonicalTotals.amountSubtotal,
+          amount_shipping: canonicalTotals.amountShipping,
+          amount_tax: canonicalTotals.amountTax,
+          amount_discount: canonicalTotals.amountDiscount,
           shippingCents,
-          shippingSource,
+          shippingSource: canonicalTotals.amountShipping > 0 ? 'session.total_details.amount_shipping' : 'line_items',
         });
       }
 
@@ -310,9 +332,9 @@ export const onRequestPost = async (context: {
           session: sessionWithLines,
           lineItems: rawLineItems,
           paymentIntentId,
-          amountTotal: session.amount_total ?? 0,
-          currency: session.currency || 'usd',
+          totals: canonicalTotals,
           customerEmail,
+          isPaid,
         });
         return ok();
       } else if (customOrderId || customSource) {
@@ -329,9 +351,11 @@ export const onRequestPost = async (context: {
           cardLast4,
           cardBrand,
           shippingCents,
+          totals: canonicalTotals,
+          isPaid,
         });
         return ok();
-      } else {
+      } else if (isPaid) {
         // Update inventory for all line items (skip shipping)
         const lineItems = rawLineItems;
         const aggregate: Record<string, number> = {};
@@ -385,6 +409,7 @@ export const onRequestPost = async (context: {
         cardLast4,
         cardBrand,
         shippingCents,
+        totals: canonicalTotals,
         productId,
         quantityFromMeta,
       });
@@ -410,7 +435,7 @@ export const onRequestPost = async (context: {
         });
       }
 
-      if (insertResult && customerEmail) {
+      if (insertResult && customerEmail && isPaid) {
       let baseEmailItems: Array<{ name: string; quantity: number; amountCents: number; imageUrl: string | null }> = [];
       try {
         baseEmailItems = await mapLineItemsToEmailItemsWithImages(
@@ -437,7 +462,6 @@ export const onRequestPost = async (context: {
 
         const totalsForEmail = resolveEmailMoneyTotals({
           session,
-          shippingCentsFromContext: shippingContext,
           lineItems: rawLineItems,
         });
         console.log('[email totals raw]', {
@@ -446,6 +470,8 @@ export const onRequestPost = async (context: {
           displayOrderId: insertResult.displayOrderId,
           subtotalCents: totalsForEmail.itemsSubtotalCents,
           shippingCents: totalsForEmail.shippingCents,
+          taxCents: totalsForEmail.taxCents,
+          discountCents: totalsForEmail.discountCents,
           totalCents: totalsForEmail.totalCents,
           shippingSource: totalsForEmail.shippingSource,
         });
@@ -469,23 +495,7 @@ export const onRequestPost = async (context: {
 
         try {
           const html = renderOrderConfirmationEmailHtml({
-            brandName: 'The Chesapeake Shell',
-            orderNumber: orderLabel,
-            orderDate,
-            customerName: shippingName || session.customer_details?.name || null,
-            customerEmail: customerEmail || undefined,
-      shippingAddress: shippingAddressText || undefined,
-      billingAddress: billingAddressText || undefined,
-      paymentMethod: paymentMethodLabel,
-            items: confirmationItems,
-            subtotal: totalsForEmail.itemsSubtotalCents,
-            shipping: totalsForEmail.shippingCents,
-            total: totalsForEmail.totalCents,
-            primaryCtaUrl: confirmationUrl,
-            primaryCtaLabel: 'View Order Details',
-          });
-          const text = renderOrderConfirmationEmailText({
-            brandName: 'The Chesapeake Shell',
+            brandName: 'Dover Designs',
             orderNumber: orderLabel,
             orderDate,
             customerName: shippingName || session.customer_details?.name || null,
@@ -496,12 +506,32 @@ export const onRequestPost = async (context: {
             items: confirmationItems,
             subtotal: totalsForEmail.itemsSubtotalCents,
             shipping: totalsForEmail.shippingCents,
+            tax: totalsForEmail.taxCents,
+            discount: totalsForEmail.discountCents,
+            total: totalsForEmail.totalCents,
+            primaryCtaUrl: confirmationUrl,
+            primaryCtaLabel: 'View Order Details',
+          });
+          const text = renderOrderConfirmationEmailText({
+            brandName: 'Dover Designs',
+            orderNumber: orderLabel,
+            orderDate,
+            customerName: shippingName || session.customer_details?.name || null,
+            customerEmail: customerEmail || undefined,
+            shippingAddress: shippingAddressText || undefined,
+            billingAddress: billingAddressText || undefined,
+            paymentMethod: paymentMethodLabel,
+            items: confirmationItems,
+            subtotal: totalsForEmail.itemsSubtotalCents,
+            shipping: totalsForEmail.shippingCents,
+            tax: totalsForEmail.taxCents,
+            discount: totalsForEmail.discountCents,
             total: totalsForEmail.totalCents,
             primaryCtaUrl: confirmationUrl,
             primaryCtaLabel: 'View Order Details',
           });
 
-        const subject = `The Chesapeake Shell - Order Confirmed (${orderLabel})`;
+        const subject = `Dover Designs - Order Confirmed (${orderLabel})`;
         const customerTo = isValidEmailRecipient(customerEmail) ? customerEmail : null;
         if (customerEmail && !customerTo) {
           warnInvalidRecipient('shop_customer', customerEmail);
@@ -566,7 +596,7 @@ export const onRequestPost = async (context: {
         });
       }
 
-      if (insertResult && !invoiceId && !customOrderId && !customSource) {
+      if (insertResult && isPaid && !invoiceId && !customOrderId && !customSource) {
         const orderLabel = insertResult.displayOrderId || insertResult.orderId;
         let confirmationItemsSource: Array<{ name: string; quantity: number; amountCents: number; imageUrl: string | null }> = [];
         try {
@@ -590,7 +620,6 @@ export const onRequestPost = async (context: {
 
         const totalsForEmail = resolveEmailMoneyTotals({
           session,
-          shippingCentsFromContext: shippingContext,
           lineItems: rawLineItems,
         });
         console.log('[email totals raw]', {
@@ -599,12 +628,16 @@ export const onRequestPost = async (context: {
           displayOrderId: insertResult.displayOrderId,
           subtotalCents: totalsForEmail.itemsSubtotalCents,
           shippingCents: totalsForEmail.shippingCents,
+          taxCents: totalsForEmail.taxCents,
+          discountCents: totalsForEmail.discountCents,
           totalCents: totalsForEmail.totalCents,
           shippingSource: totalsForEmail.shippingSource,
         });
         const totals = {
           subtotal: formatMoney(totalsForEmail.itemsSubtotalCents),
           shipping: formatMoney(totalsForEmail.shippingCents),
+          tax: formatMoney(totalsForEmail.taxCents),
+          discount: totalsForEmail.discountCents > 0 ? formatMoney(totalsForEmail.discountCents) : null,
           total: formatMoney(totalsForEmail.totalCents),
         };
         const adminUrl = siteUrl ? `${siteUrl}/admin` : '/admin';
@@ -631,6 +664,8 @@ export const onRequestPost = async (context: {
             items: confirmationItems,
             subtotal: totals.subtotal,
             shipping: totals.shipping,
+            tax: totals.tax,
+            discount: totals.discount,
             total: totals.total,
             adminUrl,
             stripeUrl,
@@ -648,12 +683,14 @@ export const onRequestPost = async (context: {
             items: confirmationItems,
             subtotal: totals.subtotal,
             shipping: totals.shipping,
+            tax: totals.tax,
+            discount: totals.discount,
             total: totals.total,
             adminUrl,
             stripeUrl,
           });
 
-          const ownerSubject = `NEW SALE - The Chesapeake Shell (${orderLabel})`;
+          const ownerSubject = `NEW SALE - Dover Designs (${orderLabel})`;
         const ownerRecipient = isValidEmailRecipient(ownerTo) ? ownerTo : null;
         if (ownerTo && !ownerRecipient) {
           warnInvalidRecipient('shop_owner', ownerTo);
@@ -734,6 +771,11 @@ async function ensureOrdersSchema(db: D1Database) {
       order_type TEXT,
       stripe_payment_intent_id TEXT,
       total_cents INTEGER,
+      amount_total_cents INTEGER,
+      amount_subtotal_cents INTEGER,
+      amount_shipping_cents INTEGER,
+      amount_tax_cents INTEGER,
+      amount_discount_cents INTEGER,
       currency TEXT,
       customer_email TEXT,
       shipping_name TEXT,
@@ -741,6 +783,7 @@ async function ensureOrdersSchema(db: D1Database) {
       card_last4 TEXT,
       card_brand TEXT,
       description TEXT,
+      shipping_cents INTEGER DEFAULT 0,
       is_seen INTEGER NOT NULL DEFAULT 0,
       seen_at TEXT,
       created_at TEXT DEFAULT (datetime('now'))
@@ -771,8 +814,14 @@ async function ensureOrdersSchema(db: D1Database) {
 
     await addColumnIfMissing('display_order_id', `ALTER TABLE orders ADD COLUMN display_order_id TEXT;`);
     await addColumnIfMissing('order_type', `ALTER TABLE orders ADD COLUMN order_type TEXT;`);
+    await addColumnIfMissing('amount_total_cents', `ALTER TABLE orders ADD COLUMN amount_total_cents INTEGER;`);
+    await addColumnIfMissing('amount_subtotal_cents', `ALTER TABLE orders ADD COLUMN amount_subtotal_cents INTEGER;`);
+    await addColumnIfMissing('amount_shipping_cents', `ALTER TABLE orders ADD COLUMN amount_shipping_cents INTEGER;`);
+    await addColumnIfMissing('amount_tax_cents', `ALTER TABLE orders ADD COLUMN amount_tax_cents INTEGER;`);
+    await addColumnIfMissing('amount_discount_cents', `ALTER TABLE orders ADD COLUMN amount_discount_cents INTEGER;`);
     await addColumnIfMissing('currency', `ALTER TABLE orders ADD COLUMN currency TEXT;`);
     await addColumnIfMissing('description', `ALTER TABLE orders ADD COLUMN description TEXT;`);
+    await addColumnIfMissing('shipping_cents', `ALTER TABLE orders ADD COLUMN shipping_cents INTEGER DEFAULT 0;`);
     await addColumnIfMissing('is_seen', `ALTER TABLE orders ADD COLUMN is_seen INTEGER NOT NULL DEFAULT 0;`);
     await addColumnIfMissing('seen_at', `ALTER TABLE orders ADD COLUMN seen_at TEXT;`);
 
@@ -864,15 +913,22 @@ async function handleCustomInvoicePayment(args: {
   session: Stripe.Checkout.Session;
   lineItems: Stripe.LineItem[];
   paymentIntentId: string | null;
-  amountTotal: number;
-  currency: string;
+  totals: CanonicalTotals;
   customerEmail: string | null;
+  isPaid: boolean;
 }) {
-  const { db, env, session, lineItems, paymentIntentId, amountTotal, currency, customerEmail } = args;
+  const { db, env, session, lineItems, paymentIntentId, totals, customerEmail, isPaid } = args;
   const emailDebug = env.EMAIL_DEBUG === '1' || (env as any).DEBUG_EMAILS === '1';
   const branch = 'custom_invoice';
   const invoiceId = session.metadata?.invoiceId;
   if (!invoiceId) return;
+  if (!isPaid) {
+    console.log('[custom invoice] payment pending; waiting for async success', {
+      sessionId: session.id,
+      invoiceId,
+    });
+    return;
+  }
 
   // Update invoice status
   const now = new Date().toISOString();
@@ -896,28 +952,61 @@ async function handleCustomInvoicePayment(args: {
   const orderId = crypto.randomUUID();
   const displayOrderId = await generateDisplayOrderId(db);
   const description = session.metadata?.description || 'Custom invoice payment';
-  const amountCents = amountTotal ?? 0;
+  const amountCents = totals.amountTotal ?? 0;
   const email = customerEmail || session.customer_details?.email || null;
-  const shippingCents = Number((session.total_details as any)?.amount_shipping ?? 0) || 0;
+  const shippingCents = totals.amountShipping ?? 0;
+  const subtotalCents = totals.amountSubtotal ?? amountCents;
+  const currency = totals.currency || 'usd';
 
   await ensureShippingColumn(db);
   let inserted = await db
     .prepare(
       `INSERT INTO orders (
-        id, display_order_id, order_type, stripe_payment_intent_id, total_cents, currency, customer_email, shipping_name, shipping_address_json, card_last4, card_brand, description, shipping_cents
-      ) VALUES (?, ?, 'custom', ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, ?);`
+        id, display_order_id, order_type, stripe_payment_intent_id, total_cents, amount_total_cents, amount_subtotal_cents, amount_shipping_cents, amount_tax_cents, amount_discount_cents, currency, customer_email, shipping_name, shipping_address_json, card_last4, card_brand, description, shipping_cents
+      ) VALUES (
+        ?, ?, 'custom', ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, NULL, NULL, NULL, NULL, ?, ?
+      );`
     )
-    .bind(orderId, displayOrderId, paymentIntentId, amountCents, currency, email, description, shippingCents)
+    .bind(
+      orderId,
+      displayOrderId,
+      paymentIntentId,
+      amountCents,
+      totals.amountTotal,
+      totals.amountSubtotal,
+      shippingCents,
+      totals.amountTax,
+      totals.amountDiscount,
+      currency,
+      email,
+      description,
+      shippingCents
+    )
     .run();
 
   if (!inserted.success && inserted.error?.includes('no such column')) {
     inserted = await db
       .prepare(
         `INSERT INTO orders (
-          id, display_order_id, stripe_payment_intent_id, total_cents, customer_email, shipping_cents
-        ) VALUES (?, ?, ?, ?, ?, ?);`
+          id, display_order_id, stripe_payment_intent_id, total_cents, amount_total_cents, amount_subtotal_cents, amount_shipping_cents, amount_tax_cents, amount_discount_cents, currency, customer_email, shipping_cents
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
       )
-      .bind(orderId, displayOrderId, paymentIntentId, amountCents, email, shippingCents)
+      .bind(
+        orderId,
+        displayOrderId,
+        paymentIntentId,
+        amountCents,
+        totals.amountTotal,
+        totals.amountSubtotal,
+        shippingCents,
+        totals.amountTax,
+        totals.amountDiscount,
+        currency,
+        email,
+        shippingCents
+      )
       .run();
   }
 
@@ -927,7 +1016,7 @@ async function handleCustomInvoicePayment(args: {
 
   // Send emails (best effort)
   const orderLabel = displayOrderId || invoiceId;
-  const invoiceAmount = formatAmount(amountTotal, currency);
+  const invoiceAmount = formatAmount(amountCents, currency);
   const siteUrl = (env.PUBLIC_SITE_URL || env.VITE_PUBLIC_SITE_URL || '').replace(/\/+$/, '');
   const invoiceLink = siteUrl ? `${siteUrl}/invoice/${invoiceId}` : `/invoice/${invoiceId}`;
   const adminUrl = siteUrl ? `${siteUrl}/admin` : '/admin';
@@ -942,7 +1031,7 @@ async function handleCustomInvoicePayment(args: {
 
   if (customerEmail) {
     try {
-      const subject = 'Payment received - The Chesapeake Shell';
+      const subject = 'Payment received - Dover Designs';
       const html = `
             <div style="font-family: Inter, Arial, sans-serif; color: #0f172a; padding: 12px; line-height: 1.5;">
               <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 700;">Thank you for your payment</h2>
@@ -989,7 +1078,6 @@ async function handleCustomInvoicePayment(args: {
     console.warn('[custom invoice] owner email missing; skipping receipt email');
   }
 
-  const subtotalCents = Math.max(0, amountTotal - shippingCents);
   const emailItems: EmailItem[] =
     (lineItems || [])
       .filter((line) => {
@@ -1021,7 +1109,7 @@ async function handleCustomInvoicePayment(args: {
     emailItems.push({
       name: description || 'Invoice payment',
       quantity: 1,
-      amountCents: subtotalCents || amountTotal,
+      amountCents: subtotalCents || amountCents,
       imageUrl: null,
     });
   }
@@ -1036,7 +1124,7 @@ async function handleCustomInvoicePayment(args: {
     amounts: {
       subtotalCents,
       shippingCents,
-      totalCents: amountTotal,
+      totalCents: amountCents,
       currency,
     },
     createdAtIso: now,
@@ -1315,6 +1403,8 @@ async function handleCustomOrderPayment(args: {
   cardLast4: string | null;
   cardBrand: string | null;
   shippingCents: number;
+  totals: CanonicalTotals;
+  isPaid: boolean;
 }) {
   const {
     db,
@@ -1328,6 +1418,8 @@ async function handleCustomOrderPayment(args: {
     cardLast4,
     cardBrand,
     shippingCents,
+    totals,
+    isPaid,
   } = args;
   const emailDebug = env.EMAIL_DEBUG === '1' || (env as any).DEBUG_EMAILS === '1';
 
@@ -1357,7 +1449,7 @@ async function handleCustomOrderPayment(args: {
 
   const customOrder = await db
     .prepare(
-      `SELECT id, display_custom_order_id, customer_name, ${
+      `SELECT id, display_custom_order_id, status, customer_name, ${
         emailCol ? `${emailCol} AS customer_email` : 'NULL AS customer_email'
       }, description, image_url, image_id, image_storage_key, amount, shipping_cents, payment_link, stripe_session_id, stripe_payment_intent_id,
          shipping_name, shipping_line1, shipping_line2, shipping_city, shipping_state, shipping_postal_code, shipping_country, shipping_phone
@@ -1367,6 +1459,7 @@ async function handleCustomOrderPayment(args: {
     .first<{
       id: string;
       display_custom_order_id: string | null;
+      status?: string | null;
       customer_name: string | null;
       customer_email: string | null;
       description: string | null;
@@ -1414,13 +1507,13 @@ async function handleCustomOrderPayment(args: {
       source: resolvedImage.source,
     });
   }
-  const shippingFromLines = extractShippingCentsFromLineItems(lineItems || []);
   const baseShipping =
     Number.isFinite(customOrder.shipping_cents as number) && (customOrder.shipping_cents as number) >= 0
       ? Number(customOrder.shipping_cents)
       : 0;
-  const resolvedShippingCents = shippingFromLines > 0 ? shippingFromLines : baseShipping;
-  const totalCents = session.amount_total ?? amount + resolvedShippingCents;
+  const resolvedShippingCents =
+    totals.amountShipping > 0 ? totals.amountShipping : baseShipping;
+  const totalCents = totals.amountTotal;
   const description = customOrder.description || 'Custom order payment';
   const shippingPhone =
     session.customer_details?.phone ||
@@ -1444,25 +1537,38 @@ async function handleCustomOrderPayment(args: {
   // Update custom order status and stripe ids
   const update = await db
     .prepare(
-      `UPDATE custom_orders
-       SET status = 'paid',
-           stripe_payment_intent_id = ?,
-           stripe_session_id = COALESCE(stripe_session_id, ?),
-           paid_at = COALESCE(paid_at, ?),
-           shipping_name = ?,
-           shipping_line1 = ?,
-           shipping_line2 = ?,
-           shipping_city = ?,
-           shipping_state = ?,
-           shipping_postal_code = ?,
-           shipping_country = ?,
-           shipping_phone = ?
-       WHERE id = ?`
+      isPaid
+        ? `UPDATE custom_orders
+           SET status = 'paid',
+               stripe_payment_intent_id = ?,
+               stripe_session_id = COALESCE(stripe_session_id, ?),
+               paid_at = COALESCE(paid_at, ?),
+               shipping_name = ?,
+               shipping_line1 = ?,
+               shipping_line2 = ?,
+               shipping_city = ?,
+               shipping_state = ?,
+               shipping_postal_code = ?,
+               shipping_country = ?,
+               shipping_phone = ?
+           WHERE id = ?`
+        : `UPDATE custom_orders
+           SET stripe_payment_intent_id = ?,
+               stripe_session_id = COALESCE(stripe_session_id, ?),
+               shipping_name = ?,
+               shipping_line1 = ?,
+               shipping_line2 = ?,
+               shipping_city = ?,
+               shipping_state = ?,
+               shipping_postal_code = ?,
+               shipping_country = ?,
+               shipping_phone = ?
+           WHERE id = ?`
     )
     .bind(
       paymentIntentId,
       session.id,
-      new Date().toISOString(),
+      ...(isPaid ? [new Date().toISOString()] : []),
       shippingName,
       shippingAddress?.line1 || null,
       shippingAddress?.line2 || null,
@@ -1478,7 +1584,16 @@ async function handleCustomOrderPayment(args: {
     console.error('[custom order] failed to update status', update.error);
   }
 
-  if (customOrder.stripe_payment_intent_id || existingOrder) {
+  if (!isPaid) {
+    console.log('[custom order] payment pending; waiting for async success', {
+      sessionId: session.id,
+      customOrderId,
+    });
+    return;
+  }
+
+  const alreadyPaid = customOrder.status === 'paid';
+  if (alreadyPaid || existingOrder) {
     console.log('[custom order] already processed', { displayId, existingOrder: existingOrder?.id });
     console.log('[webhook][custom-order-email] skip already processed', {
       sessionId: session.id,
@@ -1502,6 +1617,7 @@ async function handleCustomOrderPayment(args: {
     cardLast4,
     cardBrand,
     shippingCents: resolvedShippingCents,
+    totals,
     productId: null,
     quantityFromMeta: 1,
     displayOrderIdOverride: displayId,
@@ -1514,11 +1630,8 @@ async function handleCustomOrderPayment(args: {
         priceCents: amount,
         imageUrl: customOrder.image_url || null,
       },
-      ...(resolvedShippingCents > 0
-        ? [{ productId: 'shipping', quantity: 1, priceCents: resolvedShippingCents }]
-        : []),
     ],
-    totalCentsOverride: totalCents,
+    totalCentsOverride: totals.amountTotal,
   });
 
   const confirmationCustomerEmail = customerEmail || customOrder.customer_email || null;
@@ -1532,7 +1645,7 @@ async function handleCustomOrderPayment(args: {
     hasOwnerTo: !!(env.RESEND_OWNER_TO || env.EMAIL_OWNER_TO),
   });
 
-  if (insertResult && confirmationCustomerEmail) {
+  if (insertResult && confirmationCustomerEmail && isPaid) {
     const siteUrlForConfirmation = resolveSiteUrl(env);
     const confirmationUrl = siteUrlForConfirmation
       ? `${siteUrlForConfirmation}/checkout/return?session_id=${session.id}`
@@ -1546,11 +1659,12 @@ async function handleCustomOrderPayment(args: {
     const paymentMethodLabel = formatPaymentMethod(cardBrand, cardLast4);
     const totalsForEmail = resolveEmailMoneyTotals({
       order: {
-        total_cents: totalCents,
-        amount_cents: totalCents,
-        shipping_cents: resolvedShippingCents,
+        amount_total_cents: totals.amountTotal,
+        amount_subtotal_cents: totals.amountSubtotal,
+        amount_shipping_cents: resolvedShippingCents,
+        amount_tax_cents: totals.amountTax,
+        amount_discount_cents: totals.amountDiscount,
       },
-      shippingCentsFromContext: resolvedShippingCents,
       session,
       lineItems,
     });
@@ -1560,6 +1674,8 @@ async function handleCustomOrderPayment(args: {
       displayOrderId: insertResult.displayOrderId,
       subtotalCents: totalsForEmail.itemsSubtotalCents,
       shippingCents: totalsForEmail.shippingCents,
+      taxCents: totalsForEmail.taxCents,
+      discountCents: totalsForEmail.discountCents,
       totalCents: totalsForEmail.totalCents,
     });
     const confirmationItems: OrderConfirmationEmailItem[] = [
@@ -1574,7 +1690,7 @@ async function handleCustomOrderPayment(args: {
 
     try {
       const html = renderOrderConfirmationEmailHtml({
-        brandName: 'The Chesapeake Shell',
+        brandName: 'Dover Designs',
         orderNumber: orderLabel,
         orderDate,
         customerName: customOrder.customer_name || shippingName || session.customer_details?.name || null,
@@ -1585,12 +1701,14 @@ async function handleCustomOrderPayment(args: {
         items: confirmationItems,
         subtotal: totalsForEmail.itemsSubtotalCents,
         shipping: totalsForEmail.shippingCents,
+        tax: totalsForEmail.taxCents,
+        discount: totalsForEmail.discountCents,
         total: totalsForEmail.totalCents,
         primaryCtaUrl: confirmationUrl,
         primaryCtaLabel: 'View Order Details',
       });
       const text = renderOrderConfirmationEmailText({
-        brandName: 'The Chesapeake Shell',
+        brandName: 'Dover Designs',
         orderNumber: orderLabel,
         orderDate,
         customerName: customOrder.customer_name || shippingName || session.customer_details?.name || null,
@@ -1601,12 +1719,14 @@ async function handleCustomOrderPayment(args: {
         items: confirmationItems,
         subtotal: totalsForEmail.itemsSubtotalCents,
         shipping: totalsForEmail.shippingCents,
+        tax: totalsForEmail.taxCents,
+        discount: totalsForEmail.discountCents,
         total: totalsForEmail.totalCents,
         primaryCtaUrl: confirmationUrl,
         primaryCtaLabel: 'View Order Details',
       });
 
-      const subject = `The Chesapeake Shell - Order Confirmed (${orderLabel})`;
+      const subject = `Dover Designs - Order Confirmed (${orderLabel})`;
       const customerTo = isValidEmailRecipient(confirmationCustomerEmail) ? confirmationCustomerEmail : null;
       if (confirmationCustomerEmail && !customerTo) {
         warnInvalidRecipient('custom_customer', confirmationCustomerEmail);
@@ -1696,11 +1816,12 @@ async function handleCustomOrderPayment(args: {
   ];
   const totalsForOwner = resolveEmailMoneyTotals({
     order: {
-      total_cents: totalCents,
-      amount_cents: totalCents,
-      shipping_cents: resolvedShippingCents,
+      amount_total_cents: totals.amountTotal,
+      amount_subtotal_cents: totals.amountSubtotal,
+      amount_shipping_cents: resolvedShippingCents,
+      amount_tax_cents: totals.amountTax,
+      amount_discount_cents: totals.amountDiscount,
     },
-    shippingCentsFromContext: resolvedShippingCents,
     session,
     lineItems,
   });
@@ -1710,11 +1831,15 @@ async function handleCustomOrderPayment(args: {
     displayOrderId: insertResult.displayOrderId,
     subtotalCents: totalsForOwner.itemsSubtotalCents,
     shippingCents: totalsForOwner.shippingCents,
+    taxCents: totalsForOwner.taxCents,
+    discountCents: totalsForOwner.discountCents,
     totalCents: totalsForOwner.totalCents,
   });
   const ownerTotals = {
     subtotal: formatMoney(totalsForOwner.itemsSubtotalCents),
     shipping: formatMoney(totalsForOwner.shippingCents),
+    tax: formatMoney(totalsForOwner.taxCents),
+    discount: totalsForOwner.discountCents > 0 ? formatMoney(totalsForOwner.discountCents) : null,
     total: formatMoney(totalsForOwner.totalCents),
   };
   const shippingAddressText = formatAddressForEmail(shippingAddress, shippingName);
@@ -1734,12 +1859,14 @@ async function handleCustomOrderPayment(args: {
       statusLabel: 'PAID',
       customerName: customOrder.customer_name || shippingName || session.customer_details?.name || 'Customer',
       customerEmail: customerEmail || customOrder.customer_email || '',
-            shippingAddress: shippingAddressText || undefined,
-            billingAddress: billingAddressText || undefined,
-            paymentMethod: paymentMethodLabel,
+      shippingAddress: shippingAddressText || undefined,
+      billingAddress: billingAddressText || undefined,
+      paymentMethod: paymentMethodLabel,
       items: ownerItems,
       subtotal: ownerTotals.subtotal,
       shipping: ownerTotals.shipping,
+      tax: ownerTotals.tax,
+      discount: ownerTotals.discount,
       total: ownerTotals.total,
       adminUrl: adminLink || '/admin',
       stripeUrl,
@@ -1757,12 +1884,14 @@ async function handleCustomOrderPayment(args: {
       items: ownerItems,
       subtotal: ownerTotals.subtotal,
       shipping: ownerTotals.shipping,
+      tax: ownerTotals.tax,
+      discount: ownerTotals.discount,
       total: ownerTotals.total,
       adminUrl: adminLink || '/admin',
       stripeUrl,
     });
 
-    const ownerSubject = `NEW SALE - The Chesapeake Shell (${orderLabel})`;
+    const ownerSubject = `NEW SALE - Dover Designs (${orderLabel})`;
     const ownerRecipient = isValidEmailRecipient(ownerTo) ? ownerTo : null;
     if (ownerTo && !ownerRecipient) {
       warnInvalidRecipient('custom_owner', ownerTo);
@@ -1818,6 +1947,7 @@ async function insertStandardOrderAndItems(args: {
   cardLast4: string | null;
   cardBrand: string | null;
   shippingCents: number;
+  totals: CanonicalTotals;
   productId?: string | null;
   quantityFromMeta?: number;
   displayOrderIdOverride?: string | null;
@@ -1836,6 +1966,7 @@ async function insertStandardOrderAndItems(args: {
     cardLast4,
     cardBrand,
     shippingCents,
+    totals,
     productId,
     quantityFromMeta,
     displayOrderIdOverride,
@@ -1867,7 +1998,13 @@ async function insertStandardOrderAndItems(args: {
 
   const orderId = crypto.randomUUID();
   const displayOrderId = displayOrderIdOverride || (await generateDisplayOrderId(db));
-  const totalCents = totalCentsOverride ?? session.amount_total ?? 0;
+  const amountTotalCents = totals.amountTotal ?? session.amount_total ?? 0;
+  const amountSubtotalCents = totals.amountSubtotal ?? session.amount_subtotal ?? 0;
+  const amountShippingCents = totals.amountShipping ?? shippingCents ?? 0;
+  const amountTaxCents = totals.amountTax ?? (session.total_details as any)?.amount_tax ?? 0;
+  const amountDiscountCents = totals.amountDiscount ?? (session.total_details as any)?.amount_discount ?? 0;
+  const currency = totals.currency || session.currency || 'usd';
+  const totalCents = totalCentsOverride ?? amountTotalCents;
   const promoCode = (session.metadata?.mv_promo_code || '').trim() || null;
   const promoPercentOff = parseInt(session.metadata?.mv_percent_off_applied || '0', 10) || 0;
   const promoFreeShipping = session.metadata?.mv_free_shipping_applied === '1' ? 1 : 0;
@@ -1885,9 +2022,10 @@ async function insertStandardOrderAndItems(args: {
     .prepare(
       `
         INSERT INTO orders (
-          id, display_order_id, order_type, stripe_payment_intent_id, total_cents, customer_email, shipping_name, shipping_address_json, card_last4, card_brand, shipping_cents, description,
+          id, display_order_id, order_type, stripe_payment_intent_id, total_cents, amount_total_cents, amount_subtotal_cents, amount_shipping_cents, amount_tax_cents, amount_discount_cents, currency,
+          customer_email, shipping_name, shipping_address_json, card_last4, card_brand, shipping_cents, description,
           promo_code, promo_percent_off, promo_free_shipping, promo_source
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       `
     )
     .bind(
@@ -1896,6 +2034,12 @@ async function insertStandardOrderAndItems(args: {
       orderType ?? null,
       paymentIntentId,
       totalCents,
+      amountTotalCents,
+      amountSubtotalCents,
+      amountShippingCents,
+      amountTaxCents,
+      amountDiscountCents,
+      currency,
       customerEmail,
       shippingName,
       JSON.stringify(shippingAddress ?? null),

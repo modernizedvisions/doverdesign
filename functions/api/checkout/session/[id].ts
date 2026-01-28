@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { extractShippingCentsFromLineItems, isShippingLineItem } from '../../lib/shipping';
+import { isShippingLineItem } from '../../lib/shipping';
 
 type D1PreparedStatement = {
   all<T>(): Promise<{ results: T[] }>;
@@ -198,9 +198,13 @@ export const onRequestGet = async (context: {
       return null;
     };
 
-    const shippingFromTotal = (session.total_details as any)?.amount_shipping;
-    let shippingAmount: number | null =
-      Number.isFinite(Number(shippingFromTotal)) ? Number(shippingFromTotal) : null;
+    const toCents = (value: unknown) => (Number.isFinite(Number(value)) ? Math.round(Number(value)) : 0);
+    const totalDetails = session.total_details as Stripe.Checkout.Session.TotalDetails | null;
+    const amountTotal = toCents(session.amount_total);
+    const amountSubtotal = toCents(session.amount_subtotal);
+    const amountShipping = toCents(totalDetails?.amount_shipping);
+    const amountTax = toCents(totalDetails?.amount_tax);
+    const amountDiscount = toCents(totalDetails?.amount_discount);
     const lineItems =
       lineItemsRaw.map((li) => {
         const stripeProductId =
@@ -222,10 +226,6 @@ export const onRequestGet = async (context: {
         const isShipping = isShippingLineItem(li) && !matchedProduct;
         const isCustomOrder = /custom order/i.test(productName) && !matchedProduct;
         const lineTotal = li.amount_total ?? 0;
-        if (isShipping) {
-          if (shippingAmount === null) shippingAmount = 0;
-          shippingAmount += lineTotal;
-        }
         return {
           productName,
           quantity: li.quantity ?? 0,
@@ -237,28 +237,15 @@ export const onRequestGet = async (context: {
         };
       }) ?? [];
 
-    if (shippingAmount === null || shippingAmount === 0) {
-      const fromLines = extractShippingCentsFromLineItems(lineItemsRaw);
-      if (fromLines > 0 || shippingAmount === null) {
-        shippingAmount = fromLines;
-      }
-    }
-
-    if (shippingAmount === null || shippingAmount === 0) {
-      const fromMetadata = Number(session.metadata?.shipping_cents ?? NaN);
-      if (Number.isFinite(fromMetadata)) {
-        shippingAmount = fromMetadata;
-      }
-    }
-
-    if (!Number.isFinite(shippingAmount as number)) {
-      shippingAmount = 0;
-    }
-
     return json({
       id: session.id,
-      amount_total: session.amount_total ?? 0,
+      amount_total: amountTotal,
+      amount_subtotal: amountSubtotal,
+      amount_shipping: amountShipping,
+      amount_tax: amountTax,
+      amount_discount: amountDiscount,
       currency: session.currency ?? 'usd',
+      payment_status: session.payment_status ?? null,
       customer_email: session.customer_details?.email ?? paymentIntent?.receipt_email ?? null,
       payment_method_type: paymentMethodType,
       payment_method_label: paymentMethodLabel,
@@ -269,7 +256,7 @@ export const onRequestGet = async (context: {
           }
         : null,
       line_items: lineItems,
-      shipping_amount: shippingAmount ?? 0,
+      shipping_amount: amountShipping,
       card_last4: cardLast4,
       card_brand: cardBrand,
     });

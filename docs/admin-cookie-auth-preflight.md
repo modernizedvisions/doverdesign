@@ -131,3 +131,28 @@
 - Confirm whether any admin requests are made outside `adminFetch()` (search `fetch('/api/admin`).
 - Check for any service worker or proxy that might alter cookie behavior.
 - Verify if any local dev environment relies on `http://localhost` mixed origins.
+
+## F) Stripe Tax Preflight Discovery (2026-01-28)
+### Session creation paths + current address/shipping behavior
+- `functions/api/checkout/create-session.ts`: embedded Checkout; shipping as a line item; `shipping_address_collection` includes US/CA; no `billing_address_collection`; no `automatic_tax`.
+- `functions/api/admin/custom-orders/[id]/send-payment-link.ts`: standard Checkout session; shipping as a line item; `shipping_address_collection` US only; `phone_number_collection` enabled; no `billing_address_collection`; no `automatic_tax`.
+- `functions/api/checkout/custom-invoice-session.ts`: embedded session for custom invoices; single line item; no shipping/address collection; no `automatic_tax`.
+
+### Totals display/derived usage
+- Cart/checkout preview totals:
+  - `src/components/cart/CartDrawer.tsx` and `src/pages/CheckoutPage.tsx` compute total via `subtotal + shipping`.
+- Checkout return:
+  - `src/pages/CheckoutReturnPage.tsx` displays total and shipping from session response (no tax line yet).
+- Admin:
+  - `src/components/admin/AdminOrdersTab.tsx` shows `totalCents`.
+  - `src/components/admin/OrderDetailsModal.tsx` infers shipping via `total - subtotal` fallback.
+- Emails:
+  - `functions/_lib/orderConfirmationEmail.ts` and `functions/_lib/ownerNewSaleEmail.ts` show Subtotal/Shipping/Total only.
+  - `functions/_lib/customOrderPaymentLinkEmail.ts` computes `subtotal + shipping` for the payment link email.
+  - `functions/_lib/emailTotals.ts` derives shipping from `total - subtotal (+discount - tax)` in the current implementation.
+
+## Implementation Notes — Gold Standard Totals
+- Shipping moved to Checkout `shipping_options` (no shipping line item).
+- Canonical totals persisted in `orders` (subtotal/shipping/tax/discount/total/currency).
+- UI/admin/emails render canonical totals; derived shipping math removed.
+- Async payments handle `checkout.session.completed` + `checkout.session.async_payment_succeeded` with paid-only fulfillment.
