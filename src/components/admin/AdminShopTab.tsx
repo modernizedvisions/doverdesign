@@ -820,7 +820,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="lux-label">Product Images (max 4)</h3>
+                    <h3 className="lux-label">Product Images</h3>
                     <button
                       type="button"
                       onClick={() => editProductImageFileInputRef.current?.click()}
