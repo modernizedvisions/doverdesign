@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface DialogProps {
   open: boolean;
@@ -36,7 +37,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
 
   if (!open) return null;
 
-  return (
+  const overlay = (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-deep-ocean/40 px-4 py-4 backdrop-blur-[2px] sm:items-center sm:py-8"
       ref={overlayRef}
@@ -54,6 +55,12 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') {
+    return overlay;
+  }
+
+  return createPortal(overlay, document.body);
 };
 
 interface DialogContentProps {
