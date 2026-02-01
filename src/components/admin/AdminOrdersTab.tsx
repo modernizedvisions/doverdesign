@@ -58,7 +58,7 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
                       <div className="flex items-center gap-2">
                         <span>{order.shippingName || order.customerName || 'Customer'}</span>
                         {order.isSeen === false && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" aria-label="Unseen order" />
+                          <span className="inline-flex h-2 w-2 rounded-ui bg-red-500" aria-label="Unseen order" />
                         )}
                       </div>
                       <div className="text-xs text-gray-500">{order.customerEmail || 'No email'}</div>
@@ -106,7 +106,7 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
                       <div className="flex items-center gap-2">
                         <span>{order.shippingName || order.customerName || 'Customer'}</span>
                         {order.isSeen === false && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" aria-label="Unseen order" />
+                          <span className="inline-flex h-2 w-2 rounded-ui bg-red-500" aria-label="Unseen order" />
                         )}
                       </div>
                       <div className="text-gray-500">{order.customerEmail || 'No email'}</div>

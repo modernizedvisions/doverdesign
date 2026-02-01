@@ -432,7 +432,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
             </div>
 
             {submitStatus === 'success' && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm text-center">
                 {submittedType === 'message'
                   ? 'Thank you for your message! We typically respond within 24-48 Hours'
                   : "Got it - we're excited!"}
