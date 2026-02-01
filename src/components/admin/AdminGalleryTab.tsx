@@ -263,7 +263,7 @@ function GalleryAdmin({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="lux-card p-6">
       <div className="mb-4">
         <AdminSectionHeader title={title} subtitle={description} />
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
@@ -276,7 +276,7 @@ function GalleryAdmin({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:border-gray-400"
+            className="lux-button--ghost px-3 py-2 text-[10px]"
           >
             <Upload className="w-4 h-4" />
             Upload Images
@@ -293,7 +293,7 @@ function GalleryAdmin({
             }}
           />
         </div>
-        <div className="mt-2 text-xs text-gray-600">
+        <div className="mt-2 text-xs text-charcoal/60">
           {saveState === 'saving' && 'Saving changes...'}
           {saveState === 'success' && 'Gallery saved.'}
           {saveState === 'error' && 'Save failed. Please retry.'}
@@ -302,7 +302,7 @@ function GalleryAdmin({
       </div>
 
       <div
-        className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center text-gray-500 cursor-pointer"
+        className="rounded-shell-lg border-2 border-dashed border-driftwood/70 bg-linen/70 p-4 text-center text-charcoal/60 cursor-pointer"
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
@@ -315,8 +315,8 @@ function GalleryAdmin({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
         {images.map((img, idx) => (
-          <div key={img.id} className="relative group rounded-lg overflow-hidden border border-gray-200">
-            <div className="aspect-square bg-gray-100">
+          <div key={img.id} className="relative group rounded-shell-lg overflow-hidden border border-driftwood/60 bg-white/80">
+            <div className="aspect-square bg-linen/80">
               <ProgressiveImage
                 src={img.previewUrl || img.url || ''}
                 alt={img.alt || `Gallery image ${idx + 1}`}
@@ -326,7 +326,7 @@ function GalleryAdmin({
                 decoding="async"
               />
               {img.isUploading && (
-                <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-gray-700">
+                <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-charcoal/70">
                   {img.isOptimizing ? 'Optimizing image...' : 'Uploading...'}
                 </div>
               )}
@@ -341,7 +341,7 @@ function GalleryAdmin({
                 <button
                   type="button"
                   onClick={() => handleToggleVisibility(img.id)}
-                  className="inline-flex items-center gap-1 bg-white/10 px-2 py-1 rounded hover:bg-white/20"
+                  className="inline-flex items-center gap-1 bg-white/10 px-2 py-1 rounded-shell hover:bg-white/20"
                 >
                   {!img.hidden ? (
                     <>
@@ -363,7 +363,7 @@ function GalleryAdmin({
                         e.stopPropagation();
                         void handleRetry(img.id);
                       }}
-                      className="bg-white/10 px-2 py-1 rounded hover:bg-white/20"
+                      className="bg-white/10 px-2 py-1 rounded-shell hover:bg-white/20"
                     >
                       Retry
                     </button>
@@ -371,21 +371,21 @@ function GalleryAdmin({
                   <button
                     type="button"
                     onClick={() => handleMove(img.id, 'up')}
-                    className="bg-white/10 px-2 py-1 rounded hover:bg-white/20"
+                    className="bg-white/10 px-2 py-1 rounded-shell hover:bg-white/20"
                   >
                     ↑
                   </button>
                   <button
                     type="button"
                     onClick={() => handleMove(img.id, 'down')}
-                    className="bg-white/10 px-2 py-1 rounded hover:bg-white/20"
+                    className="bg-white/10 px-2 py-1 rounded-shell hover:bg-white/20"
                   >
                     ↓
                   </button>
                   <button
                     type="button"
                     onClick={() => handleRemove(img.id)}
-                    className="inline-flex items-center gap-1 bg-red-600 px-2 py-1 rounded hover:bg-red-700"
+                    className="inline-flex items-center gap-1 bg-red-600 px-2 py-1 rounded-shell hover:bg-red-700"
                   >
                     <Trash2 className="w-3 h-3" />
                     Remove
@@ -394,7 +394,7 @@ function GalleryAdmin({
               </div>
             </div>
             <div className="absolute top-2 left-2">
-              <span className="inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-gray-800 shadow-sm">
+              <span className="inline-flex items-center rounded-ui bg-white/90 px-2 py-0.5 text-[10px] font-medium text-charcoal shadow-sm">
                 #{idx + 1}
               </span>
             </div>
@@ -402,7 +402,7 @@ function GalleryAdmin({
         ))}
 
         {images.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center text-gray-500 py-8 border border-dashed border-gray-300 rounded-lg">
+          <div className="col-span-full flex flex-col items-center justify-center text-charcoal/60 py-8 border border-dashed border-driftwood/70 rounded-shell-lg">
             <Plus className="w-6 h-6 mb-2" />
             <p className="text-sm">No images uploaded yet.</p>
           </div>

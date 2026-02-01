@@ -38,7 +38,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 py-4 sm:items-center sm:py-8"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-deep-ocean/40 px-4 py-4 backdrop-blur-[2px] sm:items-center sm:py-8"
       ref={overlayRef}
       onClick={(e) => {
         if (e.target === overlayRef.current) {
@@ -47,7 +47,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
       }}
     >
       <div
-        className="relative flex w-full max-w-2xl max-h-[92vh] flex-col overflow-hidden rounded-xl bg-white shadow-xl"
+        className="relative flex w-full max-w-2xl max-h-[92vh] flex-col overflow-hidden rounded-shell-lg border border-driftwood/70 bg-white/92 lux-shadow"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -62,7 +62,7 @@ interface DialogContentProps {
 }
 
 export const DialogContent: React.FC<DialogContentProps> = ({ children, className }) => {
-  return <div className={`p-6 space-y-4 ${className ?? ''}`}>{children}</div>;
+  return <div className={`p-6 space-y-4 text-charcoal ${className ?? ''}`}>{children}</div>;
 };
 
 interface DialogHeaderProps {
@@ -78,7 +78,7 @@ interface DialogTitleProps {
 }
 
 export const DialogTitle: React.FC<DialogTitleProps> = ({ children }) => {
-  return <h2 className="text-lg font-semibold text-slate-900">{children}</h2>;
+  return <h2 className="text-lg font-semibold uppercase tracking-[0.18em] text-deep-ocean">{children}</h2>;
 };
 
 interface DialogDescriptionProps {
@@ -86,7 +86,7 @@ interface DialogDescriptionProps {
 }
 
 export const DialogDescription: React.FC<DialogDescriptionProps> = ({ children }) => {
-  return <p className="text-sm text-slate-600">{children}</p>;
+  return <p className="text-sm text-charcoal/75">{children}</p>;
 };
 
 interface DialogFooterProps {

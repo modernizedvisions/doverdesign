@@ -150,55 +150,55 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
     : 'No shipping address provided.';
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-3 py-6">
-      <div className="relative w-full max-w-xl rounded-2xl bg-white shadow-xl border border-slate-100 p-6 max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-deep-ocean/40 px-3 py-6 backdrop-blur-[2px]">
+      <div className="lux-card relative w-full max-w-xl p-6 max-h-[85vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+          className="absolute right-3 top-3 lux-button--ghost px-3 py-1 text-[10px]"
         >
           CLOSE
         </button>
 
         <div className="space-y-5">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 mb-1">Order</p>
-            <div className="text-xl font-semibold text-slate-900">Order {idLabel}</div>
-            <p className="text-sm text-slate-600">Placed {placedAt}</p>
+            <p className="lux-label text-[10px] mb-1">Order</p>
+            <div className="text-xl font-semibold text-charcoal">Order {idLabel}</div>
+            <p className="text-sm text-charcoal/70">Placed {placedAt}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <section className="rounded-lg border border-slate-200 p-4">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 mb-1.5">Customer</p>
-              <div className="space-y-1 text-sm text-slate-700">
-                <div className="font-medium text-slate-900">{customerName}</div>
-                <div className="text-slate-600">{customerEmail}</div>
-                <div className="text-slate-600 whitespace-pre-line">{formattedAddress}</div>
+            <section className="lux-panel p-4">
+              <p className="lux-label text-[10px] mb-1.5">Customer</p>
+              <div className="space-y-1 text-sm text-charcoal/80">
+                <div className="font-medium text-charcoal">{customerName}</div>
+                <div className="text-charcoal/70">{customerEmail}</div>
+                <div className="text-charcoal/70 whitespace-pre-line">{formattedAddress}</div>
               </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 p-4">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 mb-2">Order Status</p>
+            <section className="lux-panel p-4">
+              <p className="lux-label text-[10px] mb-2">Order Status</p>
               <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 border border-emerald-100">
+                <span className="inline-flex items-center rounded-ui bg-emerald-50 px-3 py-1 text-emerald-700 border border-emerald-100">
                   Completed
                 </span>
-                <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-blue-700 border border-blue-100">
+                <span className="inline-flex items-center rounded-ui bg-blue-50 px-3 py-1 text-blue-700 border border-blue-100">
                   Paid
                 </span>
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-slate-700 border border-slate-200">
+                <span className="inline-flex items-center rounded-ui bg-linen/80 px-3 py-1 text-charcoal/80 border border-driftwood/60">
                   {placedAt}
                 </span>
               </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 p-4">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 mb-2">Items</p>
+            <section className="lux-panel p-4">
+              <p className="lux-label text-[10px] mb-2">Items</p>
               <div className="space-y-3">
                 {items.map((item, idx) => (
                   <div key={`${item.productId}-${idx}`} className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-md bg-slate-100 border border-slate-200 overflow-hidden">
+                      <div className="h-10 w-10 rounded-shell bg-linen/80 border border-driftwood/60 overflow-hidden">
                         {item.productImageUrl ? (
                           <img
                             src={item.productImageUrl}
@@ -213,15 +213,15 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
                         ) : null}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">
+                        <div className="text-sm font-medium text-charcoal truncate">
                           {getDisplayItemName(item)}
                         </div>
-                        <div className="text-xs text-slate-600">
+                        <div className="text-xs text-charcoal/70">
                           Qty: {item.quantity || 0} — {formatCurrency(item.priceCents, currency)}
                         </div>
                       </div>
                     </div>
-                    <div className="text-sm font-semibold text-slate-900 whitespace-nowrap">
+                    <div className="text-sm font-semibold text-charcoal whitespace-nowrap">
                       {lineTotal(item.quantity, item.priceCents)}
                     </div>
                   </div>
@@ -229,62 +229,62 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
               </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 p-4">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 mb-2">Totals</p>
+            <section className="lux-panel p-4">
+              <p className="lux-label text-[10px] mb-2">Totals</p>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">Subtotal</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(subtotalCents, currency)}</span>
+                  <span className="text-charcoal/70">Subtotal</span>
+                  <span className="font-medium text-charcoal">{formatCurrency(subtotalCents, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">Shipping</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(shippingCents, currency)}</span>
+                  <span className="text-charcoal/70">Shipping</span>
+                  <span className="font-medium text-charcoal">{formatCurrency(shippingCents, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">Tax</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="text-charcoal/70">Tax</span>
+                  <span className="font-medium text-charcoal">
                     {taxCents === null ? '—' : formatCurrency(taxCents, currency)}
                   </span>
                 </div>
                 {discountCents && discountCents > 0 ? (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Discount</span>
-                    <span className="font-medium text-slate-900">-{formatCurrency(discountCents, currency)}</span>
+                    <span className="text-charcoal/70">Discount</span>
+                    <span className="font-medium text-charcoal">-{formatCurrency(discountCents, currency)}</span>
                   </div>
                 ) : null}
-                <div className="flex items-center justify-between pt-1 border-t border-slate-200">
-                  <span className="font-semibold text-slate-900">Total</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(totalCents, currency)}</span>
+                <div className="flex items-center justify-between pt-1 border-t border-driftwood/60">
+                  <span className="font-semibold text-charcoal">Total</span>
+                  <span className="font-semibold text-charcoal">{formatCurrency(totalCents, currency)}</span>
                 </div>
               </div>
             </section>
 
             {hasPromo && (
-              <section className="rounded-lg border border-slate-200 p-4">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 mb-2">Promotions</p>
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-2">Promotions</p>
                 <div className="space-y-2 text-sm">
                   {order.promoCode ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Promo code</span>
-                      <span className="font-medium text-slate-900">{order.promoCode.toUpperCase()}</span>
+                      <span className="text-charcoal/70">Promo code</span>
+                      <span className="font-medium text-charcoal">{order.promoCode.toUpperCase()}</span>
                     </div>
                   ) : null}
                   {order.promoPercentOff !== null && order.promoPercentOff !== undefined ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Percent off</span>
-                      <span className="font-medium text-slate-900">{order.promoPercentOff}%</span>
+                      <span className="text-charcoal/70">Percent off</span>
+                      <span className="font-medium text-charcoal">{order.promoPercentOff}%</span>
                     </div>
                   ) : null}
                   {order.promoFreeShipping !== null && order.promoFreeShipping !== undefined ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Free shipping</span>
-                      <span className="font-medium text-slate-900">{order.promoFreeShipping ? 'Yes' : 'No'}</span>
+                      <span className="text-charcoal/70">Free shipping</span>
+                      <span className="font-medium text-charcoal">{order.promoFreeShipping ? 'Yes' : 'No'}</span>
                     </div>
                   ) : null}
                   {order.promoSource ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Source</span>
-                      <span className="font-medium text-slate-900">{order.promoSource}</span>
+                      <span className="text-charcoal/70">Source</span>
+                      <span className="font-medium text-charcoal">{order.promoSource}</span>
                     </div>
                   ) : null}
                 </div>

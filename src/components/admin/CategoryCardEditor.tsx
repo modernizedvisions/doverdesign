@@ -66,8 +66,8 @@ export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: Cat
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
-      <div className="relative aspect-[3/4] bg-gray-50">
+    <div className="lux-card overflow-hidden flex flex-col">
+      <div className="relative aspect-[3/4] bg-linen/70">
         {category.imageUrl ? (
           <ProgressiveImage
             src={category.imageUrl}
@@ -78,14 +78,14 @@ export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: Cat
             decoding="async"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">No image</div>
+          <div className="flex h-full w-full items-center justify-center text-sm text-charcoal/50">No image</div>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
         <div className="absolute inset-x-0 bottom-3 flex justify-center">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="pointer-events-auto rounded-full bg-white/90 px-4 py-1.5 text-xs font-medium text-gray-900 shadow hover:bg-white"
+            className="pointer-events-auto lux-button--ghost px-4 py-1 text-[10px]"
             disabled={isBusy || isUpdatingImage}
           >
             {isOptimizingImage ? 'Optimizing...' : isUpdatingImage ? 'Saving...' : 'Edit Image'}
@@ -107,43 +107,43 @@ export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: Cat
       <div className="p-4 space-y-3">
         <div className="flex items-start gap-2">
           <div className="flex-1">
-            <label className="text-xs uppercase tracking-wide text-gray-500">Name</label>
+            <label className="lux-label text-[10px]">Name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+              className="lux-input text-sm mt-1"
             />
           </div>
           <button
             type="button"
             onClick={handleSaveName}
             disabled={isBusy || isSavingName || name.trim() === category.name || !name.trim()}
-            className="self-end rounded-md bg-gray-900 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+            className="lux-button px-3 py-2 text-[10px] disabled:opacity-50"
           >
             {isSavingName ? 'Saving...' : 'Rename'}
           </button>
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-gray-800">
+          <label className="flex items-center gap-2 text-sm text-charcoal">
             <input
               type="checkbox"
               checked={!!category.showOnHomePage}
               onChange={handleToggleHome}
               disabled={isBusy}
-              className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+              className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
             />
             Show on Home Page
           </label>
 
           {isOtherItemsCategory(category) ? (
-            <span className="text-xs text-gray-500">Required</span>
+            <span className="text-xs text-charcoal/60">Required</span>
           ) : (
             <button
               type="button"
               onClick={handleDelete}
               disabled={isBusy}
-              className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-700"
+              className="inline-flex items-center gap-1 text-sm text-rose-700 hover:text-red-700"
             >
               <Trash2 className="h-4 w-4" />
               Delete
@@ -157,12 +157,12 @@ export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: Cat
 
 export function CategoryCardSkeleton() {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden animate-pulse">
-      <div className="aspect-[3/4] bg-gray-100" />
+    <div className="lux-card overflow-hidden animate-pulse">
+      <div className="aspect-[3/4] bg-linen/80" />
       <div className="p-4 space-y-2">
-        <div className="h-4 bg-gray-100 rounded w-2/3" />
-        <div className="h-4 bg-gray-100 rounded w-1/3" />
-        <div className="h-8 bg-gray-100 rounded w-full" />
+        <div className="h-4 bg-linen/80 rounded-shell w-2/3" />
+        <div className="h-4 bg-linen/80 rounded-shell w-1/3" />
+        <div className="h-8 bg-linen/80 rounded-shell w-full" />
       </div>
     </div>
   );

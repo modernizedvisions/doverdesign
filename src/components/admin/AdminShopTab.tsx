@@ -67,7 +67,7 @@ const ProductAdminCard: React.FC<ProductAdminCardProps> = ({ product, onEdit, on
     (product.priceCents !== undefined ? formatPriceDisplay(product.priceCents) : '');
 
   return (
-    <div className="flex flex-col rounded-xl border bg-white shadow-sm hover:shadow-md transition-shadow relative">
+    <div className="lux-card flex flex-col relative transition-transform hover:-translate-y-0.5">
       {onDelete && (
         <button
           type="button"
@@ -75,12 +75,12 @@ const ProductAdminCard: React.FC<ProductAdminCardProps> = ({ product, onEdit, on
             if (!product.id) return;
             onDelete(product.id);
           }}
-          className="absolute right-2 top-2 z-10 rounded-full bg-white/90 p-1.5 text-slate-600 shadow hover:text-red-600 hover:shadow-md"
+          className="absolute right-2 top-2 z-10 lux-button--ghost px-2 py-1 text-[10px] !text-rose-700"
         >
           <Trash2 className="h-4 w-4" />
         </button>
       )}
-      <div className="aspect-[4/5] w-full overflow-hidden rounded-t-xl bg-slate-100">
+      <div className="aspect-[4/5] w-full overflow-hidden rounded-shell-lg bg-linen/80 border border-driftwood/50">
         {primaryImageUrl ? (
           <ProgressiveImage
             src={primaryImageUrl}
@@ -91,7 +91,7 @@ const ProductAdminCard: React.FC<ProductAdminCardProps> = ({ product, onEdit, on
             decoding="async"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+          <div className="flex h-full w-full items-center justify-center text-xs text-charcoal/50">
             No image
           </div>
         )}
@@ -99,25 +99,25 @@ const ProductAdminCard: React.FC<ProductAdminCardProps> = ({ product, onEdit, on
 
       <div className="flex flex-col gap-2 p-4">
         {categoryLabel && (
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-charcoal/60">
             {categoryLabel}
           </div>
         )}
 
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-medium text-slate-900 truncate">
+          <h3 className="text-sm font-medium text-charcoal truncate">
             {product.name}
           </h3>
-          <span className="text-sm font-semibold text-slate-900 whitespace-nowrap">
+          <span className="text-sm font-semibold text-charcoal whitespace-nowrap">
             {priceLabel}
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-charcoal/70">
           {isActive !== undefined && (
             <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              className={`rounded-ui px-2 py-0.5 text-[11px] font-medium ${
+                isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
               }`}
             >
               {isActive ? 'Active' : 'Inactive'}
@@ -127,7 +127,7 @@ const ProductAdminCard: React.FC<ProductAdminCardProps> = ({ product, onEdit, on
 
         <button
           type="button"
-          className="mt-2 w-full rounded-lg border border-slate-200 py-2 text-sm font-medium hover:bg-slate-50"
+          className="mt-2 w-full lux-button--ghost py-2 text-[10px]"
           onClick={() => onEdit(product)}
         >
           Edit product
@@ -340,7 +340,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="lux-card p-6">
         <AdminSectionHeader
           title="Add Products"
           subtitle="Add, edit, and manage all products shown in the storefront."
@@ -351,22 +351,22 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] gap-8">
             <section className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                <label className="lux-label mb-2 block">Product Name</label>
                 <input
                   required
                   value={productForm.name}
                   onChange={(e) => onProductFormChange('name', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  className="lux-input"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="lux-label mb-2 block">Description</label>
                 <textarea
                   required
                   value={productForm.description}
                   onChange={(e) => onProductFormChange('description', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  className="lux-input"
                   rows={4}
                 />
               </div>
@@ -375,7 +375,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                 <div className="flex flex-col gap-4 h-full">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                      <label className="lux-label mb-2 block">Price</label>
                       <input
                         required
                         type="number"
@@ -384,17 +384,17 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         value={productForm.price}
                         onChange={(e) => onProductFormChange('price', e.target.value)}
                         placeholder="0.00"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                        className="lux-input"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Qty</label>
+                      <label className="lux-label mb-2 block">Qty</label>
                       <input
                         type="number"
                         min="1"
                         value={productForm.quantityAvailable}
                         onChange={(e) => onProductFormChange('quantityAvailable', Number(e.target.value))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                        className="lux-input"
                         disabled={productForm.isOneOff}
                       />
                     </div>
@@ -417,11 +417,11 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     <button
                       type="submit"
                       disabled={productSaveState === 'saving' || isUploading || failedCount > 0 || missingUrlCount > 0}
-                      className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                      className="lux-button px-4 py-2 text-[10px] disabled:opacity-50"
                     >
                       {productSaveState === 'saving' ? (
                         <span className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-gray-200" />
+                          <Loader2 className="w-4 h-4 animate-spin text-white/80" />
                           <span>Saving...</span>
                         </span>
                       ) : (
@@ -429,7 +429,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       )}
                     </button>
                     {(isUploading || failedCount > 0 || missingUrlCount > 0) && (
-                      <span className="text-xs text-slate-500 self-center">
+                      <span className="text-xs text-charcoal/60 self-center">
                         {isOptimizing && 'Optimizing images...'}
                         {!isOptimizing && isUploading && 'Uploading images...'}
                         {!isUploading && failedCount > 0 && 'Fix failed uploads (remove/retry) before saving.'}
@@ -439,7 +439,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     <button
                       type="button"
                       onClick={onResetProductForm}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:border-gray-400"
+                      className="lux-button--ghost px-4 py-2 text-[10px]"
                     >
                       Clear
                     </button>
@@ -448,20 +448,20 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
                 <div className="flex flex-col h-full">
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-slate-700">
+                    <label className="lux-label">
                       Categories
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsCategoryModalOpen(true)}
-                      className="text-xs font-medium text-slate-500 hover:text-slate-800 underline"
+                      className="lux-button--ghost px-3 py-1 text-[10px]"
                     >
                       Edit Categories
                     </button>
                   </div>
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 max-h-40 overflow-y-auto">
+                  <div className="lux-panel max-h-40 overflow-y-auto">
                     {categories.length === 0 ? (
-                      <p className="px-3 py-2 text-xs text-slate-500">No categories. Create one above.</p>
+                      <p className="px-3 py-2 text-xs text-charcoal/60">No categories. Create one above.</p>
                     ) : (
                       categories.map((cat, idx) => {
                         const catName = cat.name || '';
@@ -469,15 +469,15 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         return (
                         <label
                           key={key}
-                          className="flex items-center gap-2 px-3 py-1 text-sm hover:bg-slate-100 cursor-pointer"
+                          className="flex items-center gap-2 px-3 py-1 text-sm hover:bg-linen/80 cursor-pointer"
                         >
                           <input
                             type="checkbox"
                             checked={productForm.category === catName}
                             onChange={() => onProductFormChange('category', catName)}
-                            className="h-4 w-4 rounded border-slate-300"
+                            className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                           />
-                          <span className="text-slate-800">{catName || 'Unnamed category'}</span>
+                          <span className="text-charcoal">{catName || 'Unnamed category'}</span>
                         </label>
                         );
                       })
@@ -489,11 +489,11 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
             <aside className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-slate-800">Product Images</h4>
+                <h4 className="lux-label">Product Images</h4>
                 <button
                   type="button"
                   onClick={() => productImageFileInputRef.current?.click()}
-                  className="text-xs font-medium text-slate-700 border border-slate-300 rounded-full px-3 py-1 hover:bg-slate-50"
+                  className="lux-button--ghost px-3 py-1 text-[10px]"
                 >
                   Upload Images
                 </button>
@@ -535,7 +535,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     return (
                       <div
                         key={image.id}
-                        className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer"
+                        className="relative aspect-square rounded-shell-lg overflow-hidden border border-driftwood/60 bg-linen/80 cursor-pointer"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
@@ -568,7 +568,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                           <button
                             type="button"
                             onClick={() => onSetPrimaryProductImage(image.id)}
-                            className={`px-2 py-1 rounded ${image.isPrimary ? 'bg-white text-slate-900' : 'bg-black/30 text-white'}`}
+                            className={`px-2 py-1 rounded-shell ${image.isPrimary ? 'bg-white text-charcoal' : 'bg-black/30 text-white'}`}
                           >
                             {image.isPrimary ? 'Primary' : 'Set primary'}
                           </button>
@@ -586,7 +586,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                   return (
                     <div
                       key={index}
-                      className="flex items-center justify-center aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 text-xs text-slate-400 cursor-pointer"
+                      className="flex items-center justify-center aspect-square rounded-shell-lg border-2 border-dashed border-driftwood/70 bg-linen/70 text-xs text-charcoal/40 cursor-pointer"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
@@ -628,7 +628,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
       <div className="mt-8">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-900 tracking-[0.08em] uppercase">
+          <h3 className="lux-eyebrow">
             Edit Current Products
           </h3>
           <div className="hidden" />
@@ -639,13 +639,13 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search products..."
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm sm:max-w-xs"
+            className="lux-input text-sm sm:max-w-xs"
           />
 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm sm:max-w-xs"
+            className="lux-input text-sm sm:max-w-xs"
           >
             <option value="All">All types</option>
             {categories.map((c, idx) => {
@@ -661,14 +661,14 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
         </div>
 
         {isLoadingProducts && (
-          <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+          <div className="mb-3 flex items-center gap-2 text-sm text-charcoal/60">
             <Loader2 className="w-4 h-4 animate-spin" />
             Loading...
           </div>
         )}
 
         {filteredProducts.length === 0 ? (
-          <div className="text-center text-gray-500 py-8 border border-dashed border-gray-200 rounded-lg">
+          <div className="text-center text-charcoal/60 py-8 border border-dashed border-driftwood/60 rounded-shell-lg bg-white/70">
             No active products
           </div>
         ) : (
@@ -702,14 +702,14 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
             }}
             className="flex min-h-0 flex-1 flex-col overflow-y-auto"
           >
-            <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b bg-white px-6 py-4">
+            <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-driftwood/60 bg-white/80 px-6 py-4">
               <DialogTitle>Edit Product</DialogTitle>
               <div className="flex items-center gap-2">
                 {editProductId && (
                   <button
                     type="button"
                     onClick={() => setIsDeleteConfirmOpen(true)}
-                    className="text-slate-500 hover:text-red-600 transition-colors"
+                    className="lux-button--ghost px-2 py-1 text-[10px] !text-rose-700"
                     aria-label="Delete product"
                   >
                     <Trash2 className="h-5 w-5" />
@@ -718,14 +718,14 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+                  className="lux-button--ghost px-3 py-1 text-[10px]"
                 >
                   CLOSE
                 </button>
                 <button
                   type="submit"
                   disabled={editProductSaveState === 'saving'}
-                  className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="lux-button px-3 py-1 text-[10px] disabled:opacity-50"
                 >
                   {editProductSaveState === 'saving' ? 'Saving...' : 'Save'}
                 </button>
@@ -736,17 +736,17 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <label className="lux-label mb-2 block">Name</label>
                     <input
                       value={editProductForm?.name || ''}
                       onChange={(e) => onEditFormChange('name', e.target.value)}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="lux-input text-sm"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                      <label className="lux-label mb-2 block">Price</label>
                       <input
                         type="number"
                         min="0"
@@ -754,39 +754,39 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         value={editProductForm?.price || ''}
                         onChange={(e) => onEditFormChange('price', e.target.value)}
                         disabled
-                        className="w-full rounded-md border border-slate-300 bg-gray-100 px-3 py-2 text-sm text-slate-500 opacity-70 cursor-not-allowed"
+                        className="lux-input text-sm bg-linen/80 text-charcoal/60 opacity-70 cursor-not-allowed"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                      <label className="lux-label mb-2 block">Quantity</label>
                       <input
                         type="number"
                         min="1"
                         value={editProductForm?.quantityAvailable ?? 1}
                         onChange={(e) => onEditFormChange('quantityAvailable', Number(e.target.value))}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        className="lux-input text-sm"
                         disabled={editProductForm?.isOneOff}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label className="lux-label mb-2 block">Description</label>
                     <textarea
                       value={editProductForm?.description || ''}
                       onChange={(e) => onEditFormChange('description', e.target.value)}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="lux-input text-sm"
                       rows={3}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <label className="lux-label mb-2 block">Category</label>
                       <select
                         value={editProductForm?.category}
                         onChange={(e) => onEditFormChange('category', e.target.value)}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        className="lux-input text-sm"
                       >
                         {categories.length === 0 ? (
                           <option value="">No categories available</option>
@@ -820,11 +820,11 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-900">Product Images (max 4)</h3>
+                    <h3 className="lux-label">Product Images (max 4)</h3>
                     <button
                       type="button"
                       onClick={() => editProductImageFileInputRef.current?.click()}
-                      className="text-xs font-medium text-slate-700 border border-slate-300 rounded-full px-3 py-1 hover:bg-slate-50"
+                      className="lux-button--ghost px-3 py-1 text-[10px]"
                     >
                       Upload
                     </button>
@@ -864,7 +864,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       const image = editImages[idx];
                       if (image) {
                         return (
-                          <div key={image.id} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                          <div key={image.id} className="relative aspect-square rounded-shell-lg overflow-hidden border border-driftwood/60 bg-linen/80">
                             <ProgressiveImage
                               src={image.previewUrl ?? image.url}
                               alt={`Edit image ${idx + 1}`}
@@ -877,7 +877,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleSetPrimaryModalImage(image.id)}
-                                className={`px-2 py-1 rounded ${image.isPrimary ? 'bg-white text-slate-900' : 'bg-black/30 text-white'}`}
+                                className={`px-2 py-1 rounded-shell ${image.isPrimary ? 'bg-white text-charcoal' : 'bg-black/30 text-white'}`}
                               >
                                 {image.isPrimary ? 'Primary' : 'Set primary'}
                               </button>
@@ -897,7 +897,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                           key={idx}
                           type="button"
                           onClick={() => editProductImageFileInputRef.current?.click()}
-                          className="flex items-center justify-center aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 text-xs text-slate-400"
+                          className="flex items-center justify-center aspect-square rounded-shell-lg border-2 border-dashed border-driftwood/70 bg-linen/70 text-xs text-charcoal/40"
                         >
                           Upload
                         </button>
@@ -939,8 +939,8 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
       {productStatus.type && (
         <div className="pointer-events-none absolute left-1/2 bottom-4 z-20 -translate-x-1/2">
           <div
-            className={`pointer-events-auto rounded-full px-4 py-2 text-sm shadow-md ${
-              productStatus.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'
+            className={`pointer-events-auto rounded-shell px-4 py-2 text-sm shadow-md ${
+              productStatus.type === 'error' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
             }`}
           >
             {productStatus.message}
@@ -964,7 +964,7 @@ interface ToggleSwitchProps {
 }
 
 function ToggleSwitch({ label, description, checked, onChange }: ToggleSwitchProps) {
-  const trackClasses = checked ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-300';
+  const trackClasses = checked ? 'bg-deep-ocean border-deep-ocean' : 'bg-sea-glass/30 border-driftwood/70';
   const thumbClasses = checked ? 'translate-x-5' : 'translate-x-1';
 
   return (
@@ -977,8 +977,8 @@ function ToggleSwitch({ label, description, checked, onChange }: ToggleSwitchPro
         />
       </span>
       <div className="flex flex-col text-left">
-        <span className="text-sm font-medium text-slate-800">{label}</span>
-        {description && <span className="text-xs text-slate-500">{description}</span>}
+        <span className="text-sm font-medium text-charcoal">{label}</span>
+        {description && <span className="text-xs text-charcoal/60">{description}</span>}
       </div>
     </button>
   );
@@ -993,7 +993,7 @@ function ToggleSwitchSmall({
   checked: boolean;
   onChange: (value: boolean) => void;
 }) {
-  const trackClasses = checked ? 'bg-slate-900 border-slate-900' : 'bg-slate-200 border-slate-300';
+  const trackClasses = checked ? 'bg-deep-ocean border-deep-ocean' : 'bg-sea-glass/30 border-driftwood/70';
   const thumbClasses = checked ? 'translate-x-4' : 'translate-x-0.5';
 
   return (
@@ -1005,7 +1005,7 @@ function ToggleSwitchSmall({
           className={`inline-block h-4 w-4 rounded-full rounded-ui bg-white shadow transform transition-transform ${thumbClasses}`}
         />
       </span>
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-sm font-medium text-charcoal/80">{label}</span>
     </button>
   );
 }
@@ -1022,14 +1022,14 @@ function ManagedImagesList({
   onRemove: (id: string) => void;
 }) {
   if (!images.length) {
-    return <div className="text-sm text-gray-500 border border-gray-200 rounded-lg p-3">No images yet. Upload to add.</div>;
+    return <div className="text-sm text-charcoal/60 border border-driftwood/60 rounded-shell-lg bg-white/70 p-3">No images yet. Upload to add.</div>;
   }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {images.map((img, idx) => (
-        <div key={img.id} className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="aspect-square bg-gray-100 overflow-hidden">
+        <div key={img.id} className="border border-driftwood/60 rounded-shell-lg overflow-hidden bg-white/80">
+          <div className="aspect-square bg-linen/80 overflow-hidden">
             <ProgressiveImage
               src={img.previewUrl ?? img.url}
               alt={`upload-${idx}`}
@@ -1044,7 +1044,7 @@ function ManagedImagesList({
               <button
                 type="button"
                 onClick={() => onSetPrimary(img.id)}
-                className={`rounded px-2 py-1 ${img.isPrimary ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
+                className={`rounded-shell px-2 py-1 text-[10px] ${img.isPrimary ? 'bg-deep-ocean text-white' : 'bg-linen/80 text-charcoal/80 border border-driftwood/60'}`}
               >
                 {img.isPrimary ? 'Primary' : 'Set primary'}
               </button>
@@ -1060,14 +1060,14 @@ function ManagedImagesList({
               <button
                 type="button"
                 onClick={() => onMove(img.id, 'up')}
-                className="flex-1 text-xs px-2 py-1 border border-gray-300 rounded hover:border-gray-400"
+                className="flex-1 lux-button--ghost px-2 py-1 text-[10px]"
               >
                 Up
               </button>
               <button
                 type="button"
                 onClick={() => onMove(img.id, 'down')}
-                className="flex-1 text-xs px-2 py-1 border border-gray-300 rounded hover:border-gray-400"
+                className="flex-1 lux-button--ghost px-2 py-1 text-[10px]"
               >
                 Down
               </button>

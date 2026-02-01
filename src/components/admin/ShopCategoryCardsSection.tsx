@@ -189,7 +189,7 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
   };
 
   return (
-    <div className="space-y-4 rounded-lg border bg-white p-4 shadow-sm">
+    <div className="lux-card p-4 space-y-4">
       <div className="relative pb-1">
         <AdminSectionHeader
           title="Category Cards"
@@ -203,7 +203,7 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
             idleLabel="Save Category Cards"
           />
         </div>
-        <div className="mt-2 text-xs text-gray-600">
+        <div className="mt-2 text-xs text-charcoal/60">
           {saveState === 'saving' && 'Saving changes...'}
           {saveState === 'success' && 'Category cards saved.'}
           {saveState === 'error' && 'Save failed. Please retry.'}
@@ -222,7 +222,7 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
           return (
             <div
               key={tile.id || idx}
-              className="space-y-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+              className="space-y-3 lux-panel p-3"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -243,7 +243,7 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
                     aria-label="Select category"
                     value={selectedCategory?.id || ''}
                     onChange={(e) => handleCategoryChange(tile.id, e.target.value)}
-                    className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="lux-input text-sm"
                   >
                     <option value="">Select category</option>
                     {categoryOptions.map((cat) => (
@@ -260,14 +260,14 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
                       setActiveTileId(tile.id);
                       fileInputRef.current?.click();
                     }}
-                    className="text-xs text-slate-700 underline hover:text-slate-900"
+                    className="lux-button--ghost px-3 py-1 text-[10px]"
                   >
                     Upload
                   </button>
                 </div>
               </div>
 
-              <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-gray-100 aspect-[3/4]">
+              <div className="relative overflow-hidden rounded-shell-lg border border-driftwood/60 bg-linen/80 aspect-[3/4]">
                 {categoryImage ? (
                   <ProgressiveImage
                     src={categoryImage}
@@ -278,19 +278,19 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
                     decoding="async"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                  <div className="flex h-full w-full items-center justify-center text-sm text-charcoal/60">
                     No image uploaded
                   </div>
                 )}
 
                 {status && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-xs text-slate-700">
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80/70 text-xs text-charcoal/70">
                     {status === 'optimizing' ? 'Optimizing image...' : 'Uploading...'}
                   </div>
                 )}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent" />
                 <div className="absolute inset-x-0 bottom-4 flex justify-center">
-                  <span className="pointer-events-auto inline-flex items-center rounded-full bg-white px-5 py-2 text-xs font-medium text-gray-900 shadow-sm">
+                  <span className="pointer-events-auto lux-pill px-5 py-2 text-[10px]">
                     {pillText}
                   </span>
                 </div>

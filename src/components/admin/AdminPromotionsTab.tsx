@@ -294,44 +294,44 @@ export function AdminPromotionsTab() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-600">Loading promotions...</div>;
+    return <div className="p-8 text-center text-charcoal/70">Loading promotions...</div>;
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div className="lux-card overflow-hidden">
       <div className="px-6 pt-6">
         <AdminSectionHeader title="Promotions" subtitle="Manage promotions and promo codes." />
       </div>
       <div className="px-6 pb-10 space-y-12">
         {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-shell border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </div>
         )}
 
         <section className="space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Promotions</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="lux-heading text-lg">Promotions</h3>
+            <p className="text-sm text-charcoal/70">
               Only one promotion can be enabled at a time.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-lg border border-gray-200 p-4 space-y-4">
-              <div className="text-sm font-semibold text-gray-900">
+            <div className="lux-panel p-4 space-y-4">
+              <div className="text-sm font-semibold text-charcoal">
                 {editingPromotionId ? 'Edit Promotion' : 'Create Promotion'}
               </div>
               <div className="space-y-3">
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Name</label>
+                <label className="block lux-label text-[10px]">Name</label>
                 <input
                   type="text"
                   value={promotionForm.name}
                   onChange={(e) => handlePromotionFormChange('name', e.target.value)}
                   placeholder="Summer Sale"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 />
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Percent off</label>
+                <label className="block lux-label text-[10px]">Percent off</label>
                 <input
                   type="number"
                   min={1}
@@ -339,20 +339,20 @@ export function AdminPromotionsTab() {
                   value={promotionForm.percentOff}
                   onChange={(e) => handlePromotionFormChange('percentOff', e.target.value)}
                   placeholder="10%"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 />
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Scope</label>
+                <label className="block lux-label text-[10px]">Scope</label>
                 <select
                   value={promotionForm.scope}
                   onChange={(e) => handlePromotionFormChange('scope', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 >
                   <option value="global">Global</option>
                   <option value="categories">Categories</option>
                 </select>
                 {promotionForm.scope === 'categories' && (
                   <div className="space-y-2">
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Categories</div>
+                    <div className="lux-label text-[10px]">Categories</div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {categoryOptions.map((category) => {
                         const checked = promotionForm.categorySlugs.includes(category.slug);
@@ -367,7 +367,7 @@ export function AdminPromotionsTab() {
                                   : promotionForm.categorySlugs.filter((slug) => slug !== category.slug);
                                 handlePromotionFormChange('categorySlugs', next);
                               }}
-                              className="h-4 w-4"
+                              className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                             />
                             <span>{category.name}</span>
                           </label>
@@ -381,9 +381,9 @@ export function AdminPromotionsTab() {
                     type="checkbox"
                     checked={promotionForm.bannerEnabled}
                     onChange={(e) => handlePromotionFormChange('bannerEnabled', e.target.checked)}
-                    className="h-4 w-4"
+                    className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                   />
-                  <span className="text-sm text-gray-700">Show banner</span>
+                  <span className="text-sm text-charcoal/80">Show banner</span>
                 </div>
                 {promotionForm.bannerEnabled && (
                   <input
@@ -391,29 +391,29 @@ export function AdminPromotionsTab() {
                     value={promotionForm.bannerText}
                     onChange={(e) => handlePromotionFormChange('bannerText', e.target.value)}
                     placeholder="Banner text"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    className="lux-input text-sm"
                   />
                 )}
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Starts at</label>
+                <label className="block lux-label text-[10px]">Starts at</label>
                 <input
                   type="datetime-local"
                   value={promotionForm.startsAt}
                   onChange={(e) => handlePromotionFormChange('startsAt', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 />
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Ends at</label>
+                <label className="block lux-label text-[10px]">Ends at</label>
                 <input
                   type="datetime-local"
                   value={promotionForm.endsAt}
                   onChange={(e) => handlePromotionFormChange('endsAt', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 />
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-charcoal/80">
                   <input
                     type="checkbox"
                     checked={promotionForm.enabled}
                     onChange={(e) => handlePromotionFormChange('enabled', e.target.checked)}
-                    className="h-4 w-4"
+                    className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                   />
                   Enabled
                 </label>
@@ -423,7 +423,7 @@ export function AdminPromotionsTab() {
                   type="button"
                   onClick={submitPromotion}
                   disabled={saving}
-                  className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-semibold disabled:opacity-50"
+                  className="lux-button px-4 py-2 text-[10px] disabled:opacity-50"
                 >
                   {editingPromotionId ? 'Update' : 'Create'}
                 </button>
@@ -431,7 +431,7 @@ export function AdminPromotionsTab() {
                   <button
                     type="button"
                     onClick={resetPromotionForm}
-                    className="px-4 py-2 rounded-md border border-gray-300 text-sm font-semibold text-gray-700"
+                    className="lux-button--ghost px-4 py-2 text-[10px]"
                   >
                     Cancel
                   </button>
@@ -441,44 +441,44 @@ export function AdminPromotionsTab() {
 
             <div className="space-y-3">
               {promotions.length === 0 ? (
-                <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-600">
+                <div className="lux-panel p-4 text-sm text-charcoal/70">
                   No promotions yet.
                 </div>
               ) : (
                 promotions.map((promo) => (
-                  <div key={promo.id} className="rounded-md border border-gray-200 p-4 space-y-2">
+                  <div key={promo.id} className="lux-panel p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-gray-900">{promo.name}</div>
-                        <div className="text-xs text-gray-500">{promo.percentOff}% off</div>
+                        <div className="font-semibold text-charcoal">{promo.name}</div>
+                        <div className="text-xs text-charcoal/60">{promo.percentOff}% off</div>
                       </div>
-                      <span className={`text-xs font-semibold ${promo.enabled ? 'text-emerald-600' : 'text-gray-500'}`}>
+                      <span className={`text-xs font-semibold ${promo.enabled ? 'text-emerald-600' : 'text-charcoal/60'}`}>
                         {promo.enabled ? 'Enabled' : 'Disabled'}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-charcoal/70">
                       Scope: {promo.scope === 'global' ? 'Global' : `Categories (${promo.categorySlugs.length})`}
                     </div>
-                    <div className="text-xs text-gray-600">Schedule: {formatRange(promo.startsAt, promo.endsAt)}</div>
+                    <div className="text-xs text-charcoal/70">Schedule: {formatRange(promo.startsAt, promo.endsAt)}</div>
                     <div className="flex flex-wrap gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => togglePromotionEnabled(promo)}
-                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                        className="lux-button--ghost px-3 py-1 text-[10px]"
                       >
                         {promo.enabled ? 'Disable' : 'Enable'}
                       </button>
                       <button
                         type="button"
                         onClick={() => startEditPromotion(promo)}
-                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                        className="lux-button--ghost px-3 py-1 text-[10px]"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => removePromotion(promo)}
-                        className="text-xs font-semibold text-red-600 border border-red-200 rounded px-2 py-1"
+                        className="lux-button--outline px-3 py-1 text-[10px] !border-rose-200 !text-rose-700"
                       >
                         Delete
                       </button>
@@ -492,24 +492,24 @@ export function AdminPromotionsTab() {
 
         <section className="space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Promo Codes</h3>
-            <p className="text-sm text-gray-600">Create percentage and free-shipping codes.</p>
+            <h3 className="lux-heading text-lg">Promo Codes</h3>
+            <p className="text-sm text-charcoal/70">Create percentage and free-shipping codes.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-lg border border-gray-200 p-4 space-y-4">
-              <div className="text-sm font-semibold text-gray-900">
+            <div className="lux-panel p-4 space-y-4">
+              <div className="text-sm font-semibold text-charcoal">
                 {editingPromoCodeId ? 'Edit Promo Code' : 'Create Promo Code'}
               </div>
               <div className="space-y-3">
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Code</label>
+                <label className="block lux-label text-[10px]">Code</label>
                 <input
                   type="text"
                   value={promoCodeForm.code}
                   onChange={(e) => handlePromoCodeFormChange('code', e.target.value.toUpperCase())}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm uppercase tracking-wide"
+                  className="lux-input text-sm uppercase tracking-[0.2em]"
                 />
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Percent off</label>
+                <label className="block lux-label text-[10px]">Percent off</label>
                 <input
                   type="number"
                   min={1}
@@ -517,29 +517,29 @@ export function AdminPromotionsTab() {
                   value={promoCodeForm.percentOff}
                   onChange={(e) => handlePromoCodeFormChange('percentOff', e.target.value)}
                   placeholder="10%"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 />
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-charcoal/80">
                   <input
                     type="checkbox"
                     checked={promoCodeForm.freeShipping}
                     onChange={(e) => handlePromoCodeFormChange('freeShipping', e.target.checked)}
-                    className="h-4 w-4"
+                    className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                   />
                   Free shipping
                 </label>
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Scope</label>
+                <label className="block lux-label text-[10px]">Scope</label>
                 <select
                   value={promoCodeForm.scope}
                   onChange={(e) => handlePromoCodeFormChange('scope', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 >
                   <option value="global">Global</option>
                   <option value="categories">Categories</option>
                 </select>
                 {promoCodeForm.scope === 'categories' && (
                   <div className="space-y-2">
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Categories</div>
+                    <div className="lux-label text-[10px]">Categories</div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {categoryOptions.map((category) => {
                         const checked = promoCodeForm.categorySlugs.includes(category.slug);
@@ -554,7 +554,7 @@ export function AdminPromotionsTab() {
                                   : promoCodeForm.categorySlugs.filter((slug) => slug !== category.slug);
                                 handlePromoCodeFormChange('categorySlugs', next);
                               }}
-                              className="h-4 w-4"
+                              className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                             />
                             <span>{category.name}</span>
                           </label>
@@ -563,26 +563,26 @@ export function AdminPromotionsTab() {
                     </div>
                   </div>
                 )}
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Starts at</label>
+                <label className="block lux-label text-[10px]">Starts at</label>
                 <input
                   type="datetime-local"
                   value={promoCodeForm.startsAt}
                   onChange={(e) => handlePromoCodeFormChange('startsAt', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 />
-                <label className="block text-xs uppercase tracking-wide text-gray-500">Ends at</label>
+                <label className="block lux-label text-[10px]">Ends at</label>
                 <input
                   type="datetime-local"
                   value={promoCodeForm.endsAt}
                   onChange={(e) => handlePromoCodeFormChange('endsAt', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="lux-input text-sm"
                 />
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-charcoal/80">
                   <input
                     type="checkbox"
                     checked={promoCodeForm.enabled}
                     onChange={(e) => handlePromoCodeFormChange('enabled', e.target.checked)}
-                    className="h-4 w-4"
+                    className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                   />
                   Enabled
                 </label>
@@ -592,7 +592,7 @@ export function AdminPromotionsTab() {
                   type="button"
                   onClick={submitPromoCode}
                   disabled={saving}
-                  className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-semibold disabled:opacity-50"
+                  className="lux-button px-4 py-2 text-[10px] disabled:opacity-50"
                 >
                   {editingPromoCodeId ? 'Update' : 'Create'}
                 </button>
@@ -600,7 +600,7 @@ export function AdminPromotionsTab() {
                   <button
                     type="button"
                     onClick={resetPromoCodeForm}
-                    className="px-4 py-2 rounded-md border border-gray-300 text-sm font-semibold text-gray-700"
+                    className="lux-button--ghost px-4 py-2 text-[10px]"
                   >
                     Cancel
                   </button>
@@ -610,47 +610,47 @@ export function AdminPromotionsTab() {
 
             <div className="space-y-3">
               {promoCodes.length === 0 ? (
-                <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-600">
+                <div className="lux-panel p-4 text-sm text-charcoal/70">
                   No promo codes yet.
                 </div>
               ) : (
                 promoCodes.map((code) => (
-                  <div key={code.id} className="rounded-md border border-gray-200 p-4 space-y-2">
+                  <div key={code.id} className="lux-panel p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-gray-900">{code.code.toUpperCase()}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="font-semibold text-charcoal">{code.code.toUpperCase()}</div>
+                        <div className="text-xs text-charcoal/60">
                           {code.percentOff ? `${code.percentOff}% off` : 'No percent'} •{' '}
                           {code.freeShipping ? 'Free shipping' : 'Paid shipping'}
                         </div>
                       </div>
-                      <span className={`text-xs font-semibold ${code.enabled ? 'text-emerald-600' : 'text-gray-500'}`}>
+                      <span className={`text-xs font-semibold ${code.enabled ? 'text-emerald-600' : 'text-charcoal/60'}`}>
                         {code.enabled ? 'Enabled' : 'Disabled'}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-charcoal/70">
                       Scope: {code.scope === 'global' ? 'Global' : `Categories (${code.categorySlugs.length})`}
                     </div>
-                    <div className="text-xs text-gray-600">Schedule: {formatRange(code.startsAt, code.endsAt)}</div>
+                    <div className="text-xs text-charcoal/70">Schedule: {formatRange(code.startsAt, code.endsAt)}</div>
                     <div className="flex flex-wrap gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => togglePromoCodeEnabled(code)}
-                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                        className="lux-button--ghost px-3 py-1 text-[10px]"
                       >
                         {code.enabled ? 'Disable' : 'Enable'}
                       </button>
                       <button
                         type="button"
                         onClick={() => startEditPromoCode(code)}
-                        className="text-xs font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1"
+                        className="lux-button--ghost px-3 py-1 text-[10px]"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => removePromoCode(code)}
-                        className="text-xs font-semibold text-red-600 border border-red-200 rounded px-2 py-1"
+                        className="lux-button--outline px-3 py-1 text-[10px] !border-rose-200 !text-rose-700"
                       >
                         Delete
                       </button>

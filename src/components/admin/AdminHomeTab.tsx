@@ -98,7 +98,7 @@ export function AdminHomeTab() {
       />
 
       {(loadState === 'loading' || error) && (
-        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+        <div className="rounded-shell border border-driftwood/60 bg-linen/70 px-3 py-2 text-sm text-charcoal/80">
           {loadState === 'loading' && 'Loading home content...'}
           {error && loadState !== 'loading' && error}
         </div>
@@ -216,23 +216,23 @@ function HeroCollageAdmin({
   };
 
   return (
-    <section className="space-y-4 rounded-lg border bg-white p-4 shadow-sm">
+    <section className="space-y-4 lux-card p-4">
       <div className="space-y-2">
         <AdminSectionHeader
           title="Hero Images"
           subtitle="main images on your site"
         />
-        <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+        <div className="flex items-center justify-between rounded-shell border border-driftwood/60 bg-linen/70 px-3 py-2">
           <div>
-            <p className="text-sm font-medium text-slate-900">Rotate Hero Images</p>
-            <p className="text-xs text-slate-600">
+            <p className="text-sm font-medium text-charcoal">Rotate Hero Images</p>
+            <p className="text-xs text-charcoal/70">
               ON: rotate through all hero images. OFF: show only the first image.
             </p>
           </div>
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-900">
+          <label className="flex items-center gap-2 text-sm font-medium text-charcoal">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-slate-900"
+              className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
               checked={!!heroRotationEnabled}
               onChange={(e) => onHeroRotationToggle?.(e.target.checked)}
             />
@@ -251,7 +251,7 @@ function HeroCollageAdmin({
           return (
             <div
               key={slot}
-              className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm space-y-3"
+              className="lux-panel p-3 space-y-3"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -260,24 +260,24 @@ function HeroCollageAdmin({
               }}
             >
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-slate-800">Hero Image {slot + 1}</div>
+                <div className="text-sm font-semibold text-charcoal">Hero Image {slot + 1}</div>
                 <div className="flex items-center gap-2">
                   {image && (
-                    <button type="button" onClick={() => handleRemove(slot)} className="text-xs text-red-600 hover:text-red-700">
+                    <button type="button" onClick={() => handleRemove(slot)} className="lux-button--ghost px-3 py-1 text-[10px] !text-rose-700">
                       Remove
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => document.getElementById(inputId)?.click()}
-                    className="text-xs text-slate-700 underline hover:text-slate-900"
+                    className="lux-button--ghost px-3 py-1 text-[10px]"
                   >
                     {image ? 'Replace' : 'Upload'}
                   </button>
                 </div>
               </div>
 
-              <div className="aspect-[3/4] rounded-md border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden">
+              <div className="aspect-[3/4] rounded-shell border border-dashed border-driftwood/70 bg-linen/70 flex items-center justify-center overflow-hidden">
                 {image?.imageUrl ? (
                   <>
                     <ProgressiveImage
@@ -289,24 +289,24 @@ function HeroCollageAdmin({
                       decoding="async"
                     />
                     {image.uploading && (
-                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-slate-700">
+                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-charcoal/80">
                         {image.optimizing ? 'Optimizing image...' : 'Uploading...'}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center text-slate-500 text-sm">
+                  <div className="flex flex-col items-center text-charcoal/60 text-sm">
                     <Plus className="h-6 w-6 mb-1" />
                     <span>Drop or upload</span>
                   </div>
                 )}
               </div>
               {image?.uploadError && (
-                <div className="text-xs text-red-600">{image.uploadError}</div>
+                <div className="text-xs text-rose-700">{image.uploadError}</div>
               )}
 
               <div className="space-y-1">
-                <label htmlFor={`${inputId}-alt`} className="text-xs font-medium text-slate-700">
+                <label htmlFor={`${inputId}-alt`} className="lux-label text-[10px]">
                   Alt text / description
                 </label>
                 <input
@@ -315,7 +315,7 @@ function HeroCollageAdmin({
                   value={image?.alt || ''}
                   onChange={(e) => handleAltChange(slot, e.target.value)}
                   placeholder="Optional description"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  className="lux-input text-sm"
                 />
               </div>
 
@@ -456,7 +456,7 @@ function HomeGalleryAdmin({ items, onChange, onSave, saveState }: HomeGalleryAdm
   };
 
   return (
-    <section className="space-y-4 rounded-lg border bg-white p-4 shadow-sm">
+    <section className="space-y-4 lux-card p-4">
       <div className="space-y-2">
         <AdminSectionHeader
           title="Home Gallery (Homepage)"
@@ -474,7 +474,7 @@ function HomeGalleryAdmin({ items, onChange, onSave, saveState }: HomeGalleryAdm
           return (
             <div
               key={slot}
-              className="space-y-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+              className="space-y-3 lux-panel p-3"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -483,24 +483,24 @@ function HomeGalleryAdmin({ items, onChange, onSave, saveState }: HomeGalleryAdm
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-800">Slot {slot + 1}</span>
+                <span className="text-sm font-semibold text-charcoal">Slot {slot + 1}</span>
                 <div className="flex items-center gap-2">
                   {item?.imageUrl && (
-                    <button type="button" onClick={() => handleRemove(slot)} className="text-xs text-red-600 hover:text-red-700">
+                    <button type="button" onClick={() => handleRemove(slot)} className="lux-button--ghost px-3 py-1 text-[10px] !text-rose-700">
                       Remove
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => document.getElementById(inputId)?.click()}
-                    className="text-xs text-slate-700 underline hover:text-slate-900"
+                    className="lux-button--ghost px-3 py-1 text-[10px]"
                   >
                     {item?.imageUrl ? 'Replace' : 'Upload'}
                   </button>
                 </div>
               </div>
 
-              <div className="aspect-[3/4] rounded-md border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden">
+              <div className="aspect-[3/4] rounded-shell border border-dashed border-driftwood/70 bg-linen/70 flex items-center justify-center overflow-hidden">
                 {item?.imageUrl ? (
                   <>
                     <ProgressiveImage
@@ -512,24 +512,24 @@ function HomeGalleryAdmin({ items, onChange, onSave, saveState }: HomeGalleryAdm
                       decoding="async"
                     />
                     {item.uploading && (
-                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-slate-700">
+                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-charcoal/80">
                         {item.optimizing ? 'Optimizing image...' : 'Uploading...'}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center text-slate-500 text-sm">
+                  <div className="flex flex-col items-center text-charcoal/60 text-sm">
                     <Plus className="h-6 w-6 mb-1" />
                     <span>Drop or upload</span>
                   </div>
                 )}
               </div>
               {item?.uploadError && (
-                <div className="text-xs text-red-600">{item.uploadError}</div>
+                <div className="text-xs text-rose-700">{item.uploadError}</div>
               )}
 
               <div className="space-y-1">
-                <label htmlFor={`${inputId}-descriptor`} className="text-xs font-medium text-slate-700">
+                <label htmlFor={`${inputId}-descriptor`} className="lux-label text-[10px]">
                   Descriptor (pill text)
                 </label>
                 <input
@@ -538,7 +538,7 @@ function HomeGalleryAdmin({ items, onChange, onSave, saveState }: HomeGalleryAdm
                   value={item?.descriptor || ''}
                   onChange={(e) => handleDescriptorChange(slot, e.target.value)}
                   placeholder="Optional short label"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  className="lux-input text-sm"
                 />
               </div>
 
@@ -637,7 +637,7 @@ function AboutImagesAdmin({ images, onChange, onSave, saveState }: AboutImagesAd
   };
 
   return (
-    <section className="space-y-4 rounded-lg border bg-white p-4 shadow-sm">
+    <section className="space-y-4 lux-card p-4">
       <div className="space-y-2">
         <AdminSectionHeader
           title="About Images"
@@ -655,7 +655,7 @@ function AboutImagesAdmin({ images, onChange, onSave, saveState }: AboutImagesAd
           return (
             <div
               key={slot.label}
-              className="space-y-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+              className="space-y-3 lux-panel p-3"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -664,24 +664,24 @@ function AboutImagesAdmin({ images, onChange, onSave, saveState }: AboutImagesAd
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-800">{slot.label}</span>
+                <span className="text-sm font-semibold text-charcoal">{slot.label}</span>
                 <div className="flex items-center gap-2">
                   {image?.imageUrl && (
-                    <button type="button" onClick={() => handleRemove(slot.index)} className="text-xs text-red-600 hover:text-red-700">
+                    <button type="button" onClick={() => handleRemove(slot.index)} className="lux-button--ghost px-3 py-1 text-[10px] !text-rose-700">
                       Remove
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => document.getElementById(inputId)?.click()}
-                    className="text-xs text-slate-700 underline hover:text-slate-900"
+                    className="lux-button--ghost px-3 py-1 text-[10px]"
                   >
                     {image?.imageUrl ? 'Replace' : 'Upload'}
                   </button>
                 </div>
               </div>
 
-              <div className="aspect-[4/5] rounded-md border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden">
+              <div className="aspect-[4/5] rounded-shell border border-dashed border-driftwood/70 bg-linen/70 flex items-center justify-center overflow-hidden">
                 {image?.imageUrl ? (
                   <>
                     <ProgressiveImage
@@ -693,20 +693,20 @@ function AboutImagesAdmin({ images, onChange, onSave, saveState }: AboutImagesAd
                       decoding="async"
                     />
                     {image.uploading && (
-                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-slate-700">
+                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-charcoal/80">
                         {image.optimizing ? 'Optimizing image...' : 'Uploading...'}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center text-slate-500 text-sm">
+                  <div className="flex flex-col items-center text-charcoal/60 text-sm">
                     <Plus className="h-6 w-6 mb-1" />
                     <span>Drop or upload</span>
                   </div>
                 )}
               </div>
               {image?.uploadError && (
-                <div className="text-xs text-red-600">{image.uploadError}</div>
+                <div className="text-xs text-rose-700">{image.uploadError}</div>
               )}
 
               <input

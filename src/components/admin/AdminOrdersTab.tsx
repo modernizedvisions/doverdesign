@@ -13,7 +13,7 @@ export interface AdminOrdersTabProps {
 
 export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, onSelectOrder, loading, error }: AdminOrdersTabProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div className="lux-card overflow-hidden">
       <div className="px-6 pt-6">
         <AdminSectionHeader
           title="Orders"
@@ -26,51 +26,51 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search by order ID, customer, or product..."
-          className="w-full sm:max-w-md border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+          className="lux-input sm:max-w-md text-sm"
         />
       </div>
       {loading ? (
-        <div className="p-8 text-center text-gray-600">Loading orders...</div>
+        <div className="p-8 text-center text-charcoal/70">Loading orders...</div>
       ) : error ? (
-        <div className="p-8 text-center text-red-600">
+        <div className="p-8 text-center text-rose-700">
           Failed to load orders{error ? `: ${error}` : ''}
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="p-8 text-center text-gray-500">
+        <div className="p-8 text-center text-charcoal/60">
           <div>No orders found</div>
-          <div className="text-xs text-gray-400 mt-1">Endpoint: /api/admin/orders</div>
+          <div className="text-xs text-charcoal/40 mt-1">Endpoint: /api/admin/orders</div>
         </div>
       ) : (
         <>
           <div className="sm:hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-driftwood/50">
+              <thead className="bg-linen/70">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Customer</th>
+                  <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Total</th>
+                  <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white/80 divide-y divide-driftwood/40">
                 {filteredOrders.map((order) => (
                   <tr key={order.id}>
-                    <td className="px-4 py-4 text-sm text-gray-900 whitespace-normal break-words leading-tight">
+                    <td className="px-4 py-4 text-sm text-charcoal whitespace-normal break-words leading-tight">
                       <div className="flex items-center gap-2">
                         <span>{order.shippingName || order.customerName || 'Customer'}</span>
                         {order.isSeen === false && (
-                          <span className="inline-flex h-2 w-2 rounded-ui bg-red-500" aria-label="Unseen order" />
+                          <span className="inline-flex h-2 w-2 rounded-ui bg-soft-gold ring-1 ring-deep-ocean/20" aria-label="Unseen order" />
                         )}
                       </div>
-                      <div className="text-xs text-gray-500">{order.customerEmail || 'No email'}</div>
+                      <div className="text-xs text-charcoal/60">{order.customerEmail || 'No email'}</div>
                     </td>
-                    <td className="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-4 text-center whitespace-nowrap text-sm text-charcoal">
                       ${(((order.amountTotalCents ?? order.totalCents) || 0) / 100).toFixed(2)}
                     </td>
                     <td className="px-4 py-4 text-center whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => onSelectOrder(order)}
-                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-900 border border-gray-300 rounded-ui hover:bg-gray-50 transition-colors"
+                        className="lux-button--ghost px-3 py-1 text-[10px]"
                       >
                         View
                       </button>
@@ -82,44 +82,44 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
           </div>
           <div className="hidden sm:block">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-driftwood/50">
+                <thead className="bg-linen/70">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date / Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Order ID</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Date / Time</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Customer</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Items</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Total</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white/80 divide-y divide-driftwood/40">
                 {filteredOrders.map((order) => (
                   <tr key={order.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal font-mono">
                       {order.displayOrderId || order.id}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal">
                       {new Date(order.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-charcoal">
                       <div className="flex items-center gap-2">
                         <span>{order.shippingName || order.customerName || 'Customer'}</span>
                         {order.isSeen === false && (
-                          <span className="inline-flex h-2 w-2 rounded-ui bg-red-500" aria-label="Unseen order" />
+                          <span className="inline-flex h-2 w-2 rounded-ui bg-soft-gold ring-1 ring-deep-ocean/20" aria-label="Unseen order" />
                         )}
                       </div>
-                      <div className="text-gray-500">{order.customerEmail || 'No email'}</div>
+                      <div className="text-charcoal/60">{order.customerEmail || 'No email'}</div>
                     </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{order.items?.length || 0} items</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-charcoal">{order.items?.length || 0} items</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal">
                         ${(((order.amountTotalCents ?? order.totalCents) || 0) / 100).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => onSelectOrder(order)}
-                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-900 border border-gray-300 rounded-ui hover:bg-gray-50 transition-colors"
+                          className="lux-button--ghost px-3 py-1 text-[10px]"
                         >
                           View
                         </button>

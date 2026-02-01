@@ -1005,10 +1005,10 @@ export function AdminPage() {
 
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Checking session…</h2>
-          <p className="text-sm text-gray-600">Please wait while we verify admin access.</p>
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="lux-card w-full max-w-md p-8 text-center">
+          <h2 className="lux-heading text-2xl mb-3">Checking session…</h2>
+          <p className="lux-subtitle text-sm">Please wait while we verify admin access.</p>
         </div>
       </div>
     );
@@ -1016,14 +1016,14 @@ export function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full bg-white/90 rounded-2xl border border-driftwood/60 shadow-lg p-8 text-charcoal">
-          <h2 className="text-2xl font-serif font-semibold text-deep-ocean mb-6 text-center tracking-[0.04em]">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="lux-card w-full max-w-md p-8 text-charcoal">
+          <h2 className="lux-heading text-2xl mb-6 text-center">
             Admin Login
           </h2>
           <form onSubmit={handleLogin}>
             <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1 tracking-[0.12em] uppercase">
+              <label htmlFor="password" className="lux-label mb-2 block">
                 Password
               </label>
               <input
@@ -1032,18 +1032,18 @@ export function AdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 ref={passwordInputRef}
-                className="w-full px-4 py-2 border border-driftwood/60 rounded-lg bg-white focus:ring-2 focus:ring-deep-ocean focus:border-transparent font-sans font-semibold tracking-[0.12em]"
+                className="lux-input font-semibold tracking-[0.12em]"
                 required
               />
             </div>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+              <div className="mb-4 rounded-shell border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
                 <div className="flex items-center justify-between gap-3">
                   <span>{error}</span>
                   <button
                     type="button"
                     onClick={() => passwordInputRef.current?.focus()}
-                    className="text-xs font-semibold text-red-800 underline"
+                    className="text-xs font-semibold text-rose-800 underline"
                   >
                     Re-enter Admin Password
                   </button>
@@ -1053,7 +1053,7 @@ export function AdminPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-full bg-deep-ocean text-white py-3 px-6 font-semibold uppercase tracking-[0.24em] hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50"
+              className="lux-button w-full justify-center disabled:opacity-50"
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
@@ -1068,10 +1068,10 @@ export function AdminPage() {
     <div className="min-h-screen bg-gradient-to-b from-[var(--warm-linen)] via-[var(--sand)] to-[var(--linen)] text-charcoal py-12 overflow-x-hidden">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-serif font-semibold tracking-[0.04em] text-deep-ocean">Admin Dashboard</h1>
+          <h1 className="lux-heading text-3xl">Admin Dashboard</h1>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 rounded-full border border-driftwood/70 bg-white/80 text-deep-ocean uppercase tracking-[0.16em] text-[11px] hover:-translate-y-0.5 hover:shadow transition-all"
+            className="lux-button--ghost px-4 py-2 text-[10px]"
           >
             Logout
           </button>
@@ -1093,10 +1093,10 @@ export function AdminPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                  className={`relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] uppercase tracking-[0.2em] transition-all ${
+                  className={`relative inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.24em] transition-all ${
                     isActive
-                      ? 'bg-deep-ocean text-white shadow-md'
-                      : 'bg-white/80 text-deep-ocean border border-driftwood/60 hover:bg-sand/80'
+                      ? 'lux-button shadow-none'
+                      : 'lux-button--ghost shadow-none'
                   }`}
                 >
                   {tab.label}

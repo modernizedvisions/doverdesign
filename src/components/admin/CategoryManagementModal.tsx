@@ -179,19 +179,19 @@ export function CategoryManagementModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="flex w-full max-w-2xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0">
         {/* Keep header fixed and allow body to scroll within the modal. */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-6 pt-6 pb-4">
+        <div className="flex items-start justify-between gap-3 border-b border-driftwood/60 px-6 pt-6 pb-4">
           <DialogHeader className="space-y-1">
-            <DialogTitle className="text-center text-lg font-semibold tracking-[0.15em] uppercase text-slate-900">
+            <DialogTitle className="text-center lux-heading text-lg">
               Category Management
             </DialogTitle>
-            <p className="text-center text-sm text-slate-600">
+            <p className="text-center text-sm text-charcoal/70">
               Add or delete categories available to products.
             </p>
           </DialogHeader>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+            className="lux-button--ghost px-3 py-1 text-[10px]"
           >
             CLOSE
           </button>
@@ -199,81 +199,81 @@ export function CategoryManagementModal({
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-4">
           {categoryMessage && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <div className="rounded-shell border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               {categoryMessage}
             </div>
           )}
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+          <div className="lux-panel p-4 space-y-3">
             <div className="grid gap-3 md:grid-cols-[1.2fr_1.2fr_0.6fr_auto] md:items-end">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">Title</label>
+                <label className="lux-label text-[10px]">Title</label>
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Category title"
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  className="lux-input text-sm mt-1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">Subtitle</label>
+                <label className="lux-label text-[10px]">Subtitle</label>
                 <input
                   type="text"
                   value={newCategorySubtitle}
                   onChange={(e) => setNewCategorySubtitle(e.target.value)}
                   placeholder="Optional subtitle"
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  className="lux-input text-sm mt-1"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">Shipping</label>
+                <label className="lux-label text-[10px]">Shipping</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={newCategoryShipping}
                   onChange={(e) => setNewCategoryShipping(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  className="lux-input text-sm mt-1"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleAddCategory}
                 disabled={!newCategoryName.trim()}
-                className="inline-flex items-center justify-center rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+                className="lux-button px-4 py-2 text-[10px] disabled:opacity-50"
               >
                 Add Category
               </button>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-charcoal/60">
               Shipping is a flat per-order fee; the lowest category shipping wins (0 makes shipping free).
             </p>
           </div>
 
-          <div className="border border-slate-200 rounded-lg">
-            <div className="max-h-72 overflow-y-auto divide-y divide-slate-200">
+          <div className="border border-driftwood/60 rounded-shell-lg">
+            <div className="max-h-72 overflow-y-auto divide-y divide-driftwood/60">
               {isLoading ? (
-                <div className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500">
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-charcoal/60">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading...
                 </div>
               ) : categories.length === 0 ? (
-                <p className="px-3 py-2 text-sm text-slate-500">No categories yet.</p>
+                <p className="px-3 py-2 text-sm text-charcoal/60">No categories yet.</p>
               ) : (
                 categories.map((cat) => (
                   <div key={cat.id} className="px-3 py-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="font-medium text-slate-800 truncate">{cat.name}</div>
+                        <div className="font-medium text-charcoal truncate">{cat.name}</div>
                         {cat.subtitle && (
-                          <div className="text-xs text-slate-500 truncate">{cat.subtitle}</div>
+                          <div className="text-xs text-charcoal/60 truncate">{cat.subtitle}</div>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                          className="lux-button--ghost px-3 py-1 text-[10px]"
                           onClick={() => {
                             if (editCategoryId === cat.id) {
                               setEditCategoryId(null);
@@ -292,11 +292,11 @@ export function CategoryManagementModal({
                           {editCategoryId === cat.id ? 'Close' : 'Edit'}
                         </button>
                         {isOtherItemsCategory(cat) ? (
-                          <span className="text-xs text-slate-400">Required</span>
+                          <span className="text-xs text-charcoal/50">Required</span>
                         ) : (
                           <button
                             type="button"
-                            className="text-slate-500 hover:text-red-600"
+                            className="text-charcoal/60 hover:text-red-600"
                             onClick={() => handleDeleteCategory(cat)}
                             aria-label={`Delete ${cat.name}`}
                           >
@@ -306,10 +306,10 @@ export function CategoryManagementModal({
                       </div>
                     </div>
                     {editCategoryId === cat.id && editDraft && (
-                      <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 space-y-3">
+                      <div className="mt-3 lux-panel p-3 space-y-3">
                         <div className="grid gap-3 md:grid-cols-3">
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            <label className="lux-label text-[10px]">
                               Title
                             </label>
                             <input
@@ -319,11 +319,11 @@ export function CategoryManagementModal({
                               onChange={(e) =>
                                 setEditDraft((prev) => (prev ? { ...prev, name: e.target.value } : prev))
                               }
-                              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                              className="lux-input text-sm mt-1"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            <label className="lux-label text-[10px]">
                               Subtitle
                             </label>
                             <input
@@ -332,11 +332,11 @@ export function CategoryManagementModal({
                               onChange={(e) =>
                                 setEditDraft((prev) => (prev ? { ...prev, subtitle: e.target.value } : prev))
                               }
-                              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                              className="lux-input text-sm mt-1"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            <label className="lux-label text-[10px]">
                               Shipping
                             </label>
                             <input
@@ -347,7 +347,7 @@ export function CategoryManagementModal({
                               onChange={(e) =>
                                 setEditDraft((prev) => (prev ? { ...prev, shipping: e.target.value } : prev))
                               }
-                              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                              className="lux-input text-sm mt-1"
                             />
                           </div>
                         </div>
@@ -358,14 +358,14 @@ export function CategoryManagementModal({
                               setEditCategoryId(null);
                               setEditDraft(null);
                             }}
-                            className="rounded-md border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                            className="lux-button--ghost px-4 py-2 text-[10px]"
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
                             onClick={() => handleSaveEdit(cat)}
-                            className="rounded-md bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+                            className="lux-button px-4 py-2 text-[10px]"
                           >
                             Save
                           </button>
