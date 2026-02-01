@@ -459,7 +459,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
 
       {isViewOpen && selectedOrder && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-deep-ocean/40 px-3 py-6 backdrop-blur-[2px]">
-          <div className="lux-card relative w-full max-w-xl p-6 max-h-[85vh] overflow-y-auto">
+          <div className="lux-card bg-white relative w-full max-w-xl p-6 max-h-[85vh] overflow-y-auto">
             <div className="absolute right-3 top-3 flex items-center gap-2">
               <button
                 type="button"
@@ -771,7 +771,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
         onConfirm={handleArchive}
       />
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white">
           <DialogHeader>
             <DialogTitle>Create Custom Order</DialogTitle>
           </DialogHeader>

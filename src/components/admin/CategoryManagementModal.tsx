@@ -177,7 +177,7 @@ export function CategoryManagementModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="flex w-full max-w-2xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0">
+      <DialogContent className="flex w-full max-w-2xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0 bg-white">
         {/* Keep header fixed and allow body to scroll within the modal. */}
         <div className="flex items-start justify-between gap-3 border-b border-driftwood/60 px-6 pt-6 pb-4">
           <DialogHeader className="space-y-1">

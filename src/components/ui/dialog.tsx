@@ -47,7 +47,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
       }}
     >
       <div
-        className="relative flex w-full max-w-2xl max-h-[92vh] flex-col overflow-hidden rounded-shell-lg border border-driftwood/70 bg-white/92 lux-shadow"
+        className="relative flex w-full max-w-2xl max-h-[92vh] flex-col overflow-hidden rounded-shell-lg border border-driftwood/70 bg-white lux-shadow"
         onClick={(e) => e.stopPropagation()}
       >
         {children}

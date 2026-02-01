@@ -124,7 +124,8 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
     body, table, td, a, p, div, span { font-family:${baseFont}; }
     .container { width:100%; background:#FBF9F5; }
     .inner { width:600px; max-width:600px; background:#ffffff; border-radius:28px; border:1px solid ${borderColor}; overflow:hidden; box-shadow:0 24px 56px rgba(31,41,51,0.12); }
-    .pad { padding:32px 24px; }
+    .pad { padding:32px 22px 36px; }
+    .inner-pad { padding:30px 28px 32px; }
     .section { padding-bottom:24px; }
     .brand { font-size:20px; font-weight:600; color:${baseColor}; font-family:${serifFont}; letter-spacing:0.04em; }
     .order-label { font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:${mutedColor}; white-space:nowrap; }
@@ -132,7 +133,7 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
     .subtitle { font-size:14px; color:${mutedColor}; margin:0; }
     .button { display:inline-block; padding:12px 22px; background:${baseColor}; color:#ffffff; text-decoration:none; border-radius:9999px; font-size:14px; font-weight:600; letter-spacing:0.08em; }
     .subhead { font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:${mutedColor}; margin:0 0 8px; }
-    .item-row td { padding:12px 0; border-bottom:1px solid #ededed; vertical-align:top; }
+    .item-row td { padding:14px 0; border-bottom:1px solid #ededed; vertical-align:top; }
     .item-info { width:100%; }
     .item-media { display:inline-block; width:56px; height:56px; vertical-align:top; }
     .item-text { display:inline-block; vertical-align:top; margin-left:12px; max-width:420px; }
@@ -144,10 +145,17 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
     .item-empty { padding:12px 0; font-size:14px; color:${mutedColor}; }
     .totals-label { padding:4px 0; font-size:14px; color:${mutedColor}; }
     .totals-value { padding:4px 0; font-size:14px; color:${baseColor}; font-weight:600; }
+    .totals-start td { padding-top:16px; border-top:1px solid #ededed; }
     .total-row td { padding-top:10px; font-size:16px; font-weight:700; color:${baseColor}; }
     .info-title { font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:${mutedColor}; margin:0 0 6px; white-space:nowrap; }
     .info { font-size:14px; color:${baseColor}; line-height:1.5; margin:0; }
     .footer { padding-top:16px; font-size:12px; color:${mutedColor}; }
+    @media screen and (max-width: 640px) {
+      .pad { padding:24px 16px 30px; }
+      .inner-pad { padding:24px 18px 28px; }
+      .title { font-size:24px; }
+      .item-text { max-width:260px; }
+    }
   </style>
 </head>
 <body>
@@ -156,55 +164,61 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
       <td align="center" class="pad">
         <table role="presentation" class="inner" width="600" cellspacing="0" cellpadding="0">
           <tr>
-            <td class="section brand">${escapeHtml(brand)}</td>
-            <td class="section order-label" align="right" style="white-space:nowrap;">ORDER # ${escapeHtml(orderLabel)}</td>
-          </tr>
-          <tr>
-            <td class="section" colspan="2">
-              <p class="title">New Sale!</p>
-              <p class="subtitle">A new order has been placed on Dover Designs.</p>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">
+            <td class="inner-pad">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td bgcolor="${baseColor}" style="border-radius:9999px;">
-                    <a href="${escapeHtml(params.adminUrl)}" style="display:inline-block; padding:12px 20px; font-family:${baseFont}; font-size:14px; font-weight:600; color:#ffffff !important; text-decoration:none !important; border-radius:9999px;">
-                      ${escapeHtml(primaryCtaLabel)}
-                    </a>
+                  <td class="section brand">${escapeHtml(brand)}</td>
+                  <td class="section order-label" align="right" style="white-space:nowrap;">ORDER # ${escapeHtml(orderLabel)}</td>
+                </tr>
+                <tr>
+                  <td class="section" colspan="2">
+                    <p class="title">New Sale!</p>
+                    <p class="subtitle">A new order has been placed on Dover Designs.</p>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">
+                      <tr>
+                        <td bgcolor="${baseColor}" style="border-radius:9999px;">
+                          <a href="${escapeHtml(params.adminUrl)}" style="display:inline-block; padding:12px 20px; font-family:${baseFont}; font-size:14px; font-weight:600; color:#ffffff !important; text-decoration:none !important; border-radius:9999px;">
+                            ${escapeHtml(primaryCtaLabel)}
+                          </a>
+                        </td>
+                        ${stripeButton}
+                      </tr>
+                    </table>
                   </td>
-                  ${stripeButton}
+                </tr>
+                <tr>
+                  <td class="section" colspan="2">
+                    <p class="subhead">Order summary</p>
+                  </td>
+                </tr>
+                ${itemRows}
+                ${totalsRows.replace('<tr>', '<tr class="totals-start">')}
+                <tr>
+                  <td class="section" colspan="2" style="padding-top:12px;">
+                    <p class="subhead">Customer information</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="section" style="width:50%; vertical-align:top; padding-right:16px;">
+                    <p class="info-title" style="white-space:nowrap;">Shipping address</p>
+                    <p class="info">${shippingBlock}</p>
+                  </td>
+                  <td class="section" style="width:50%; vertical-align:top; padding-left:16px;">
+                    <p class="info-title" style="white-space:nowrap;">Billing address</p>
+                    <p class="info">${billingBlock}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="section" colspan="2">
+                    <p class="info-title">Payment method</p>
+                    <p class="info">${escapeHtml(paymentMethod)}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="footer" colspan="2">If this was not you, you can safely ignore this email.</td>
                 </tr>
               </table>
             </td>
-          </tr>
-          <tr>
-            <td class="section" colspan="2">
-              <p class="subhead">Order summary</p>
-            </td>
-          </tr>
-          ${itemRows}
-          ${totalsRows}
-          <tr>
-            <td class="section" colspan="2" style="padding-top:12px;">
-              <p class="subhead">Customer information</p>
-            </td>
-          </tr>
-          <tr>
-            <td class="section" style="width:50%; vertical-align:top; padding-right:16px;">
-              <p class="info-title" style="white-space:nowrap;">Shipping address</p>
-              <p class="info">${shippingBlock}</p>
-            </td>
-            <td class="section" style="width:50%; vertical-align:top; padding-left:16px;">
-              <p class="info-title" style="white-space:nowrap;">Billing address</p>
-              <p class="info">${billingBlock}</p>
-            </td>
-          </tr>
-          <tr>
-            <td class="section" colspan="2">
-              <p class="info-title">Payment method</p>
-              <p class="info">${escapeHtml(paymentMethod)}</p>
-            </td>
-          </tr>
-          <tr>
-            <td class="footer" colspan="2">If this was not you, you can safely ignore this email.</td>
           </tr>
         </table>
       </td>

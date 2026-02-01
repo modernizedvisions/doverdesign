@@ -691,7 +691,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
       </div>
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="flex min-h-0 flex-col p-0">
+        <DialogContent className="flex min-h-0 flex-col p-0 bg-white">
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -702,7 +702,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
             }}
             className="flex min-h-0 flex-1 flex-col overflow-y-auto"
           >
-            <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-driftwood/60 bg-white/80 px-6 py-4">
+            <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-driftwood/60 bg-white px-6 py-4">
               <DialogTitle>Edit Product</DialogTitle>
               <div className="flex items-center gap-2">
                 {editProductId && (
