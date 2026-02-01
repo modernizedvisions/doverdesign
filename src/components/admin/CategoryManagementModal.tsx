@@ -229,9 +229,9 @@ export function CategoryManagementModal({
               <div>
                 <label className="lux-label text-[10px]">Shipping</label>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="^\\d*(\\.\\d{0,2})?$"
                   value={newCategoryShipping}
                   onChange={(e) => setNewCategoryShipping(e.target.value)}
                   className="lux-input text-sm mt-1"
@@ -340,9 +340,9 @@ export function CategoryManagementModal({
                               Shipping
                             </label>
                             <input
-                              type="number"
-                              min="0"
-                              step="0.01"
+                              type="text"
+                              inputMode="decimal"
+                              pattern="^\\d*(\\.\\d{0,2})?$"
                               value={editDraft.shipping}
                               onChange={(e) =>
                                 setEditDraft((prev) => (prev ? { ...prev, shipping: e.target.value } : prev))
