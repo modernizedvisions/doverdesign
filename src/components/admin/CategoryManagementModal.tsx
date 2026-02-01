@@ -177,24 +177,27 @@ export function CategoryManagementModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="relative max-w-lg">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
-        >
-          CLOSE
-        </button>
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="text-center text-lg font-semibold tracking-[0.15em] uppercase text-slate-900">
-            Category Management
-          </DialogTitle>
-          <p className="text-center text-sm text-slate-600">
-            Add or delete categories available to products.
-          </p>
-        </DialogHeader>
+      <DialogContent className="flex w-full max-w-2xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0">
+        {/* Keep header fixed and allow body to scroll within the modal. */}
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-6 pt-6 pb-4">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-center text-lg font-semibold tracking-[0.15em] uppercase text-slate-900">
+              Category Management
+            </DialogTitle>
+            <p className="text-center text-sm text-slate-600">
+              Add or delete categories available to products.
+            </p>
+          </DialogHeader>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+          >
+            CLOSE
+          </button>
+        </div>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-4">
           {categoryMessage && (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               {categoryMessage}

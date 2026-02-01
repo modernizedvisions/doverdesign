@@ -2,10 +2,13 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
 import { ContactForm } from '../components/ContactForm';
+import type { HomeGalleryItem } from '../lib/types';
 
 export type HomeTemplateProps = {
   heroImageUrl?: string;
   galleryImageUrls?: string[];
+  homeGalleryItems?: HomeGalleryItem[];
+  aboutImageUrl?: string;
 };
 
 const heroDefault = '/pictures/hero_picture.jpg';
@@ -64,18 +67,32 @@ const testimonials = [
   },
 ];
 
-export default function HomeTemplate({ heroImageUrl, galleryImageUrls }: HomeTemplateProps) {
+export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalleryItems, aboutImageUrl }: HomeTemplateProps) {
   const resolvedHeroImage = heroImageUrl ?? heroDefault;
   const resolvedGalleryImages = galleryImageUrls?.length ? galleryImageUrls : galleryDefaults;
-  const resolvedAboutImage = artistDefault || resolvedGalleryImages[1] || resolvedHeroImage || galleryDefaults[1];
-  const galleryWithSources = useMemo(
-    () =>
-      galleryItems.map((item, index) => ({
-        ...item,
-        image: resolvedGalleryImages[index % resolvedGalleryImages.length] ?? resolvedHeroImage ?? null,
-      })),
-    [resolvedGalleryImages, resolvedHeroImage]
-  );
+  const resolvedAboutImage = aboutImageUrl || artistDefault || resolvedGalleryImages[1] || resolvedHeroImage || galleryDefaults[1];
+  const galleryWithSources = useMemo(() => {
+    const hasHomeGalleryContent = Array.isArray(homeGalleryItems);
+    const normalizedHomeGallery = Array.from({ length: 8 }, (_, index) => ({
+      imageUrl: homeGalleryItems?.[index]?.imageUrl || '',
+      descriptor: homeGalleryItems?.[index]?.descriptor || '',
+    }));
+    const fallbackDescriptors = galleryItems.map((item) => item.accent);
+
+    return Array.from({ length: 8 }, (_, index) => {
+      const slot = normalizedHomeGallery[index];
+      const image = hasHomeGalleryContent
+        ? slot.imageUrl || null
+        : resolvedGalleryImages[index % resolvedGalleryImages.length] ?? resolvedHeroImage ?? null;
+      const descriptor = hasHomeGalleryContent ? slot.descriptor || '' : fallbackDescriptors[index] || '';
+      const label = descriptor || (hasHomeGalleryContent ? `Gallery ${index + 1}` : fallbackDescriptors[index] || `Gallery ${index + 1}`);
+      return {
+        image,
+        descriptor,
+        label,
+      };
+    });
+  }, [homeGalleryItems, resolvedGalleryImages, resolvedHeroImage]);
 
   return (
     <div className="bg-linen text-charcoal">
@@ -419,14 +436,14 @@ function RevealOnScroll({ children, delay = 0, className = '' }: { children: Rea
   );
 }
 
-function GalleryGrid({ items }: { items: Array<{ label: string; accent: string; tall?: boolean; image?: string | null }> }) {
+function GalleryGrid({ items }: { items: Array<{ label?: string; descriptor?: string; image?: string | null }> }) {
   return (
     <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
       {items.map((item, index) => {
         const toneClass = index % 2 === 0 ? 'bg-white/90' : 'bg-sand/70';
-        const bottomLabel = (item.label || '').split(/\s+/).slice(0, 2).join(' ');
+        const descriptor = (item.descriptor || '').trim();
         return (
-          <RevealOnScroll key={`${item.label}-${index}`} delay={index * 40}>
+          <RevealOnScroll key={`${item.label || 'gallery'}-${index}`} delay={index * 40}>
             <div
               className={`group relative rounded-shell-lg border border-driftwood/30 ${toneClass} shadow-sm transition-all duration-300 ease-out hover:shadow-md cursor-pointer bg-linen`}
             >
@@ -434,22 +451,26 @@ function GalleryGrid({ items }: { items: Array<{ label: string; accent: string; 
                 {item.image ? (
                   <img
                     src={item.image}
-                    alt={item.label}
+                    alt={descriptor || item.label || 'Gallery image'}
                     className="h-full w-full object-cover rounded-shell-lg transition duration-500 group-hover:scale-[1.02]"
                     loading="lazy"
                   />
                 ) : (
                   <div className="h-full w-full bg-gradient-to-br from-sand via-linen to-sea-glass/20 shell-pattern rounded-shell-lg" />
                 )}
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-2 sm:translate-x-0 shell-card bg-white/90 px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80 sm:block hidden">
-                  {item.accent}
+                {descriptor ? (
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-2 sm:translate-x-0 shell-card bg-white/90 px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80 sm:block hidden">
+                    {descriptor}
+                  </div>
+                ) : null}
+              </div>
+              {descriptor ? (
+                <div className="sm:hidden flex justify-center px-3 pb-3 pt-2">
+                  <span className="inline-flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-driftwood/30 shadow-sm px-3 py-1.5 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80 whitespace-nowrap">
+                    {descriptor}
+                  </span>
                 </div>
-              </div>
-              <div className="sm:hidden flex justify-center px-3 pb-3 pt-2">
-                <span className="inline-flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-driftwood/30 shadow-sm px-3 py-1.5 text-[11px] uppercase tracking-[0.28em] text-deep-ocean/80 whitespace-nowrap">
-                  {bottomLabel}
-                </span>
-              </div>
+              ) : null}
             </div>
           </RevealOnScroll>
         );

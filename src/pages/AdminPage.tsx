@@ -84,6 +84,26 @@ const initialProductForm: ProductFormState = {
   stripeProductId: '',
 };
 
+type AdminTabBadgeProps = {
+  count?: number | null;
+  isActive?: boolean;
+};
+
+const AdminTabBadge = ({ count, isActive }: AdminTabBadgeProps) => {
+  const safeCount = typeof count === 'number' && Number.isFinite(count) ? count : 0;
+  if (safeCount <= 0) return null;
+
+  return (
+    <span
+      className={`notif-circle absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center bg-soft-gold text-[10px] font-semibold leading-none text-deep-ocean shadow-sm ${
+        isActive ? 'ring-1 ring-white/70' : 'ring-1 ring-deep-ocean/20'
+      }`}
+    >
+      {safeCount > 9 ? '9+' : String(safeCount)}
+    </span>
+  );
+};
+
 export function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -1073,18 +1093,14 @@ export function AdminPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] uppercase tracking-[0.2em] transition-all ${
+                  className={`relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] uppercase tracking-[0.2em] transition-all ${
                     isActive
                       ? 'bg-deep-ocean text-white shadow-md'
                       : 'bg-white/80 text-deep-ocean border border-driftwood/60 hover:bg-sand/80'
                   }`}
                 >
                   {tab.label}
-                  {tab.badge && tab.badge > 0 && (
-                    <span className="notif-circle inline-flex h-5 w-5 items-center justify-center rounded-full bg-softGold text-[11px] font-semibold leading-none text-charcoal">
-                      {tab.badge > 9 ? '9+' : String(tab.badge)}
-                    </span>
-                  )}
+                  <AdminTabBadge count={tab.badge} isActive={isActive} />
                 </button>
               );
             })}

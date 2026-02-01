@@ -70,7 +70,7 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
                       <button
                         type="button"
                         onClick={() => onSelectOrder(order)}
-                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-900 border border-gray-300 rounded-ui hover:bg-gray-50 transition-colors"
                       >
                         View
                       </button>
@@ -119,7 +119,7 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
                         <button
                           type="button"
                           onClick={() => onSelectOrder(order)}
-                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-900 border border-gray-300 rounded-ui hover:bg-gray-50 transition-colors"
                         >
                           View
                         </button>

@@ -103,6 +103,21 @@ export interface CustomOrdersImage {
   previewUrl?: string;
 }
 
+export interface HomeGalleryItem {
+  imageUrl: string;
+  descriptor?: string;
+  alt?: string;
+  uploading?: boolean;
+  optimizing?: boolean;
+  uploadError?: string;
+  previewUrl?: string;
+}
+
+export type AboutImages = {
+  home?: string;
+  about?: string;
+};
+
 export interface HeroConfig {
   heroImages: HeroCollageImage[]; // up to 3
   customOrdersImages?: CustomOrdersImage[]; // up to 4 for custom shells grid
@@ -115,7 +130,10 @@ export type HomeSiteContent = {
     middle?: string;
     right?: string;
   };
-  customOrderImages?: string[];
+  // Home Gallery (Homepage): 8 slots with optional pill descriptors.
+  homeGallery?: HomeGalleryItem[];
+  // About images shared by homepage + About page.
+  aboutImages?: AboutImages;
   heroRotationEnabled?: boolean;
   shopCategoryCards?: Array<{
     slotIndex: number;

@@ -1,6 +1,30 @@
+import { useEffect, useState } from 'react';
 import { ContactForm } from '../components/ContactForm';
+import { getPublicSiteContentHome } from '../lib/api';
+import type { HomeSiteContent } from '../lib/types';
 
 export function AboutPage() {
+  const [homeContent, setHomeContent] = useState<HomeSiteContent | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const content = await getPublicSiteContentHome();
+        if (!cancelled) {
+          setHomeContent(content || {});
+        }
+      } catch (err) {
+        console.error('Failed to load about images', err);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const aboutImage = homeContent?.aboutImages?.about || '/pictures/about_page.jpg';
   return (
     <div className="bg-linen text-charcoal">
       <section className="py-16 sm:py-20">
@@ -30,7 +54,7 @@ export function AboutPage() {
               <div className="relative rounded-shell-lg overflow-hidden lux-shadow border border-driftwood/70 bg-white/70">
                 <div className="absolute inset-0 bg-gradient-to-br from-sand/70 via-transparent to-sea-glass/15 pointer-events-none" />
                 <img
-                  src="/pictures/about_page.jpg"
+                  src={aboutImage}
                   alt="Dover Designs studio"
                   className="h-full w-full object-cover"
                   loading="lazy"

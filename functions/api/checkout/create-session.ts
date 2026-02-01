@@ -133,8 +133,24 @@ export const onRequestPost = async (context: {
   console.log('Stripe secret present?', !!stripeSecretKey);
 
   try {
-    const body = (await request.json()) as { items?: { productId?: string; quantity?: number }[]; promoCode?: string };
+    const body = (await request.json()) as {
+      items?: Array<{ productId?: string; quantity?: number; stripePriceId?: string; priceCents?: number; price?: number }>;
+      promoCode?: string;
+    };
     const itemsPayload = Array.isArray(body.items) ? body.items : [];
+    const clientPriceItems = itemsPayload.filter(
+      (item) => item?.stripePriceId || item?.priceCents !== undefined || item?.price !== undefined
+    );
+    if (clientPriceItems.length) {
+      console.warn('[checkout] ignoring client price fields', { count: clientPriceItems.length });
+    }
+    const clientPriceByProduct = new Map<string, string>();
+    itemsPayload.forEach((item) => {
+      if (!item?.productId || typeof item.stripePriceId !== 'string') return;
+      const key = item.productId.trim();
+      if (!key) return;
+      clientPriceByProduct.set(key, item.stripePriceId);
+    });
     if (!itemsPayload.length) {
       return json({ error: 'At least one item is required' }, 400);
     }
@@ -292,6 +308,14 @@ export const onRequestPost = async (context: {
       const product = productMap.get(pid);
       if (!product) {
         return json({ error: `Product not found: ${pid}` }, 404);
+      }
+      const clientStripePrice = clientPriceByProduct.get(pid);
+      if (clientStripePrice && product.stripe_price_id && clientStripePrice !== product.stripe_price_id) {
+        console.warn('[checkout] client price mismatch; using DB price', {
+          productId: pid,
+          clientStripePrice,
+          dbStripePrice: product.stripe_price_id,
+        });
       }
       if (product.is_active === 0) {
         return json({ error: `Product inactive: ${product.name || pid}` }, 400);

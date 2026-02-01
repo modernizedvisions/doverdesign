@@ -75,15 +75,22 @@ export async function onRequest(context: { env: { DB: D1Database }; request: Req
       }
 
       const heroImages = incomingJson?.heroImages || {};
-      const customOrderImages = Array.isArray(incomingJson?.customOrderImages)
-        ? incomingJson.customOrderImages
+      const homeGallery = Array.isArray(incomingJson?.homeGallery)
+        ? incomingJson.homeGallery
         : [];
+      const aboutImages = incomingJson?.aboutImages || {};
+
+      const homeGalleryUrls = homeGallery
+        .map((item: any) => item?.imageUrl)
+        .filter(Boolean) as string[];
+      const aboutUrls = [aboutImages.home, aboutImages.about].filter(Boolean) as string[];
 
       const urlValues = [
         heroImages.left,
         heroImages.middle,
         heroImages.right,
-        ...customOrderImages,
+        ...homeGalleryUrls,
+        ...aboutUrls,
       ].filter(Boolean) as string[];
 
       const invalid = urlValues.find((url) => isDataUrl(url) || url.length > MAX_URL_LENGTH);

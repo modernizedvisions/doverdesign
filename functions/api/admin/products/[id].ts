@@ -1,3 +1,4 @@
+import Stripe from 'stripe';
 import type { Product } from '../../../../src/lib/types';
 import {
   ensureImagesSchema,
@@ -55,6 +56,12 @@ type UpdateProductInput = {
   stripeProductId?: string;
   collection?: string;
 };
+
+const createStripeClient = (secretKey: string) =>
+  new Stripe(secretKey, {
+    apiVersion: '2024-06-20',
+    httpClient: Stripe.createFetchHttpClient(),
+  });
 
 const mapRowToProduct = (row: ProductRow, request: Request, env: { PUBLIC_IMAGES_BASE_URL?: string }): Product => {
   const rawImageUrls = row.image_urls_json ? safeParseJsonArray(row.image_urls_json) : [];
@@ -238,7 +245,7 @@ const resolveProductImagePayload = async (
 };
 
 export async function onRequestPut(context: {
-  env: { DB: D1Database };
+  env: { DB: D1Database; STRIPE_SECRET_KEY?: string };
   request: Request;
   params: Record<string, string>;
 }): Promise<Response> {
@@ -329,10 +336,101 @@ export async function onRequestPut(context: {
       values.push(value);
     };
 
+    const existing = await context.env.DB.prepare(
+      `
+      SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json,
+             primary_image_id, image_ids_json,
+             is_active, is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id,
+             collection, created_at
+      FROM products WHERE id = ?;
+    `
+    )
+      .bind(id)
+      .first<ProductRow>();
+
+    if (!existing) {
+      return new Response(JSON.stringify({ error: 'Product not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const incomingPriceCents = body.priceCents !== undefined ? Math.round(Number(body.priceCents)) : undefined;
+    if (incomingPriceCents !== undefined && !Number.isFinite(incomingPriceCents)) {
+      return new Response(JSON.stringify({ error: 'priceCents must be a valid number' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const existingPriceCents =
+      typeof existing.price_cents === 'number' && Number.isFinite(existing.price_cents)
+        ? existing.price_cents
+        : null;
+    const priceChanged =
+      incomingPriceCents !== undefined && existingPriceCents !== incomingPriceCents;
+
+    let stripeProductIdToUse = existing.stripe_product_id || null;
+    let newStripePriceId: string | null = null;
+
+    if (priceChanged) {
+      const stripeSecret = context.env.STRIPE_SECRET_KEY;
+      if (!stripeSecret) {
+        return new Response(
+          JSON.stringify({ error: 'Stripe is not configured. Pricing changes require Stripe.' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      try {
+        const stripe = createStripeClient(stripeSecret);
+        if (!stripeProductIdToUse) {
+          const name = body.name ?? existing.name ?? 'Dover Designs Product';
+          const description = body.description ?? existing.description ?? undefined;
+          const slug = body.name ? toSlug(body.name) : existing.slug ?? undefined;
+          const stripeProduct = await stripe.products.create({
+            name,
+            description,
+            metadata: {
+              d1_product_id: id,
+              d1_product_slug: slug || '',
+            },
+          });
+          stripeProductIdToUse = stripeProduct.id;
+        }
+
+        const stripePrice = await stripe.prices.create({
+          product: stripeProductIdToUse,
+          unit_amount: incomingPriceCents ?? 0,
+          currency: 'usd',
+          metadata: {
+            d1_product_id: id,
+          },
+        });
+
+        newStripePriceId = stripePrice.id;
+        console.log('[admin products] price change', {
+          id,
+          oldPriceCents: existingPriceCents,
+          newPriceCents: incomingPriceCents,
+          oldStripePriceId: existing.stripe_price_id || null,
+          newStripePriceId,
+          stripeProductId: stripeProductIdToUse,
+        });
+      } catch (stripeError) {
+        const detail = stripeError instanceof Error ? stripeError.message : String(stripeError);
+        console.error('Failed to update Stripe price', { id, detail });
+        return new Response(JSON.stringify({ error: 'Failed to update Stripe price', detail }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     if (body.name !== undefined) addSet('name = ?', body.name);
     if (body.name) addSet('slug = ?', toSlug(body.name));
     if (body.description !== undefined) addSet('description = ?', body.description);
-    if (body.priceCents !== undefined) addSet('price_cents = ?', body.priceCents);
+    if (incomingPriceCents !== undefined) addSet('price_cents = ?', incomingPriceCents);
     if (body.category !== undefined) {
       const categoryValue = sanitizeCategory(body.category);
       addSet('category = ?', categoryValue || null);
@@ -358,8 +456,14 @@ export async function onRequestPut(context: {
     if (body.quantityAvailable !== undefined) addSet('quantity_available = ?', body.quantityAvailable);
     if (body.isOneOff !== undefined) addSet('is_one_off = ?', body.isOneOff ? 1 : 0);
     if (body.isActive !== undefined) addSet('is_active = ?', body.isActive ? 1 : 0);
-    if (body.stripePriceId !== undefined) addSet('stripe_price_id = ?', body.stripePriceId);
-    if (body.stripeProductId !== undefined) addSet('stripe_product_id = ?', body.stripeProductId);
+    if (newStripePriceId) addSet('stripe_price_id = ?', newStripePriceId);
+    if (stripeProductIdToUse && stripeProductIdToUse !== existing.stripe_product_id) {
+      addSet('stripe_product_id = ?', stripeProductIdToUse);
+    }
+    if (!priceChanged) {
+      if (body.stripePriceId !== undefined) addSet('stripe_price_id = ?', body.stripePriceId);
+      if (body.stripeProductId !== undefined) addSet('stripe_product_id = ?', body.stripeProductId);
+    }
     if (body.collection !== undefined) addSet('collection = ?', body.collection);
 
     if (!sets.length) {
