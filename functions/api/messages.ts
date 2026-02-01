@@ -173,17 +173,148 @@ export async function onRequestPost(context: { env: MessageEnv; request: Request
       siteUrl ? `Site: ${siteUrl}` : '',
     ].filter(Boolean);
 
+    const typeLabel = type === 'custom_order' ? 'Custom Order' : 'Message';
+    const baseFont = "'Inter', 'Helvetica Neue', Arial, sans-serif";
+    const serifFont = "'Cormorant Garamond', Georgia, 'Times New Roman', serif";
+    const baseColor = '#2F4F4F';
+    const mutedColor = '#5f6f75';
+    const borderColor = '#E6DFD4';
+    const messageHtml = escapeHtml(message).replace(/\n/g, '<br/>');
+    const inspoBlock =
+      inspoTitle || inspoImageUrl
+        ? `
+          <div class="inspo-box">
+            <div class="info-title">Inspired by</div>
+            <div class="inspo-row">
+              ${inspoImageUrl ? `<img src="${escapeHtml(inspoImageUrl)}" alt="${escapeHtml(inspoTitle || 'Inspiration')}" width="56" height="56" class="inspo-img" />` : ''}
+              <div class="inspo-text">
+                <div class="inspo-title">${escapeHtml(inspoTitle || 'Customer inspiration')}</div>
+                ${inspoImageUrl ? `<a href="${escapeHtml(inspoImageUrl)}" class="inspo-link">View image</a>` : ''}
+              </div>
+            </div>
+          </div>
+        `
+        : '';
+    const categoryLine = categoryNames.length ? escapeHtml(categoryNames.join(', ')) : 'None selected';
+    const attachmentLine = attachment ? 'Image attached.' : 'No image attached.';
+
     const html = `
-      <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
-        <p><strong>New inquiry from ${escapeHtml(name)}</strong></p>
-        <p>Email: <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p>
-        <p>Type: ${type === 'custom_order' ? 'Custom Order' : 'Message'}</p>
-        ${categoryNames.length ? `<p>Category: ${escapeHtml(categoryNames.join(', '))}</p>` : ''}
-        ${inspoTitle ? `<p>Inspired by: ${escapeHtml(inspoTitle)}</p>` : ''}
-        <p style="white-space: pre-line;">${escapeHtml(message)}</p>
-        <p>${attachment ? 'Image attached.' : 'No image attached.'}</p>
-        ${siteUrl ? `<p>Site: <a href="${escapeHtml(siteUrl)}">${escapeHtml(siteUrl)}</a></p>` : ''}
-      </div>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin:0; padding:0; background:#FBF9F5; }
+    table { border-collapse:collapse; }
+    img { border:0; line-height:100%; }
+    body, table, td, a, p, div, span { font-family:${baseFont}; }
+    .container { width:100%; background:#FBF9F5; }
+    .inner { width:600px; max-width:600px; background:#ffffff; border-radius:28px; border:1px solid ${borderColor}; overflow:hidden; box-shadow:0 24px 56px rgba(31,41,51,0.12); }
+    .pad { padding:32px 22px 36px; }
+    .inner-pad { padding:30px 28px 32px; }
+    .section { padding-bottom:22px; }
+    .brand { font-size:20px; font-weight:600; color:${baseColor}; font-family:${serifFont}; letter-spacing:0.04em; }
+    .order-label { font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:${mutedColor}; white-space:nowrap; }
+    .title { font-size:28px; font-weight:600; color:${baseColor}; margin:0 0 6px; font-family:${serifFont}; letter-spacing:0.02em; }
+    .subtitle { font-size:14px; color:${mutedColor}; margin:0; }
+    .button { display:inline-block; padding:12px 22px; background:${baseColor}; color:#ffffff !important; text-decoration:none !important; border-radius:9999px; font-size:14px; font-weight:600; letter-spacing:0.08em; }
+    .subhead { font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:${mutedColor}; margin:0 0 8px; }
+    .meta-table td { padding:6px 0; font-size:14px; color:${mutedColor}; }
+    .meta-label { width:140px; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:${mutedColor}; }
+    .meta-value { font-size:14px; color:${baseColor}; font-weight:600; }
+    .message-box { padding:16px 18px; border:1px solid #ededed; border-radius:18px; background:#FBF9F5; color:${baseColor}; font-size:15px; line-height:1.6; }
+    .info-title { font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:${mutedColor}; margin:0 0 6px; white-space:nowrap; }
+    .info { font-size:14px; color:${baseColor}; line-height:1.5; margin:0; }
+    .inspo-box { margin-top:16px; padding:14px 16px; border:1px solid #ededed; border-radius:18px; background:#ffffff; }
+    .inspo-row { display:flex; gap:12px; align-items:center; }
+    .inspo-img { width:56px; height:56px; border-radius:14px; border:1px solid ${borderColor}; object-fit:cover; display:block; }
+    .inspo-title { font-size:14px; font-weight:600; color:${baseColor}; }
+    .inspo-link { display:inline-block; margin-top:4px; font-size:12px; color:${baseColor}; text-decoration:underline; }
+    .footer { padding-top:16px; font-size:12px; color:${mutedColor}; }
+    @media screen and (max-width: 640px) {
+      .pad { padding:24px 16px 30px; }
+      .inner-pad { padding:24px 18px 28px; }
+      .title { font-size:24px; }
+      .meta-label { width:120px; }
+    }
+  </style>
+</head>
+<body>
+  <table role="presentation" class="container" width="100%" cellspacing="0" cellpadding="0">
+    <tr>
+      <td align="center" class="pad">
+        <table role="presentation" class="inner" width="600" cellspacing="0" cellpadding="0">
+          <tr>
+            <td class="inner-pad">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td class="section brand">Dover Designs</td>
+                  <td class="section order-label" align="right">Inquiry</td>
+                </tr>
+                <tr>
+                  <td class="section" colspan="2">
+                    <p class="title">New Inquiry</p>
+                    <p class="subtitle">${escapeHtml(typeLabel)} received from the contact form.</p>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">
+                      <tr>
+                        <td bgcolor="${baseColor}" style="border-radius:9999px;">
+                          <a href="mailto:${escapeHtml(email)}" class="button">Reply to ${escapeHtml(name)}</a>
+                        </td>
+                        ${siteUrl ? `<td width="12">&nbsp;</td><td bgcolor="${baseColor}" style="border-radius:9999px;"><a href="${escapeHtml(siteUrl)}" class="button">Visit Site</a></td>` : ''}
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="section" colspan="2">
+                    <p class="subhead">Inquiry details</p>
+                    <table role="presentation" class="meta-table" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td class="meta-label">From</td>
+                        <td class="meta-value">${escapeHtml(name)}</td>
+                      </tr>
+                      <tr>
+                        <td class="meta-label">Email</td>
+                        <td class="meta-value"><a href="mailto:${escapeHtml(email)}" style="color:${baseColor}; text-decoration:none;">${escapeHtml(email)}</a></td>
+                      </tr>
+                      <tr>
+                        <td class="meta-label">Type</td>
+                        <td class="meta-value">${escapeHtml(typeLabel)}</td>
+                      </tr>
+                      <tr>
+                        <td class="meta-label">Categories</td>
+                        <td class="meta-value">${categoryLine}</td>
+                      </tr>
+                      <tr>
+                        <td class="meta-label">Attachment</td>
+                        <td class="meta-value">${attachmentLine}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="section" colspan="2">
+                    <p class="subhead">Message</p>
+                    <div class="message-box">${messageHtml}</div>
+                    ${inspoBlock}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="footer" colspan="2">
+                    Reply directly to this email to respond to the customer.
+                    ${siteUrl ? ` Visit the site: <a href="${escapeHtml(siteUrl)}" style="color:${baseColor}; text-decoration:underline;">${escapeHtml(siteUrl)}</a>.` : ''}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `;
 
     const emailResult = await sendEmail(
