@@ -155,6 +155,7 @@ export async function onRequestPost(context: { env: MessageEnv; request: Request
     }
 
     const siteUrl = context.env.PUBLIC_SITE_URL || context.env.VITE_PUBLIC_SITE_URL || '';
+    const adminUrl = siteUrl ? `${siteUrl.replace(/\/+$/, '')}/admin` : '/admin';
     const attachment = parseDataUrl(body?.imageUrl);
     if (body?.imageUrl && !attachment) {
       console.warn('[messages] Invalid image data URL; sending without attachment');
@@ -170,7 +171,7 @@ export async function onRequestPost(context: { env: MessageEnv; request: Request
       message,
       '',
       attachment ? 'Image attached.' : 'No image attached.',
-      siteUrl ? `Site: ${siteUrl}` : '',
+      adminUrl ? `Admin: ${adminUrl}` : '',
     ].filter(Boolean);
 
     const typeLabel = type === 'custom_order' ? 'Custom Order' : 'Message';
@@ -259,9 +260,8 @@ export async function onRequestPost(context: { env: MessageEnv; request: Request
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">
                       <tr>
                         <td bgcolor="${baseColor}" style="border-radius:9999px;">
-                          <a href="mailto:${escapeHtml(email)}" class="button">Reply to ${escapeHtml(name)}</a>
+                          <a href="${escapeHtml(adminUrl)}" class="button">View in Admin</a>
                         </td>
-                        ${siteUrl ? `<td width="12">&nbsp;</td><td bgcolor="${baseColor}" style="border-radius:9999px;"><a href="${escapeHtml(siteUrl)}" class="button">Visit Site</a></td>` : ''}
                       </tr>
                     </table>
                   </td>
@@ -298,12 +298,6 @@ export async function onRequestPost(context: { env: MessageEnv; request: Request
                     <p class="subhead">Message</p>
                     <div class="message-box">${messageHtml}</div>
                     ${inspoBlock}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="footer" colspan="2">
-                    Reply directly to this email to respond to the customer.
-                    ${siteUrl ? ` Visit the site: <a href="${escapeHtml(siteUrl)}" style="color:${baseColor}; text-decoration:underline;">${escapeHtml(siteUrl)}</a>.` : ''}
                   </td>
                 </tr>
               </table>
