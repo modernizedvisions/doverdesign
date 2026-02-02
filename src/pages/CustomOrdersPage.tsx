@@ -61,7 +61,7 @@ export default function CustomOrdersPage() {
               <p className="section-eyebrow">Made with intention</p>
               <h1 className="section-heading">Custom Orders</h1>
               <p className="section-subtext">
-                Every piece begins with your story — from color and coastal mood to names, dates, and meaningful details. We’ll share a proof before finishing, so everything feels just right.
+                Every piece begins with your story. I'll share a proof before finishing, so everything feels just right.
               </p>
             </div>
             <div className="pt-1 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
@@ -152,7 +152,7 @@ export default function CustomOrdersPage() {
           <div className="space-y-8">
             <div className="space-y-3 max-w-3xl">
               <p className="lux-eyebrow">Contact</p>
-              <h2 className="text-3xl sm:text-4xl font-serif tracking-[0.03em] text-deep-ocean">Soft luxury form experience</h2>
+              <h2 className="text-3xl sm:text-4xl font-serif tracking-[0.03em] text-deep-ocean">Send us a message</h2>
               <p className="lux-subtitle">
                 Tell us about your space, palette, or the story you want a shell to hold.
               </p>

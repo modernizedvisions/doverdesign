@@ -70,7 +70,7 @@ export function AboutPage() {
           <div className="space-y-8">
             <div className="space-y-3 max-w-3xl">
               <p className="text-xs uppercase tracking-[0.32em] text-deep-ocean/75">Contact</p>
-              <h2 className="text-3xl sm:text-4xl font-serif tracking-[0.03em] text-deep-ocean">Soft luxury form experience</h2>
+              <h2 className="text-3xl sm:text-4xl font-serif tracking-[0.03em] text-deep-ocean">Send us a message</h2>
               <p className="text-base text-charcoal/80 leading-relaxed">
                 Tell us about your space, palette, or the story you want a shell to hold.
               </p>

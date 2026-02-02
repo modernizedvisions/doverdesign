@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Instagram } from 'lucide-react';
 import { CartIcon } from '../components/cart/CartIcon';
 import { CartDrawer } from '../components/cart/CartDrawer';
 import { useUIStore } from '../store/uiStore';
@@ -160,7 +160,27 @@ function SiteLayoutInner() {
 
       <footer className="bg-charcoal border-t border-driftwood/50 py-8 text-linen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center gap-2 text-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex items-center gap-3 text-linen/80">
+              <a
+                href="https://www.instagram.com/dover_designs/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Visit Dover Designs on Instagram"
+                className="p-2 rounded-full border border-linen/30 hover:border-gold-accent hover:text-gold-accent transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@doverdesign"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Visit Dover Designs on TikTok"
+                className="p-2 rounded-full border border-linen/30 hover:border-gold-accent hover:text-gold-accent transition-colors"
+              >
+                <TikTokIcon className="h-5 w-5" />
+              </a>
+            </div>
             <div className="flex items-center gap-4 text-sm font-serif text-linen/80">
               <Link to="/terms" className="hover:text-linen transition-colors">
                 Terms
@@ -187,5 +207,19 @@ function SiteLayoutInner() {
 
       <CartDrawer />
     </div>
+  );
+}
+
+function TikTokIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M21 8.27c-1.18-.24-2.26-.75-3.2-1.5a6.43 6.43 0 0 1-1.01-1.06c-.15-.21-.29-.43-.42-.66v8.07a5.72 5.72 0 0 1-1.13 3.4c-.88 1.19-2.13 1.98-3.57 2.21a5.64 5.64 0 0 1-3.48-.54A5.18 5.18 0 0 1 5.4 14.8c.02-1.33.55-2.58 1.52-3.53a5.34 5.34 0 0 1 5.77-1.16v2.61c-.38-.25-.82-.39-1.27-.4a2.2 2.2 0 0 0-2.25 2.25c0 .6.23 1.18.65 1.6a2.22 2.22 0 0 0 2.31.53c.38-.14.72-.38 1-.69.47-.54.73-1.24.73-1.96V3h2.4c.08.36.2.72.35 1.06.22.49.5.95.84 1.38.51.66 1.17 1.2 1.92 1.57.57.29 1.18.48 1.81.55V8.27Z" />
+    </svg>
   );
 }

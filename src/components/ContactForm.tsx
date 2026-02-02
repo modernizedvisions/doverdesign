@@ -391,7 +391,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
                 rows={5}
                 value={formData.message}
                 onChange={handleChange}
-                placeholder="Tell us what you're looking for - custom ideas, questions, or details."
+                placeholder="Tell me what you're looking for - custom ideas, questions, or details."
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none font-sans font-semibold tracking-[0.12em] text-gray-900 placeholder:font-sans placeholder:font-semibold placeholder:tracking-[0.12em] placeholder:text-gray-500"
               />
             </div>

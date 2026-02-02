@@ -239,7 +239,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
           <SectionHeading
             eyebrow="Reviews"
             title="Trusted by collectors"
-            subtitle="Words from interior designers and collectors who live with Dover pieces."
+            subtitle="Words from interior designers and collectors who live with Dover Designs' pieces."
           />
           <div className="mt-10 rounded-shell-lg border border-sea-glass/30 bg-sea-glass/10 px-4 py-6 sm:px-6 sm:py-8 shadow-inner">
             <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto pb-2 snap-x snap-mandatory items-center md:items-stretch">
@@ -316,7 +316,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
         <SectionWrapper id="contact" className="py-16 sm:py-20 bg-transparent relative z-10">
           <SectionHeading
             eyebrow="Contact"
-            title="Soft luxury form experience"
+            title="Send us a message"
             subtitle="Tell us about your space, palette, or the story you want a shell to hold."
           />
           <div className="mt-10 rounded-shell-lg border border-driftwood/70 bg-white/80 lux-shadow">
