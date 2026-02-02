@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import type { Product } from '../../../src/lib/types';
 import {
   ensureImagesSchema,
@@ -8,6 +7,7 @@ import {
   resolveImageUrlsToIds,
 } from '../lib/images';
 import { requireAdmin } from '../_lib/adminAuth';
+import { createStripePrice, createStripeProduct } from '../../_lib/stripeClient';
 
 type D1PreparedStatement = {
   all<T>(): Promise<{ results: T[] }>;
@@ -40,12 +40,6 @@ type ProductRow = {
   collection?: string | null;
   created_at: string | null;
 };
-
-const createStripeClient = (secretKey: string) =>
-  new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
-    httpClient: Stripe.createFetchHttpClient(),
-  });
 
 type NewProductInput = {
   name: string;
@@ -440,11 +434,9 @@ export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SEC
     }
 
     try {
-      const stripe = createStripeClient(stripeSecret);
-
       // Only create Stripe resources if missing.
       if (!inserted?.stripe_product_id || !inserted?.stripe_price_id) {
-        const stripeProduct = await stripe.products.create({
+        const stripeProduct = await createStripeProduct(stripeSecret, {
           name: body.name || 'Chesapeake Shell Item',
           description: body.description || undefined,
           metadata: {
@@ -453,7 +445,7 @@ export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SEC
           },
         });
 
-        const stripePrice = await stripe.prices.create({
+        const stripePrice = await createStripePrice(stripeSecret, {
           product: stripeProduct.id,
           unit_amount: body.priceCents,
           currency: 'usd',

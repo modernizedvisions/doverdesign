@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+import { createCheckoutSession, retrieveCheckoutSession } from '../../_lib/stripeClient';
 
 type D1PreparedStatement = {
   bind(...values: unknown[]): D1PreparedStatement;
@@ -33,12 +33,6 @@ const json = (data: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
-const createStripeClient = (secretKey: string) =>
-  new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
-    httpClient: Stripe.createFetchHttpClient(),
-  });
-
 export const onRequestPost = async (context: { request: Request; env: Env }) => {
   const { request, env } = context;
   const stripeSecret = env.STRIPE_SECRET_KEY;
@@ -61,11 +55,9 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       return json({ error: `Invoice is ${invoice.status}` }, 409);
     }
 
-    const stripe = createStripeClient(stripeSecret);
-
     // Reuse session if it exists
     if (invoice.stripe_checkout_session_id) {
-      const existing = await stripe.checkout.sessions.retrieve(invoice.stripe_checkout_session_id);
+      const existing = await retrieveCheckoutSession(stripeSecret, invoice.stripe_checkout_session_id);
       if (existing?.client_secret) {
         return json({ clientSecret: existing.client_secret, sessionId: existing.id });
       }
@@ -75,7 +67,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     if (!baseUrl) return json({ error: 'Server configuration error: missing PUBLIC_SITE_URL' }, 500);
 
     // NOTE: Custom invoices are treated as non-taxable; Stripe Tax not enabled here.
-    const session = await stripe.checkout.sessions.create({
+    const session = await createCheckoutSession(stripeSecret, {
       ui_mode: 'embedded',
       mode: 'payment',
       customer_email: invoice.customer_email,

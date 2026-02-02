@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { sendEmail } from '../../_lib/email';
 import {
   renderOrderConfirmationEmailHtml,
@@ -19,6 +19,7 @@ import {
   isShippingLineItem,
 } from '../lib/shipping';
 import { resolveCustomOrderEmailImage } from '../../_lib/customOrderEmailImages';
+import { constructStripeEvent, listCheckoutSessionLineItems, retrieveCheckoutSession } from '../../_lib/stripeClient';
 
 type D1PreparedStatement = {
   bind(...values: unknown[]): D1PreparedStatement;
@@ -49,13 +50,7 @@ type Env = {
   PUBLIC_IMAGES_BASE_URL?: string;
 };
 
-const createStripeClient = (secretKey: string) =>
-  new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
-    httpClient: Stripe.createFetchHttpClient(),
-  });
-
-const cryptoProvider = Stripe.createSubtleCryptoProvider();
+const STRIPE_WEBHOOK_TOLERANCE_SECONDS = 300;
 
 type EmailLogPayload = {
   kind: string;
@@ -153,13 +148,11 @@ export const onRequestPost = async (context: {
   let event: Stripe.Event;
 
   try {
-    const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
-    event = await stripe.webhooks.constructEventAsync(
+    event = await constructStripeEvent(
       body,
       signature,
       env.STRIPE_WEBHOOK_SECRET,
-      undefined,
-      cryptoProvider
+      STRIPE_WEBHOOK_TOLERANCE_SECONDS
     );
   } catch (error) {
     console.error('Stripe webhook signature verification failed', error);
@@ -175,8 +168,7 @@ export const onRequestPost = async (context: {
       const eventType = event.type;
       const sessionSummary = event.data.object as Stripe.Checkout.Session;
       console.log('[stripe webhook] checkout.session', { eventType, sessionId: sessionSummary.id });
-      const stripeClient = createStripeClient(env.STRIPE_SECRET_KEY);
-      const session = await stripeClient.checkout.sessions.retrieve(sessionSummary.id, {
+      const session = await retrieveCheckoutSession(env.STRIPE_SECRET_KEY, sessionSummary.id, {
         expand: [
           'payment_intent',
           'payment_intent.payment_method',
@@ -184,7 +176,7 @@ export const onRequestPost = async (context: {
           'payment_intent.shipping',
         ],
       });
-      const lineItemsResp = await stripeClient.checkout.sessions.listLineItems(session.id, {
+      const lineItemsResp = await listCheckoutSessionLineItems(env.STRIPE_SECRET_KEY, session.id, {
         limit: 100,
         expand: ['data.price.product'],
       });

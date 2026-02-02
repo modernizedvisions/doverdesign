@@ -1,5 +1,6 @@
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { isShippingLineItem } from '../../lib/shipping';
+import { listCheckoutSessionLineItems, retrieveCheckoutSession } from '../../../_lib/stripeClient';
 
 type D1PreparedStatement = {
   all<T>(): Promise<{ results: T[] }>;
@@ -31,12 +32,6 @@ const json = (data: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
-const createStripeClient = (secretKey: string) =>
-  new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
-    httpClient: Stripe.createFetchHttpClient(),
-  });
-
 export const onRequestGet = async (context: {
   params: Record<string, string>;
   env: { STRIPE_SECRET_KEY?: string; DB?: D1Database };
@@ -54,15 +49,14 @@ export const onRequestGet = async (context: {
   }
 
   try {
-    const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    const session = await retrieveCheckoutSession(env.STRIPE_SECRET_KEY, sessionId, {
       expand: [
         'payment_intent.payment_method',
         'payment_intent.charges.data.payment_method_details',
         'payment_intent.shipping',
       ],
     });
-    const lineItemsResp = await stripe.checkout.sessions.listLineItems(session.id, {
+    const lineItemsResp = await listCheckoutSessionLineItems(env.STRIPE_SECRET_KEY, session.id, {
       limit: 100,
       expand: ['data.price.product'],
     });

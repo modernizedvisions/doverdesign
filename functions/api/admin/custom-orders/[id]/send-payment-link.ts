@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { resolveFromEmail, sendEmail } from '../../../../_lib/email';
 import {
   renderCustomOrderPaymentLinkEmailHtml,
@@ -6,6 +6,7 @@ import {
 } from '../../../../_lib/customOrderPaymentLinkEmail';
 import { resolveCustomOrderEmailImage } from '../../../../_lib/customOrderEmailImages';
 import { requireAdmin } from '../../../_lib/adminAuth';
+import { createCheckoutSession } from '../../../../_lib/stripeClient';
 
 type D1PreparedStatement = {
   all<T>(): Promise<{ results: T[] }>;
@@ -50,12 +51,6 @@ const jsonResponse = (data: unknown, status = 200) =>
       pragma: 'no-cache',
       expires: '0',
     },
-  });
-
-const createStripeClient = (secretKey: string) =>
-  new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
-    httpClient: Stripe.createFetchHttpClient(),
   });
 
 export async function onRequestPost(context: {
@@ -126,7 +121,6 @@ export async function onRequestPost(context: {
       return jsonResponse({ error: 'Missing PUBLIC_SITE_URL' }, 500);
     }
 
-    const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
     const shippingCents =
       Number.isFinite(order.shipping_cents as number) && (order.shipping_cents as number) >= 0
         ? Number(order.shipping_cents)
@@ -195,7 +189,7 @@ export async function onRequestPost(context: {
       },
     ];
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await createCheckoutSession(env.STRIPE_SECRET_KEY, {
       mode: 'payment',
       customer_email: customerEmail,
       shipping_address_collection: {

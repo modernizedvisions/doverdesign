@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import type { Product } from '../../../../src/lib/types';
 import {
   ensureImagesSchema,
@@ -8,6 +7,7 @@ import {
   resolveImageUrlsToIds,
 } from '../../lib/images';
 import { requireAdmin } from '../../_lib/adminAuth';
+import { createStripePrice, createStripeProduct } from '../../../_lib/stripeClient';
 
 type D1PreparedStatement = {
   run(): Promise<{ success: boolean; error?: string; meta?: { changes?: number } }>;
@@ -56,12 +56,6 @@ type UpdateProductInput = {
   stripeProductId?: string;
   collection?: string;
 };
-
-const createStripeClient = (secretKey: string) =>
-  new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
-    httpClient: Stripe.createFetchHttpClient(),
-  });
 
 const mapRowToProduct = (row: ProductRow, request: Request, env: { PUBLIC_IMAGES_BASE_URL?: string }): Product => {
   const rawImageUrls = row.image_urls_json ? safeParseJsonArray(row.image_urls_json) : [];
@@ -383,12 +377,11 @@ export async function onRequestPut(context: {
       }
 
       try {
-        const stripe = createStripeClient(stripeSecret);
         if (!stripeProductIdToUse) {
           const name = body.name ?? existing.name ?? 'Dover Designs Product';
           const description = body.description ?? existing.description ?? undefined;
           const slug = body.name ? toSlug(body.name) : existing.slug ?? undefined;
-          const stripeProduct = await stripe.products.create({
+          const stripeProduct = await createStripeProduct(stripeSecret, {
             name,
             description,
             metadata: {
@@ -399,7 +392,7 @@ export async function onRequestPut(context: {
           stripeProductIdToUse = stripeProduct.id;
         }
 
-        const stripePrice = await stripe.prices.create({
+        const stripePrice = await createStripePrice(stripeSecret, {
           product: stripeProductIdToUse,
           unit_amount: incomingPriceCents ?? 0,
           currency: 'usd',

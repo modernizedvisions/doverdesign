@@ -1,5 +1,6 @@
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { calculateShippingCents } from '../../_lib/shipping';
+import { createCheckoutSession } from '../../_lib/stripeClient';
 
 type D1PreparedStatement = {
   bind(...values: unknown[]): D1PreparedStatement;
@@ -67,12 +68,6 @@ const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
     headers: { 'Content-Type': 'application/json' },
-  });
-
-const createStripeClient = (secretKey: string) =>
-  new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
-    httpClient: Stripe.createFetchHttpClient(),
   });
 
 const normalizeOrigin = (request: Request) => {
@@ -381,7 +376,6 @@ export const onRequestPost = async (context: {
       itemsForShipping.push({ category: product.category ?? null });
     }
 
-    const stripe = createStripeClient(stripeSecretKey);
     const baseUrl = normalizeSiteUrl(env.VITE_PUBLIC_SITE_URL) || normalizeOrigin(request);
     if (!baseUrl) {
       console.error('Missing VITE_PUBLIC_SITE_URL in env');
@@ -432,7 +426,7 @@ export const onRequestPost = async (context: {
           ? 'code'
           : '';
       const autoPromoIdForMeta = autoPercentApplied && autoPromo?.id ? autoPromo.id : '';
-      const session = await stripe.checkout.sessions.create({
+      const session = await createCheckoutSession(stripeSecretKey, {
         mode: 'payment',
         ui_mode: 'embedded',
         line_items: lineItems,
