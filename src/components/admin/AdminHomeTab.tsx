@@ -223,20 +223,20 @@ function HeroCollageAdmin({
           subtitle="main images on your site"
         />
         <div className="flex items-center justify-between rounded-shell border border-driftwood/60 bg-linen/70 px-3 py-2">
-          <div>
-            <p className="text-sm font-medium text-charcoal">Rotate Hero Images</p>
-            <p className="text-xs text-charcoal/70">
+          <div className="space-y-1">
+            <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-deep-ocean">Rotate Hero Images</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-charcoal/70">
               ON: rotate through all hero images. OFF: show only the first image.
             </p>
           </div>
-          <label className="flex items-center gap-2 text-sm font-medium text-charcoal">
+          <label className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">
             <input
               type="checkbox"
               className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
               checked={!!heroRotationEnabled}
               onChange={(e) => onHeroRotationToggle?.(e.target.checked)}
             />
-            <span>{heroRotationEnabled ? 'On' : 'Off'}</span>
+            <span>{heroRotationEnabled ? 'ON' : 'OFF'}</span>
           </label>
         </div>
         <div className="flex justify-center sm:justify-end">
@@ -260,7 +260,7 @@ function HeroCollageAdmin({
               }}
             >
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-charcoal">Hero Image {slot + 1}</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">Hero Image {slot + 1}</div>
                 <div className="flex items-center gap-2">
                   {image && (
                     <button type="button" onClick={() => handleRemove(slot)} className="lux-button--ghost px-3 py-1 text-[10px] !text-rose-700">

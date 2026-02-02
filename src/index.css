@@ -307,6 +307,23 @@
     color: rgba(47, 79, 79, 0.8);
   }
 
+  /* Admin dashboard form styling */
+  .admin-dashboard .lux-input {
+    @apply font-semibold;
+    letter-spacing: 0.16em;
+    font-size: 12px;
+    color: var(--deep-ocean);
+  }
+  .admin-dashboard .lux-input::placeholder {
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(31, 41, 51, 0.5);
+  }
+  .admin-dashboard select.lux-input option {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+
   .lux-chip {
     @apply inline-flex items-center justify-center rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-semibold;
     background: rgba(255, 255, 255, 0.9);
