@@ -30,7 +30,7 @@ export function AdminSoldTab({ soldProducts }: AdminSoldTabProps) {
                     decoding="async"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-charcoal/40">No image</div>
+                  <div className="w-full h-full flex items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/40">No Image</div>
                 )}
               </div>
               <div className="p-4">

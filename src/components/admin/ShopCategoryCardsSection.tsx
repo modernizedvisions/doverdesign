@@ -278,8 +278,8 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
                     decoding="async"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-sm text-charcoal/60">
-                    No image uploaded
+                  <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/60">
+                    No Image Uploaded
                   </div>
                 )}
 

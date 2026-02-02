@@ -602,8 +602,8 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                           decoding="async"
                         />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center text-xs text-charcoal/40">
-                          No image
+                        <div className="h-full w-full flex items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/40">
+                          No Image
                         </div>
                       )}
                     </div>
@@ -833,8 +833,8 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                         decoding="async"
                       />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center text-xs text-charcoal/40">
-                        No image
+                      <div className="h-full w-full flex items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/40">
+                        No Image
                       </div>
                     )}
                   </div>
@@ -941,7 +941,6 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
     </div>
   );
 };
-
 
 
 

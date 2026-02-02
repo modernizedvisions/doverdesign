@@ -295,9 +295,9 @@ function HeroCollageAdmin({
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center text-charcoal/60 text-sm">
+                  <div className="flex flex-col items-center text-charcoal/60 text-[11px] uppercase tracking-[0.2em] font-semibold">
                     <Plus className="h-6 w-6 mb-1" />
-                    <span>Drop or upload</span>
+                    <span>Drop or Upload</span>
                   </div>
                 )}
               </div>
@@ -483,7 +483,7 @@ function HomeGalleryAdmin({ items, onChange, onSave, saveState }: HomeGalleryAdm
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-charcoal">Slot {slot + 1}</span>
+                <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">Slot {slot + 1}</span>
                 <div className="flex items-center gap-2">
                   {item?.imageUrl && (
                     <button type="button" onClick={() => handleRemove(slot)} className="lux-button--ghost px-3 py-1 text-[10px] !text-rose-700">
@@ -518,9 +518,9 @@ function HomeGalleryAdmin({ items, onChange, onSave, saveState }: HomeGalleryAdm
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center text-charcoal/60 text-sm">
+                  <div className="flex flex-col items-center text-charcoal/60 text-[11px] uppercase tracking-[0.2em] font-semibold">
                     <Plus className="h-6 w-6 mb-1" />
-                    <span>Drop or upload</span>
+                    <span>Drop or Upload</span>
                   </div>
                 )}
               </div>
@@ -664,7 +664,7 @@ function AboutImagesAdmin({ images, onChange, onSave, saveState }: AboutImagesAd
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-charcoal">{slot.label}</span>
+                <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">{slot.label.toUpperCase()}</span>
                 <div className="flex items-center gap-2">
                   {image?.imageUrl && (
                     <button type="button" onClick={() => handleRemove(slot.index)} className="lux-button--ghost px-3 py-1 text-[10px] !text-rose-700">
@@ -699,9 +699,9 @@ function AboutImagesAdmin({ images, onChange, onSave, saveState }: AboutImagesAd
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center text-charcoal/60 text-sm">
+                  <div className="flex flex-col items-center text-charcoal/60 text-[11px] uppercase tracking-[0.2em] font-semibold">
                     <Plus className="h-6 w-6 mb-1" />
-                    <span>Drop or upload</span>
+                    <span>Drop or Upload</span>
                   </div>
                 )}
               </div>

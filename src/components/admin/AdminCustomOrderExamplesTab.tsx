@@ -226,9 +226,9 @@ export function AdminCustomOrderExamplesTab() {
                 {slot.imageUrl ? (
                   <img src={slot.imageUrl} alt={slot.title || `Example ${idx + 1}`} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="text-xs text-charcoal/60 flex flex-col items-center gap-2">
+                  <div className="text-[11px] uppercase tracking-[0.2em] text-charcoal/60 flex flex-col items-center gap-2 font-semibold">
                     <Plus className="h-5 w-5" />
-                    Empty slot
+                    Empty Slot
                   </div>
                 )}
                 {slot.isUploading && (

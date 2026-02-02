@@ -91,8 +91,8 @@ const ProductAdminCard: React.FC<ProductAdminCardProps> = ({ product, onEdit, on
             decoding="async"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-charcoal/50">
-            No image
+          <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/50">
+            No Image
           </div>
         )}
       </div>
@@ -610,7 +610,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         productImageFileInputRef.current?.click();
                       }}
                     >
-                      Empty slot
+                      <span className="text-[11px] uppercase tracking-[0.22em] font-semibold">Empty Slot</span>
                     </div>
                   );
                 })}
@@ -1025,7 +1025,11 @@ function ManagedImagesList({
   onRemove: (id: string) => void;
 }) {
   if (!images.length) {
-    return <div className="text-sm text-charcoal/60 border border-driftwood/60 rounded-shell-lg bg-white/70 p-3">No images yet. Upload to add.</div>;
+    return (
+      <div className="text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/60 border border-driftwood/60 rounded-shell-lg bg-white/70 p-3">
+        No Images Yet. Upload to Add.
+      </div>
+    );
   }
 
   return (
