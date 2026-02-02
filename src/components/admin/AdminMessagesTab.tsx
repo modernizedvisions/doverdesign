@@ -269,7 +269,7 @@ export const AdminMessagesTab: React.FC<AdminMessagesTabProps> = ({ onCreateCust
                             decoding="async"
                           />
                         ) : (
-                          <span className="text-xs text-charcoal/40">No image</span>
+                          <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/40">No Image</span>
                         )}
                       </td>
                       <td className="px-4 py-3">

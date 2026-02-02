@@ -213,8 +213,8 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.slice(0, SLOT_COUNT).map((tile, idx) => {
           const selectedCategory = resolveCategoryForTile(tile);
-          const displayLabel = selectedCategory?.name || tile.label || `Category ${idx + 1}`;
-          const pillText = `Shop ${displayLabel}`;
+          const displayLabel = (selectedCategory?.name || tile.label || `Category ${idx + 1}`).toUpperCase();
+          const pillText = `SHOP ${displayLabel}`;
           const categoryImage = selectedCategory?.heroImageUrl || selectedCategory?.imageUrl;
           const status = tileStatus[tile.id];
           const inputId = `category-tile-${tile.id || idx}`;
@@ -243,12 +243,12 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
                     aria-label="Select category"
                     value={selectedCategory?.id || ''}
                     onChange={(e) => handleCategoryChange(tile.id, e.target.value)}
-                    className="lux-input text-sm"
+                    className="lux-input text-[11px] uppercase tracking-[0.22em] font-semibold"
                   >
-                    <option value="">Select category</option>
+                    <option value="">SELECT CATEGORY</option>
                     {categoryOptions.map((cat) => (
                       <option key={cat.id} value={cat.id}>
-                        {cat.name}
+                        {(cat.name || '').toUpperCase()}
                       </option>
                     ))}
                   </select>
@@ -278,8 +278,8 @@ export function ShopCategoryCardsSection({ categories = [], onCategoryUpdated }:
                     decoding="async"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-sm text-charcoal/60">
-                    No image uploaded
+                  <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/60">
+                    No Image Uploaded
                   </div>
                 )}
 

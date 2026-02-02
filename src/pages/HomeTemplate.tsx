@@ -313,7 +313,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
 
         <SectionDivider />
 
-        <SectionWrapper id="contact" className="py-16 sm:py-20 bg-transparent">
+        <SectionWrapper id="contact" className="py-16 sm:py-20 bg-transparent relative z-10">
           <SectionHeading
             eyebrow="Contact"
             title="Soft luxury form experience"

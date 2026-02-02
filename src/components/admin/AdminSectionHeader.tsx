@@ -13,7 +13,7 @@ export function AdminSectionHeader({ title, subtitle, className = '' }: AdminSec
         {title}
       </h2>
       {subtitle && (
-        <p className="lux-subtitle mt-2 text-sm md:text-base">
+        <p className="lux-subtitle mt-2 text-[11px] md:text-xs uppercase tracking-[0.28em] font-semibold text-deep-ocean/80">
           {subtitle}
         </p>
       )}

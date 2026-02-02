@@ -1065,7 +1065,7 @@ export function AdminPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-b from-[var(--warm-linen)] via-[var(--sand)] to-[var(--linen)] text-charcoal py-12 overflow-x-hidden">
+    <div className="admin-dashboard min-h-screen bg-gradient-to-b from-[var(--warm-linen)] via-[var(--sand)] to-[var(--linen)] text-charcoal py-12 overflow-x-hidden">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="lux-heading text-3xl">Admin Dashboard</h1>

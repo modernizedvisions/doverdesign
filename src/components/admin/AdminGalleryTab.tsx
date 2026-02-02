@@ -293,11 +293,11 @@ function GalleryAdmin({
             }}
           />
         </div>
-        <div className="mt-2 text-xs text-charcoal/60">
-          {saveState === 'saving' && 'Saving changes...'}
-          {saveState === 'success' && 'Gallery saved.'}
-          {saveState === 'error' && 'Save failed. Please retry.'}
-          {saveState === 'idle' && images.length === 0 && 'No images saved yet.'}
+        <div className="mt-2 text-[10px] uppercase tracking-[0.2em] font-semibold text-charcoal/60">
+          {saveState === 'saving' && 'Saving Changes...'}
+          {saveState === 'success' && 'Gallery Saved.'}
+          {saveState === 'error' && 'Save Failed. Please Retry.'}
+          {saveState === 'idle' && images.length === 0 && 'No Images Saved Yet.'}
         </div>
       </div>
 
@@ -309,7 +309,7 @@ function GalleryAdmin({
       >
         <div className="flex flex-col items-center justify-center gap-2">
           <Upload className="w-5 h-5" />
-          <p className="text-sm">Drag and drop images here, or click to browse.</p>
+          <p className="text-[11px] uppercase tracking-[0.2em] font-semibold">Drag and drop images here, or click to browse.</p>
         </div>
       </div>
 
@@ -404,7 +404,7 @@ function GalleryAdmin({
         {images.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center text-charcoal/60 py-8 border border-dashed border-driftwood/70 rounded-shell-lg">
             <Plus className="w-6 h-6 mb-2" />
-            <p className="text-sm">No images uploaded yet.</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] font-semibold">No Images Uploaded Yet.</p>
           </div>
         )}
       </div>

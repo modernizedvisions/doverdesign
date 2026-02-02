@@ -78,7 +78,7 @@ export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: Cat
             decoding="async"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-charcoal/50">No image</div>
+          <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/50">No Image</div>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
         <div className="absolute inset-x-0 bottom-3 flex justify-center">
