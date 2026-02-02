@@ -753,8 +753,8 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         step="0.01"
                         value={editProductForm?.price || ''}
                         onChange={(e) => onEditFormChange('price', e.target.value)}
-                        disabled
-                        className="lux-input text-sm bg-linen/80 text-charcoal/60 opacity-70 cursor-not-allowed"
+                        placeholder="0.00"
+                        className="lux-input text-sm"
                       />
                     </div>
                     <div>
