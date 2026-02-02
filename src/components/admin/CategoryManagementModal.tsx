@@ -265,9 +265,13 @@ export function CategoryManagementModal({
                   <div key={cat.id} className="px-3 py-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="font-medium text-charcoal truncate">{cat.name}</div>
+                        <div className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal truncate">
+                          {cat.name || 'UNNAMED CATEGORY'}
+                        </div>
                         {cat.subtitle && (
-                          <div className="text-xs text-charcoal/60 truncate">{cat.subtitle}</div>
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-charcoal/60 truncate">
+                            {cat.subtitle}
+                          </div>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
@@ -292,7 +296,7 @@ export function CategoryManagementModal({
                           {editCategoryId === cat.id ? 'Close' : 'Edit'}
                         </button>
                         {isOtherItemsCategory(cat) ? (
-                          <span className="text-xs text-charcoal/50">Required</span>
+                          <span className="text-[10px] uppercase tracking-[0.18em] text-charcoal/50">Required</span>
                         ) : (
                           <button
                             type="button"

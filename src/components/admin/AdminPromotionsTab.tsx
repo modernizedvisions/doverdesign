@@ -345,10 +345,10 @@ export function AdminPromotionsTab() {
                 <select
                   value={promotionForm.scope}
                   onChange={(e) => handlePromotionFormChange('scope', e.target.value)}
-                  className="lux-input text-sm"
+                  className="lux-input text-[11px] uppercase tracking-[0.22em] font-semibold"
                 >
-                  <option value="global">Global</option>
-                  <option value="categories">Categories</option>
+                  <option value="global">GLOBAL</option>
+                  <option value="categories">CATEGORIES</option>
                 </select>
                 {promotionForm.scope === 'categories' && (
                   <div className="space-y-2">
@@ -369,7 +369,9 @@ export function AdminPromotionsTab() {
                               }}
                               className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                             />
-                            <span>{category.name}</span>
+                            <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">
+                              {category.name?.toUpperCase() || 'CATEGORY'}
+                            </span>
                           </label>
                         );
                       })}
@@ -383,7 +385,7 @@ export function AdminPromotionsTab() {
                     onChange={(e) => handlePromotionFormChange('bannerEnabled', e.target.checked)}
                     className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                   />
-                  <span className="text-sm text-charcoal/80">Show banner</span>
+                  <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal/80">Show banner</span>
                 </div>
                 {promotionForm.bannerEnabled && (
                   <input
@@ -519,7 +521,7 @@ export function AdminPromotionsTab() {
                   placeholder="10%"
                   className="lux-input text-sm"
                 />
-                <label className="flex items-center gap-2 text-sm text-charcoal/80">
+                <label className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal/80">
                   <input
                     type="checkbox"
                     checked={promoCodeForm.freeShipping}
@@ -532,10 +534,10 @@ export function AdminPromotionsTab() {
                 <select
                   value={promoCodeForm.scope}
                   onChange={(e) => handlePromoCodeFormChange('scope', e.target.value)}
-                  className="lux-input text-sm"
+                  className="lux-input text-[11px] uppercase tracking-[0.22em] font-semibold"
                 >
-                  <option value="global">Global</option>
-                  <option value="categories">Categories</option>
+                  <option value="global">GLOBAL</option>
+                  <option value="categories">CATEGORIES</option>
                 </select>
                 {promoCodeForm.scope === 'categories' && (
                   <div className="space-y-2">
@@ -556,7 +558,9 @@ export function AdminPromotionsTab() {
                               }}
                               className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
                             />
-                            <span>{category.name}</span>
+                            <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">
+                              {category.name?.toUpperCase() || 'CATEGORY'}
+                            </span>
                           </label>
                         );
                       })}

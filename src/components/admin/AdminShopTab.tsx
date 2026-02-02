@@ -465,20 +465,23 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     ) : (
                       categories.map((cat, idx) => {
                         const catName = cat.name || '';
+                        const catNameDisplay = (catName || 'Unnamed category').toUpperCase();
                         const key = cat.id || (cat as any).slug || `${catName || 'category'}-${idx}`;
                         return (
-                        <label
-                          key={key}
-                          className="flex items-center gap-2 px-3 py-1 text-sm hover:bg-linen/80 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={productForm.category === catName}
-                            onChange={() => onProductFormChange('category', catName)}
-                            className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
-                          />
-                          <span className="text-charcoal">{catName || 'Unnamed category'}</span>
-                        </label>
+                          <label
+                            key={key}
+                            className="flex items-center gap-2 px-3 py-1 text-sm hover:bg-linen/80 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={productForm.category === catName}
+                              onChange={() => onProductFormChange('category', catName)}
+                              className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean"
+                            />
+                            <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">
+                              {catNameDisplay}
+                            </span>
+                          </label>
                         );
                       })
                     )}
@@ -645,15 +648,15 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="lux-input text-sm sm:max-w-xs"
+            className="lux-input text-[11px] sm:max-w-xs uppercase tracking-[0.22em] font-semibold text-deep-ocean"
           >
-            <option value="All">All types</option>
+            <option value="All">ALL TYPES</option>
             {categories.map((c, idx) => {
               const name = c.name || '';
               const key = c.id || (c as any).slug || `${name || 'category'}-${idx}`;
               return (
                 <option key={key} value={name}>
-                  {name || 'Unnamed category'}
+                  {(name || 'UNNAMED CATEGORY').toUpperCase()}
                 </option>
               );
             })}
@@ -786,17 +789,17 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       <select
                         value={editProductForm?.category}
                         onChange={(e) => onEditFormChange('category', e.target.value)}
-                        className="lux-input text-sm"
+                        className="lux-input text-[11px] uppercase tracking-[0.22em] font-semibold"
                       >
                         {categories.length === 0 ? (
-                          <option value="">No categories available</option>
+                          <option value="">NO CATEGORIES AVAILABLE</option>
                         ) : (
                           categories.map((option, idx) => {
                             const name = option.name || '';
                             const key = option.id || (option as any).slug || `${name || 'category'}-${idx}`;
                             return (
                               <option key={key} value={name}>
-                                {name || 'Unnamed category'}
+                                {(name || 'UNNAMED CATEGORY').toUpperCase()}
                               </option>
                             );
                           })
@@ -977,8 +980,8 @@ function ToggleSwitch({ label, description, checked, onChange }: ToggleSwitchPro
         />
       </span>
       <div className="flex flex-col text-left">
-        <span className="text-sm font-medium text-charcoal">{label}</span>
-        {description && <span className="text-xs text-charcoal/60">{description}</span>}
+        <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal">{label}</span>
+        {description && <span className="text-[10px] uppercase tracking-[0.18em] text-charcoal/60">{description}</span>}
       </div>
     </button>
   );
@@ -1005,7 +1008,7 @@ function ToggleSwitchSmall({
           className={`inline-block h-4 w-4 rounded-full rounded-ui bg-white shadow transform transition-transform ${thumbClasses}`}
         />
       </span>
-      <span className="text-sm font-medium text-charcoal/80">{label}</span>
+      <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal/80">{label}</span>
     </button>
   );
 }
