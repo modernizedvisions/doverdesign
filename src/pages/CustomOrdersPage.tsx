@@ -120,18 +120,22 @@ export default function CustomOrdersPage() {
                   <div className="mt-3 space-y-1">
                     <h3 className="font-semibold font-serif text-deep-ocean">{item.title}</h3>
                     <p className="text-sm text-charcoal/80 leading-6">{item.description}</p>
-                    {item.tags?.length ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {item.tags.map((tag) => (
+                    <div className="mt-2 min-h-[34px] flex flex-wrap gap-2">
+                      {item.tags?.length ? (
+                        item.tags.map((tag) => (
                           <span
                             key={`${item.id}-${tag}`}
                             className="lux-chip"
                           >
                             {tag}
                           </span>
-                        ))}
-                      </div>
-                    ) : null}
+                        ))
+                      ) : (
+                        <span className="lux-chip opacity-0" aria-hidden="true">
+                          placeholder
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </button>
               ))}
