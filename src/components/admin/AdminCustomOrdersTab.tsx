@@ -339,10 +339,10 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
         ) : (
           <>
             <div className="sm:hidden">
-              <div className="grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] gap-3 border-b border-driftwood/60 bg-linen/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem] gap-3 border-b border-driftwood/60 bg-linen/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">
                 <div>Customer</div>
-                <div className="text-center">Status</div>
-                <div className="text-right">Actions</div>
+                <div className="text-center">Actions</div>
+                <div className="text-right">Status</div>
               </div>
               <div className="divide-y divide-driftwood/50 bg-white/80">
                 {allCustomOrders.map((order) => {
@@ -352,21 +352,12 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                   return (
                     <div
                       key={order.id}
-                      className="grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] gap-3 px-4 py-3 text-sm text-charcoal"
+                      className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem] gap-3 px-4 py-3 text-sm text-charcoal"
                     >
                       <div className="whitespace-normal break-words font-medium">
                         {order.customerName || 'Customer'}
                       </div>
-                      <div className="flex items-start justify-center pt-1">
-                        <span
-                          role="img"
-                          aria-label={isPaid ? 'Paid' : 'Not paid'}
-                          className={`text-lg font-semibold ${isPaid ? 'text-emerald-600' : 'text-amber-600'}`}
-                        >
-                          {isPaid ? '\u2713' : '\u2715'}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col items-center gap-2">
                         <button
                           type="button"
                           className="w-full lux-button--ghost px-3 py-1 text-[10px]"
@@ -384,6 +375,15 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                           <span className="block leading-tight">{hasPaymentLink ? 'Resend' : 'Send'}</span>
                           <span className="block leading-tight">Payment</span>
                         </button>
+                      </div>
+                      <div className="flex items-start justify-end pt-1">
+                        <span
+                          role="img"
+                          aria-label={isPaid ? 'Paid' : 'Not paid'}
+                          className={`text-lg font-semibold ${isPaid ? 'text-emerald-600' : 'text-amber-600'}`}
+                        >
+                          {isPaid ? '\u2713' : '\u2715'}
+                        </span>
                       </div>
                     </div>
                   );
