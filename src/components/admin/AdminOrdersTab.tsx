@@ -13,14 +13,12 @@ export interface AdminOrdersTabProps {
 
 export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, onSelectOrder, loading, error }: AdminOrdersTabProps) {
   return (
-    <div className="lux-card overflow-hidden">
-      <div className="px-6 pt-6">
-        <AdminSectionHeader
-          title="Orders"
-          subtitle="View and manage storefront orders."
-        />
-      </div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3 px-6 pt-6">
+    <div className="lux-card p-6">
+      <AdminSectionHeader
+        title="Orders"
+        subtitle="View and manage storefront orders."
+      />
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
         <input
           type="text"
           value={searchQuery}

@@ -4,10 +4,18 @@ import { createPortal } from 'react-dom';
 interface DialogProps {
   open: boolean;
   onOpenChange?: (open: boolean) => void;
+  overlayClassName?: string;
+  contentClassName?: string;
   children: React.ReactNode;
 }
 
-export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
+export const Dialog: React.FC<DialogProps> = ({
+  open,
+  onOpenChange,
+  overlayClassName,
+  contentClassName,
+  children,
+}) => {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const previousBodyOverflow = useRef<string | null>(null);
 
@@ -39,7 +47,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
 
   const overlay = (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-deep-ocean/40 px-4 py-4 backdrop-blur-[2px] sm:items-center sm:py-8"
+      className={`fixed inset-0 z-50 flex items-start justify-center bg-deep-ocean/40 px-4 py-4 backdrop-blur-[2px] sm:items-center sm:py-8 ${overlayClassName ?? ''}`}
       ref={overlayRef}
       onClick={(e) => {
         if (e.target === overlayRef.current) {
@@ -48,7 +56,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
       }}
     >
       <div
-        className="relative flex w-full max-w-2xl max-h-[92vh] flex-col overflow-hidden rounded-shell-lg border border-driftwood/70 bg-white lux-shadow"
+        className={`relative flex w-full max-w-2xl max-h-[92vh] flex-col overflow-hidden rounded-shell-lg border border-driftwood/70 bg-white lux-shadow ${contentClassName ?? ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

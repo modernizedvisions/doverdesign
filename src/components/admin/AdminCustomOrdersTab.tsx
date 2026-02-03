@@ -331,7 +331,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
         </div>
       )}
 
-      <div className="rounded-shell border border-driftwood/60 bg-white/70">
+      <div>
         {isLoading ? (
           <div className="p-4 text-sm text-charcoal/70">Loading custom orders...</div>
         ) : allCustomOrders.length === 0 ? (
@@ -457,9 +457,16 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
         )}
       </div>
 
-      {isViewOpen && selectedOrder && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-deep-ocean/40 px-3 py-6 backdrop-blur-[2px]">
-          <div className="lux-card bg-white relative w-full max-w-xl p-6 max-h-[85vh] overflow-y-auto">
+      <Dialog
+        open={isViewOpen && !!selectedOrder}
+        onOpenChange={(next) => {
+          if (!next) closeView();
+        }}
+        overlayClassName="items-center px-3 py-6 sm:py-6"
+        contentClassName="max-w-xl max-h-[85vh] overflow-y-auto overflow-x-hidden"
+      >
+        {selectedOrder && (
+          <DialogContent className="relative space-y-5">
             <div className="absolute right-3 top-3 flex items-center gap-2">
               <button
                 type="button"
@@ -480,283 +487,281 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
               </button>
             </div>
 
-            <div className="space-y-5">
-              <div>
-                <p className="lux-label text-[10px] mb-1">Custom Order</p>
-                <div className="lux-heading text-xl">
-                  Order {normalizeDisplayId(selectedOrder)}
-                </div>
-                <p className="text-sm text-charcoal/70">
-                  Placed {safeDate(selectedOrder.createdAt || selectedOrder.created_at)}
-                </p>
+            <div>
+              <p className="lux-label text-[10px] mb-1">Custom Order</p>
+              <div className="lux-heading text-xl">
+                Order {normalizeDisplayId(selectedOrder)}
               </div>
+              <p className="text-sm text-charcoal/70">
+                Placed {safeDate(selectedOrder.createdAt || selectedOrder.created_at)}
+              </p>
+            </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                <section className="lux-panel p-4">
-                  <p className="lux-label text-[10px] mb-1.5">Customer</p>
-                  <div className="text-sm text-charcoal">{selectedOrder.customerName || '-'}</div>
-                  <div className="text-sm text-charcoal/70">{selectedOrder.customerEmail || '-'}</div>
-                </section>
+            <div className="grid grid-cols-1 gap-4">
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-1.5">Customer</p>
+                <div className="text-sm text-charcoal">{selectedOrder.customerName || '-'}</div>
+                <div className="text-sm text-charcoal/70">{selectedOrder.customerEmail || '-'}</div>
+              </section>
 
-                <section className="lux-panel p-4">
-                  <p className="lux-label text-[10px] mb-1.5">Shipping</p>
-                  {selectedOrder.shippingAddress ? (
-                    <div className="text-sm text-charcoal/80 whitespace-pre-line">
-                      {[
-                        selectedOrder.shippingAddress.name,
-                        selectedOrder.shippingAddress.line1,
-                        selectedOrder.shippingAddress.line2,
-                        [selectedOrder.shippingAddress.city, selectedOrder.shippingAddress.state, selectedOrder.shippingAddress.postal_code]
-                          .filter(Boolean)
-                          .join(', '),
-                        selectedOrder.shippingAddress.country,
-                        selectedOrder.shippingAddress.phone ? `Phone: ${selectedOrder.shippingAddress.phone}` : null,
-                      ]
-                        .filter((line) => line && String(line).trim().length > 0)
-                        .join('\n') || 'No shipping address collected.'}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-charcoal/70">No shipping address collected.</div>
-                  )}
-                </section>
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-1.5">Shipping</p>
+                {selectedOrder.shippingAddress ? (
+                  <div className="text-sm text-charcoal/80 whitespace-pre-line">
+                    {[
+                      selectedOrder.shippingAddress.name,
+                      selectedOrder.shippingAddress.line1,
+                      selectedOrder.shippingAddress.line2,
+                      [selectedOrder.shippingAddress.city, selectedOrder.shippingAddress.state, selectedOrder.shippingAddress.postal_code]
+                        .filter(Boolean)
+                        .join(', '),
+                      selectedOrder.shippingAddress.country,
+                      selectedOrder.shippingAddress.phone ? `Phone: ${selectedOrder.shippingAddress.phone}` : null,
+                    ]
+                      .filter((line) => line && String(line).trim().length > 0)
+                      .join('\n') || 'No shipping address collected.'}
+                  </div>
+                ) : (
+                  <div className="text-sm text-charcoal/70">No shipping address collected.</div>
+                )}
+              </section>
 
-                <section className="lux-panel p-4">
-                  <p className="lux-label text-[10px] mb-1.5">Status</p>
-                  <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                    <span
-                      className={`inline-flex items-center rounded-ui px-3 py-1 border ${
-                        (selectedOrder.status || 'pending') === 'paid'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                          : 'bg-amber-50 text-amber-700 border-amber-100'
-                      }`}
-                    >
-                      {(selectedOrder.status || 'pending').toUpperCase()}
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-1.5">Status</p>
+                <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                  <span
+                    className={`inline-flex items-center rounded-ui px-3 py-1 border ${
+                      (selectedOrder.status || 'pending') === 'paid'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        : 'bg-amber-50 text-amber-700 border-amber-100'
+                    }`}
+                  >
+                    {(selectedOrder.status || 'pending').toUpperCase()}
+                  </span>
+                  <span className="inline-flex items-center rounded-ui bg-linen/80 px-3 py-1 text-charcoal/80 border border-driftwood/60">
+                    {safeDate(selectedOrder.createdAt || selectedOrder.created_at)}
+                  </span>
+                  {viewShowOnSoldProducts && (
+                    <span className="inline-flex items-center rounded-ui bg-deep-ocean px-3 py-1 text-white border border-deep-ocean">
+                      Visible in Sold Products
                     </span>
-                    <span className="inline-flex items-center rounded-ui bg-linen/80 px-3 py-1 text-charcoal/80 border border-driftwood/60">
-                      {safeDate(selectedOrder.createdAt || selectedOrder.created_at)}
-                    </span>
-                    {viewShowOnSoldProducts && (
-                      <span className="inline-flex items-center rounded-ui bg-deep-ocean px-3 py-1 text-white border border-deep-ocean">
-                        Visible in Sold Products
-                      </span>
-                    )}
-                  </div>
-                </section>
-
-                                <section className="lux-panel p-4">
-                  <p className="lux-label text-[10px] mb-2">Totals</p>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-charcoal/70">Subtotal</span>
-                      <span className="font-medium text-charcoal">
-                        {typeof selectedOrder.amount === 'number' ? formatCurrency(selectedOrder.amount) : '--'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-charcoal/70">Shipping</span>
-                      <span className="font-medium text-charcoal">
-                        {formatCurrency(resolveShippingCents(selectedOrder))}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-charcoal/70">Total</span>
-                      <span className="font-medium text-charcoal">
-                        {formatCurrency(
-                          (typeof selectedOrder.amount === 'number' ? selectedOrder.amount : 0) +
-                            resolveShippingCents(selectedOrder)
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-1">
-                    <label className="lux-label text-[10px]">Edit shipping (USD)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={viewShipping}
-                      onChange={(e) => setViewShipping(e.target.value)}
-                      className="lux-input text-sm"
-                    />
-                    <p className="text-[11px] text-charcoal/60">Leave blank for $0.00.</p>
-                  </div>
-                </section>
-
-                <section className="lux-panel p-4">
-                  <p className="lux-label text-[10px] mb-2">Message</p>
-                  <div className="text-sm text-charcoal whitespace-pre-wrap">
-                    {selectedOrder.description || '-'}
-                  </div>
-                </section>
-
-                <section className="lux-panel p-4">
-                  <p className="lux-label text-[10px] mb-2">Image</p>
-                  <div className="flex flex-wrap items-start gap-4">
-                    <div className="h-24 w-24 rounded-shell border border-driftwood/60 bg-linen/80 overflow-hidden">
-                      {viewImage.previewUrl ? (
-                        <img
-                          src={viewImage.previewUrl}
-                          alt="Custom order"
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/40">
-                          No Image
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => viewImageInputRef.current?.click()}
-                        className="lux-button--ghost px-3 py-1 text-[10px]"
-                      >
-                        {viewImage.url ? 'Replace Image' : 'Upload Image'}
-                      </button>
-                      {viewImage.url && (
-                        <button
-                          type="button"
-                          onClick={handleViewImageRemove}
-                          className="block text-xs text-charcoal/70 underline hover:text-deep-ocean"
-                        >
-                          Remove image
-                        </button>
-                      )}
-                      {viewImage.uploading && (
-                        <div className="text-xs text-charcoal/60">
-                          {viewImage.optimizing ? 'Optimizing image...' : 'Uploading image...'}
-                        </div>
-                      )}
-                      {viewImage.uploadError && (
-                        <div className="text-xs text-red-600">{viewImage.uploadError}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 space-y-1">
-                    <label className="flex items-center gap-2 text-sm text-charcoal/80">
-                      <input
-                        type="checkbox"
-                        checked={viewShowOnSoldProducts}
-                        onChange={(e) => setViewShowOnSoldProducts(e.target.checked)}
-                        disabled={!viewImage.url}
-                        className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                      <span className={viewImage.url ? '' : 'opacity-50'}>Display Custom Order On Sold Products</span>
-                    </label>
-                    {!viewImage.url && (
-                      <p className="text-xs text-charcoal/60">Upload an image to enable this option.</p>
-                    )}
-                  </div>
-                  <input
-                    ref={viewImageInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        void startImageUpload(file, setViewImage);
-                      }
-                      if (viewImageInputRef.current) {
-                        viewImageInputRef.current.value = '';
-                      }
-                    }}
-                  />
-                </section>
-
-                <section className="lux-panel p-4">
-                  <p className="lux-label text-[10px] mb-2">Payment Link</p>
-                  {selectedOrder.paymentLink ? (
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <a
-                        href={selectedOrder.paymentLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="lux-button px-3 py-2 text-[10px]"
-                      >
-                        Open Stripe Checkout
-                      </a>
-                      <button
-                        type="button"
-                        className="text-xs text-charcoal/70 hover:text-deep-ocean underline"
-                        onClick={() => {
-                          if (navigator?.clipboard?.writeText) {
-                            navigator.clipboard.writeText(selectedOrder.paymentLink);
-                          }
-                        }}
-                      >
-                        Copy link
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-charcoal/70">Not sent yet.</div>
                   )}
-                </section>
-
-                <div className="flex justify-end">
-                  <AdminSaveButton
-                    saveState={viewSaveState}
-                    onClick={async () => {
-                      if (!selectedOrder || !onUpdateOrder) return;
-                      const currentUrl = selectedOrder.imageUrl || selectedOrder.image_url || null;
-                      const currentShipping = resolveShippingCents(selectedOrder);
-                      const currentShowOnSold =
-                        selectedOrder.showOnSoldProducts === true || selectedOrder.show_on_sold_products === 1;
-                      const desiredShipping = normalizeShippingCents(viewShipping || '');
-                      const hasImageChange = viewImage.url !== currentUrl;
-                      const hasShippingChange = desiredShipping !== currentShipping;
-                      const hasShowOnSoldChange = viewShowOnSoldProducts !== currentShowOnSold;
-                      const hasChanges = hasImageChange || hasShippingChange || hasShowOnSoldChange;
-                      if (viewImage.uploading || viewImage.uploadError || !hasChanges) return;
-                      setViewSaveState('saving');
-                      try {
-                        const updates: any = {};
-                        if (hasImageChange) {
-                          updates.imageUrl = viewImage.url;
-                          updates.imageId = viewImage.imageId || null;
-                          updates.imageStorageKey = viewImage.storageKey || null;
-                        }
-                        if (hasShippingChange) updates.shippingCents = desiredShipping;
-                        if (hasShowOnSoldChange) updates.showOnSoldProducts = viewShowOnSoldProducts;
-                        await onUpdateOrder(selectedOrder.id, updates);
-                        setSelectedOrder((prev: any) =>
-                          prev
-                            ? {
-                                ...prev,
-                                ...(hasImageChange ? { imageUrl: viewImage.url } : {}),
-                                ...(hasShippingChange ? { shippingCents: desiredShipping } : {}),
-                              }
-                            : prev
-                        );
-                        setViewShipping(desiredShipping ? (desiredShipping / 100).toFixed(2) : '');
-                        setViewSaveState('success');
-                        setTimeout(() => setViewSaveState('idle'), 1500);
-                      } catch (err) {
-                        console.error('Failed to update custom order', err);
-                        setViewSaveState('error');
-                        setTimeout(() => setViewSaveState('idle'), 1500);
-                      }
-                    }}
-                    disabled={
-                      !onUpdateOrder ||
-                      viewImage.uploading ||
-                      !!viewImage.uploadError ||
-                      (viewImage.url === (selectedOrder.imageUrl || selectedOrder.image_url || null) &&
-                        normalizeShippingCents(viewShipping || '') === resolveShippingCents(selectedOrder) &&
-                        viewShowOnSoldProducts ===
-                          (selectedOrder.showOnSoldProducts === true ||
-                            selectedOrder.show_on_sold_products === 1))
-                    }
-                    idleLabel="Save Changes"
-                  />
                 </div>
+              </section>
+
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-2">Totals</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-charcoal/70">Subtotal</span>
+                    <span className="font-medium text-charcoal">
+                      {typeof selectedOrder.amount === 'number' ? formatCurrency(selectedOrder.amount) : '--'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-charcoal/70">Shipping</span>
+                    <span className="font-medium text-charcoal">
+                      {formatCurrency(resolveShippingCents(selectedOrder))}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-charcoal/70">Total</span>
+                    <span className="font-medium text-charcoal">
+                      {formatCurrency(
+                        (typeof selectedOrder.amount === 'number' ? selectedOrder.amount : 0) +
+                          resolveShippingCents(selectedOrder)
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-1">
+                  <label className="lux-label text-[10px]">Edit shipping (USD)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={viewShipping}
+                    onChange={(e) => setViewShipping(e.target.value)}
+                    className="lux-input text-sm"
+                  />
+                  <p className="text-[11px] text-charcoal/60">Leave blank for $0.00.</p>
+                </div>
+              </section>
+
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-2">Message</p>
+                <div className="text-sm text-charcoal whitespace-pre-wrap">
+                  {selectedOrder.description || '-'}
+                </div>
+              </section>
+
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-2">Image</p>
+                <div className="flex flex-wrap items-start gap-4">
+                  <div className="h-24 w-24 rounded-shell border border-driftwood/60 bg-linen/80 overflow-hidden">
+                    {viewImage.previewUrl ? (
+                      <img
+                        src={viewImage.previewUrl}
+                        alt="Custom order"
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-[11px] uppercase tracking-[0.2em] font-semibold text-charcoal/40">
+                        No Image
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => viewImageInputRef.current?.click()}
+                      className="lux-button--ghost px-3 py-1 text-[10px]"
+                    >
+                      {viewImage.url ? 'Replace Image' : 'Upload Image'}
+                    </button>
+                    {viewImage.url && (
+                      <button
+                        type="button"
+                        onClick={handleViewImageRemove}
+                        className="block text-xs text-charcoal/70 underline hover:text-deep-ocean"
+                      >
+                        Remove image
+                      </button>
+                    )}
+                    {viewImage.uploading && (
+                      <div className="text-xs text-charcoal/60">
+                        {viewImage.optimizing ? 'Optimizing image...' : 'Uploading image...'}
+                      </div>
+                    )}
+                    {viewImage.uploadError && (
+                      <div className="text-xs text-red-600">{viewImage.uploadError}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3 space-y-1">
+                  <label className="flex items-center gap-2 text-sm text-charcoal/80">
+                    <input
+                      type="checkbox"
+                      checked={viewShowOnSoldProducts}
+                      onChange={(e) => setViewShowOnSoldProducts(e.target.checked)}
+                      disabled={!viewImage.url}
+                      className="h-4 w-4 rounded-[4px] border-driftwood/70 text-deep-ocean disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className={viewImage.url ? '' : 'opacity-50'}>Display Custom Order On Sold Products</span>
+                  </label>
+                  {!viewImage.url && (
+                    <p className="text-xs text-charcoal/60">Upload an image to enable this option.</p>
+                  )}
+                </div>
+                <input
+                  ref={viewImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      void startImageUpload(file, setViewImage);
+                    }
+                    if (viewImageInputRef.current) {
+                      viewImageInputRef.current.value = '';
+                    }
+                  }}
+                />
+              </section>
+
+              <section className="lux-panel p-4">
+                <p className="lux-label text-[10px] mb-2">Payment Link</p>
+                {selectedOrder.paymentLink ? (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <a
+                      href={selectedOrder.paymentLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="lux-button px-3 py-2 text-[10px]"
+                    >
+                      Open Stripe Checkout
+                    </a>
+                    <button
+                      type="button"
+                      className="text-xs text-charcoal/70 hover:text-deep-ocean underline"
+                      onClick={() => {
+                        if (navigator?.clipboard?.writeText) {
+                          navigator.clipboard.writeText(selectedOrder.paymentLink);
+                        }
+                      }}
+                    >
+                      Copy link
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-sm text-charcoal/70">Not sent yet.</div>
+                )}
+              </section>
+
+              <div className="flex justify-end">
+                <AdminSaveButton
+                  saveState={viewSaveState}
+                  onClick={async () => {
+                    if (!selectedOrder || !onUpdateOrder) return;
+                    const currentUrl = selectedOrder.imageUrl || selectedOrder.image_url || null;
+                    const currentShipping = resolveShippingCents(selectedOrder);
+                    const currentShowOnSold =
+                      selectedOrder.showOnSoldProducts === true || selectedOrder.show_on_sold_products === 1;
+                    const desiredShipping = normalizeShippingCents(viewShipping || '');
+                    const hasImageChange = viewImage.url !== currentUrl;
+                    const hasShippingChange = desiredShipping !== currentShipping;
+                    const hasShowOnSoldChange = viewShowOnSoldProducts !== currentShowOnSold;
+                    const hasChanges = hasImageChange || hasShippingChange || hasShowOnSoldChange;
+                    if (viewImage.uploading || viewImage.uploadError || !hasChanges) return;
+                    setViewSaveState('saving');
+                    try {
+                      const updates: any = {};
+                      if (hasImageChange) {
+                        updates.imageUrl = viewImage.url;
+                        updates.imageId = viewImage.imageId || null;
+                        updates.imageStorageKey = viewImage.storageKey || null;
+                      }
+                      if (hasShippingChange) updates.shippingCents = desiredShipping;
+                      if (hasShowOnSoldChange) updates.showOnSoldProducts = viewShowOnSoldProducts;
+                      await onUpdateOrder(selectedOrder.id, updates);
+                      setSelectedOrder((prev: any) =>
+                        prev
+                          ? {
+                              ...prev,
+                              ...(hasImageChange ? { imageUrl: viewImage.url } : {}),
+                              ...(hasShippingChange ? { shippingCents: desiredShipping } : {}),
+                            }
+                          : prev
+                      );
+                      setViewShipping(desiredShipping ? (desiredShipping / 100).toFixed(2) : '');
+                      setViewSaveState('success');
+                      setTimeout(() => setViewSaveState('idle'), 1500);
+                    } catch (err) {
+                      console.error('Failed to update custom order', err);
+                      setViewSaveState('error');
+                      setTimeout(() => setViewSaveState('idle'), 1500);
+                    }
+                  }}
+                  disabled={
+                    !onUpdateOrder ||
+                    viewImage.uploading ||
+                    !!viewImage.uploadError ||
+                    (viewImage.url === (selectedOrder.imageUrl || selectedOrder.image_url || null) &&
+                      normalizeShippingCents(viewShipping || '') === resolveShippingCents(selectedOrder) &&
+                      viewShowOnSoldProducts ===
+                        (selectedOrder.showOnSoldProducts === true ||
+                          selectedOrder.show_on_sold_products === 1))
+                  }
+                  idleLabel="Save Changes"
+                />
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        )}
+      </Dialog>
 
       <ConfirmDialog
         open={isArchiveConfirmOpen}
