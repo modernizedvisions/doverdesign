@@ -154,7 +154,7 @@ export default function CustomOrdersPage() {
               <p className="lux-eyebrow">Contact</p>
               <h2 className="text-3xl sm:text-4xl font-serif tracking-[0.03em] text-deep-ocean">Send me a message</h2>
               <p className="lux-subtitle">
-                Thoughtfully created, just for you. I'll share a proof before finishing so everything feels just right.
+                Tell me about your space, palette, or the story you want a shell to hold.
               </p>
             </div>
             <div className="mt-10 lux-card bg-white">
