@@ -339,7 +339,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
         ) : (
           <>
             <div className="sm:hidden">
-              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem] gap-3 border-b border-driftwood/60 bg-linen/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">
+              <div className="grid grid-cols-[minmax(0,1fr)_8.5rem_2.5rem] gap-3 border-b border-driftwood/60 bg-linen/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">
                 <div>Customer</div>
                 <div className="text-center">Actions</div>
                 <div className="text-right">Status</div>
@@ -352,22 +352,22 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                   return (
                     <div
                       key={order.id}
-                      className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem] gap-3 px-4 py-3 text-sm text-charcoal"
+                      className="grid grid-cols-[minmax(0,1fr)_8.5rem_2.5rem] gap-3 px-4 py-3 text-sm text-charcoal"
                     >
                       <div className="whitespace-normal break-words font-medium">
                         {order.customerName || 'Customer'}
                       </div>
-                      <div className="flex flex-col items-center gap-2">
+                      <div className="flex flex-col items-center gap-2 justify-self-center w-[8.5rem]">
                         <button
                           type="button"
-                          className="w-full lux-button--ghost px-3 py-1 text-[10px]"
+                          className="w-full lux-button--ghost px-3 py-1 text-[10px] h-9 leading-tight"
                           onClick={() => openView(order)}
                         >
                           View
                         </button>
                         <button
                           type="button"
-                          className="w-full lux-button--ghost px-3 py-1 text-[10px] disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="w-full lux-button--ghost px-3 py-1 text-[10px] h-9 leading-tight disabled:opacity-60 disabled:cursor-not-allowed"
                           disabled={isPaid}
                           title={isPaid ? 'Already paid' : hasPaymentLink ? 'Resend payment link' : ''}
                           onClick={() => onSendPaymentLink?.(order.id)}
