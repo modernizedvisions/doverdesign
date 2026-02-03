@@ -222,7 +222,7 @@ function HeroCollageAdmin({
           title="Hero Images"
           subtitle="main images on your site"
         />
-        <div className="flex items-center justify-between rounded-shell border border-driftwood/60 bg-linen/70 px-3 py-2">
+        <div className="mx-auto flex w-full max-w-2xl items-center justify-between rounded-shell border border-driftwood/60 bg-linen/70 px-3 py-2">
           <div className="space-y-1">
             <p className="text-[11px] uppercase tracking-[0.24em] font-semibold text-deep-ocean">Rotate Hero Images</p>
             <p className="text-[10px] uppercase tracking-[0.2em] text-charcoal/70">
