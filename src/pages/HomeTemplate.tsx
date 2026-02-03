@@ -317,7 +317,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
           <SectionHeading
             eyebrow="Contact"
             title="Send us a message"
-            subtitle="Tell us about your space, palette, or the story you want a shell to hold."
+            subtitle="Tell me about your space, palette, or the story you want a shell to hold."
           />
           <div className="mt-10 rounded-shell-lg border border-driftwood/70 bg-white/80 lux-shadow">
             <div className="flex justify-center">
