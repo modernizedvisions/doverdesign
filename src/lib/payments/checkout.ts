@@ -43,13 +43,15 @@ export interface CheckoutSessionInfo {
     oneOff?: boolean;
     isShipping?: boolean;
     stripeProductId?: string | null;
+    optionGroupLabel?: string | null;
+    optionValue?: string | null;
   }[];
   cardLast4: string | null;
   cardBrand?: string | null;
 }
 
 export async function createEmbeddedCheckoutSession(
-  items: { productId: string; quantity: number }[],
+  items: { productId: string; quantity: number; optionGroupLabel?: string | null; optionValue?: string | null }[],
   promoCode?: string
 ): Promise<EmbeddedCheckoutSession> {
   const normalizedPromoCode = typeof promoCode === 'string' ? promoCode.trim() : '';
@@ -128,6 +130,8 @@ export async function fetchCheckoutSession(sessionId: string): Promise<CheckoutS
           oneOff: li.oneOff ?? false,
           isShipping: li.isShipping ?? false,
           stripeProductId: li.stripeProductId ?? null,
+          optionGroupLabel: li.optionGroupLabel ?? null,
+          optionValue: li.optionValue ?? null,
         }))
       : [],
     cardLast4: data.card_last4 ?? null,

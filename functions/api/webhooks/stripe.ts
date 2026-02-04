@@ -450,6 +450,8 @@ export const onRequestPost = async (context: {
             : item.amountCents || 0,
         lineTotal: item.amountCents || 0,
         imageUrl: item.imageUrl || undefined,
+        optionGroupLabel: item.optionGroupLabel || null,
+        optionValue: item.optionValue || null,
       }));
 
         const totalsForEmail = resolveEmailMoneyTotals({
@@ -608,6 +610,8 @@ export const onRequestPost = async (context: {
           qtyLabel: item.quantity > 1 ? `x${item.quantity}` : '',
           lineTotal: formatMoney(item.amountCents),
           imageUrl: item.imageUrl || undefined,
+          optionGroupLabel: item.optionGroupLabel || null,
+          optionValue: item.optionValue || null,
         }));
 
         const totalsForEmail = resolveEmailMoneyTotals({
@@ -788,6 +792,8 @@ async function ensureOrdersSchema(db: D1Database) {
     quantity INTEGER,
     price_cents INTEGER,
     image_url TEXT,
+    option_group_label TEXT,
+    option_value TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );`).run();
 
@@ -821,6 +827,12 @@ async function ensureOrdersSchema(db: D1Database) {
   const itemNames = (itemColumns.results || []).map((c) => c.name);
   if (!itemNames.includes('image_url')) {
     await db.prepare(`ALTER TABLE order_items ADD COLUMN image_url TEXT;`).run();
+  }
+  if (!itemNames.includes('option_group_label')) {
+    await db.prepare(`ALTER TABLE order_items ADD COLUMN option_group_label TEXT;`).run();
+  }
+  if (!itemNames.includes('option_value')) {
+    await db.prepare(`ALTER TABLE order_items ADD COLUMN option_value TEXT;`).run();
   }
 
   await db
@@ -1341,10 +1353,12 @@ async function mapLineItemsToEmailItemsWithImages(
       line.price?.product && typeof line.price.product !== 'string'
         ? (line.price.product as Stripe.Product)
         : null;
+    const meta = extractOptionMetadata(line);
     const productId =
-      typeof line.price?.product === 'string'
+      meta.sourceProductId ||
+      (typeof line.price?.product === 'string'
         ? line.price.product
-        : (line.price?.product as Stripe.Product | undefined)?.id || null;
+        : (line.price?.product as Stripe.Product | undefined)?.id || null);
     const name =
       line.description ||
       productObj?.name ||
@@ -1358,11 +1372,13 @@ async function mapLineItemsToEmailItemsWithImages(
       name,
       quantity: line.quantity ?? 1,
       amountCents:
-        line.amount_subtotal ??
+      line.amount_subtotal ??
         line.amount_total ??
         (line.price?.unit_amount ?? 0) * (line.quantity ?? 1),
       imageUrl,
       productId,
+      optionGroupLabel: meta.optionGroupLabel,
+      optionValue: meta.optionValue,
     };
   });
 
@@ -1382,6 +1398,8 @@ async function mapLineItemsToEmailItemsWithImages(
       quantity: item.quantity,
       amountCents: item.amountCents,
       imageUrl: finalImageUrl,
+      optionGroupLabel: item.optionGroupLabel,
+      optionValue: item.optionValue,
     });
   }
 
@@ -1951,7 +1969,14 @@ async function insertStandardOrderAndItems(args: {
   displayOrderIdOverride?: string | null;
   orderType?: string | null;
   description?: string | null;
-  lineItemsOverride?: { productId: string; quantity: number; priceCents: number; imageUrl?: string | null }[];
+  lineItemsOverride?: {
+    productId: string;
+    quantity: number;
+    priceCents: number;
+    imageUrl?: string | null;
+    optionGroupLabel?: string | null;
+    optionValue?: string | null;
+  }[];
   totalCentsOverride?: number;
 }): Promise<{ orderId: string; displayOrderId: string } | null> {
   const {
@@ -2096,8 +2121,15 @@ async function insertStandardOrderAndItems(args: {
 
   const preparedLineItems = lineItemsOverride
     ? lineItemsOverride
-    : await (async () => {
-        const items: Array<{ productId: string; quantity: number; priceCents: number; imageUrl?: string | null }> = [];
+      : await (async () => {
+        const items: Array<{
+          productId: string;
+          quantity: number;
+          priceCents: number;
+          imageUrl?: string | null;
+          optionGroupLabel?: string | null;
+          optionValue?: string | null;
+        }> = [];
         const lines = filterNonShippingLineItems(lineItemsForInsert || []);
         for (const line of lines) {
           const qty = line.quantity ?? 1;
@@ -2106,7 +2138,8 @@ async function insertStandardOrderAndItems(args: {
             typeof line.price?.product === 'string'
               ? line.price.product
               : (line.price?.product as Stripe.Product | undefined)?.id;
-          const resolvedProductId = productIdFromPrice || productId || line.price?.id || 'unknown';
+          const meta = extractOptionMetadata(line);
+          const resolvedProductId = meta.sourceProductId || productIdFromPrice || productId || line.price?.id || 'unknown';
           const productObj =
             line.price?.product && typeof line.price.product !== 'string'
               ? (line.price.product as Stripe.Product)
@@ -2123,6 +2156,8 @@ async function insertStandardOrderAndItems(args: {
             quantity: qty,
             priceCents,
             imageUrl,
+            optionGroupLabel: meta.optionGroupLabel,
+            optionValue: meta.optionValue,
           });
         }
         return items;
@@ -2134,19 +2169,21 @@ async function insertStandardOrderAndItems(args: {
       const itemResult = await db
         .prepare(
           `
-            INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url)
-            VALUES (?, ?, ?, ?, ?, ?);
-          `
-        )
-        .bind(
-          itemId,
-          orderId,
-          li.productId,
-          li.quantity ?? 1,
-          li.priceCents ?? 0,
-          (li as any).imageUrl ?? null
-        )
-        .run();
+          INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url, option_group_label, option_value)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        `
+      )
+      .bind(
+        itemId,
+        orderId,
+        li.productId,
+        li.quantity ?? 1,
+        li.priceCents ?? 0,
+        (li as any).imageUrl ?? null,
+        (li as any).optionGroupLabel ?? null,
+        (li as any).optionValue ?? null
+      )
+      .run();
 
       if (!itemResult.success) {
         console.error('Failed to insert order_items into D1', itemResult.error);
@@ -2159,8 +2196,8 @@ async function insertStandardOrderAndItems(args: {
     const itemResult = await db
       .prepare(
         `
-          INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url)
-          VALUES (?, ?, ?, ?, ?, ?);
+          INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url, option_group_label, option_value)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         `
       )
       .bind(
@@ -2171,7 +2208,9 @@ async function insertStandardOrderAndItems(args: {
         session.amount_subtotal && (quantityFromMeta || 1) > 0
           ? Math.floor(session.amount_subtotal / (quantityFromMeta || 1))
           : 0,
-        fallbackImageUrl
+        fallbackImageUrl,
+        null,
+        null
       )
       .run();
 
@@ -2197,6 +2236,30 @@ function formatOrderDate(date: Date): string {
   } catch {
     return date.toISOString();
   }
+}
+
+function extractLineItemMetadata(line: Stripe.LineItem): Record<string, string> {
+  const productObj =
+    line.price?.product && typeof line.price.product !== 'string'
+      ? (line.price.product as Stripe.Product)
+      : null;
+  return (productObj?.metadata || {}) as Record<string, string>;
+}
+
+function extractOptionMetadata(line: Stripe.LineItem): {
+  optionGroupLabel: string | null;
+  optionValue: string | null;
+  sourceProductId: string | null;
+} {
+  const meta = extractLineItemMetadata(line);
+  const rawLabel = meta?.option_group_label;
+  const rawValue = meta?.option_value;
+  const rawSource = meta?.dd_product_id;
+  return {
+    optionGroupLabel: typeof rawLabel === 'string' && rawLabel.trim().length ? rawLabel.trim() : null,
+    optionValue: typeof rawValue === 'string' && rawValue.trim().length ? rawValue.trim() : null,
+    sourceProductId: typeof rawSource === 'string' && rawSource.trim().length ? rawSource.trim() : null,
+  };
 }
 
 function formatShippingAddress(address: Stripe.Address | Stripe.ShippingAddress | null): string {

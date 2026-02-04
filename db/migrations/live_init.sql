@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS categories (
   slug TEXT NOT NULL,
   image_url TEXT,
   hero_image_url TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  option_group_label TEXT,
+  option_group_options_json TEXT,
   show_on_homepage INTEGER DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -117,6 +120,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   quantity INTEGER,
   price_cents INTEGER,
   image_url TEXT,
+  option_group_label TEXT,
+  option_value TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );
 

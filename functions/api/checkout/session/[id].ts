@@ -32,6 +32,15 @@ const json = (data: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
+const extractLineItemMetadata = (line: Stripe.LineItem): Record<string, string> => {
+  const productObj =
+    line.price?.product && typeof line.price.product !== 'string'
+      ? (line.price.product as Stripe.Product)
+      : null;
+  const meta = productObj?.metadata || {};
+  return meta as Record<string, string>;
+};
+
 export const onRequestGet = async (context: {
   params: Record<string, string>;
   env: { STRIPE_SECRET_KEY?: string; DB?: D1Database };
@@ -142,14 +151,23 @@ export const onRequestGet = async (context: {
       })
       .filter(Boolean) as string[];
 
+    const sourceProductIds = lineItemsRaw
+      .map((li) => {
+        const meta = extractLineItemMetadata(li);
+        const source = meta?.dd_product_id;
+        return typeof source === 'string' && source.trim().length > 0 ? source.trim() : null;
+      })
+      .filter(Boolean) as string[];
+
     const stripePriceIds = lineItemsRaw
       .map((li) => (li.price && typeof li.price.id === 'string' ? li.price.id : null))
       .filter(Boolean) as string[];
 
     const productLookup = new Map<string, ProductRow>();
-    if (env.DB && (stripeProductIds.length || stripePriceIds.length)) {
+    if (env.DB && (stripeProductIds.length || stripePriceIds.length || sourceProductIds.length)) {
       const placeholdersProd = stripeProductIds.map(() => '?').join(',');
       const placeholdersPrice = stripePriceIds.map(() => '?').join(',');
+      const placeholdersSource = sourceProductIds.map(() => '?').join(',');
       const whereClauses = [];
       const bindValues: unknown[] = [];
       if (placeholdersProd) {
@@ -160,6 +178,10 @@ export const onRequestGet = async (context: {
         whereClauses.push(`stripe_price_id IN (${placeholdersPrice})`);
         bindValues.push(...stripePriceIds);
       }
+      if (placeholdersSource) {
+        whereClauses.push(`id IN (${placeholdersSource})`);
+        bindValues.push(...sourceProductIds);
+      }
       try {
         const query = `
           SELECT id, name, stripe_product_id, stripe_price_id, image_url, image_urls_json, is_one_off
@@ -168,6 +190,7 @@ export const onRequestGet = async (context: {
         `;
         const { results } = await env.DB.prepare(query).bind(...bindValues).all<ProductRow>();
         (results || []).forEach((row) => {
+          if (row.id) productLookup.set(row.id, row);
           if (row.stripe_product_id) productLookup.set(row.stripe_product_id, row);
           if (row.stripe_price_id) productLookup.set(row.stripe_price_id, row);
         });
@@ -201,6 +224,19 @@ export const onRequestGet = async (context: {
     const amountDiscount = toCents(totalDetails?.amount_discount);
     const lineItems =
       lineItemsRaw.map((li) => {
+        const meta = extractLineItemMetadata(li);
+        const optionGroupLabel =
+          typeof meta?.option_group_label === 'string' && meta.option_group_label.trim().length
+            ? meta.option_group_label.trim()
+            : null;
+        const optionValue =
+          typeof meta?.option_value === 'string' && meta.option_value.trim().length
+            ? meta.option_value.trim()
+            : null;
+        const sourceProductId =
+          typeof meta?.dd_product_id === 'string' && meta.dd_product_id.trim().length
+            ? meta.dd_product_id.trim()
+            : null;
         const stripeProductId =
           typeof li.price?.product === 'string'
             ? li.price?.product
@@ -214,9 +250,10 @@ export const onRequestGet = async (context: {
             (li.price.product as Stripe.Product).name) ||
           li.description ||
           'Item';
-        const keyMatch = stripeProductId && productLookup.get(stripeProductId);
-        const priceMatch = !keyMatch && stripePriceId ? productLookup.get(stripePriceId) : null;
-        const matchedProduct = keyMatch || priceMatch || null;
+        const metaMatch = sourceProductId ? productLookup.get(sourceProductId) : null;
+        const keyMatch = !metaMatch && stripeProductId ? productLookup.get(stripeProductId) : null;
+        const priceMatch = !metaMatch && !keyMatch && stripePriceId ? productLookup.get(stripePriceId) : null;
+        const matchedProduct = metaMatch || keyMatch || priceMatch || null;
         const isShipping = isShippingLineItem(li) && !matchedProduct;
         const isCustomOrder = /custom order/i.test(productName) && !matchedProduct;
         const quantity = li.quantity ?? 0;
@@ -232,7 +269,9 @@ export const onRequestGet = async (context: {
           imageUrl: isCustomOrder ? customOrderImageUrl : pickPrimaryImage(matchedProduct),
           oneOff: matchedProduct ? matchedProduct.is_one_off === 1 : false,
           isShipping,
-          stripeProductId,
+          stripeProductId: sourceProductId || stripeProductId,
+          optionGroupLabel,
+          optionValue,
         };
       }) ?? [];
 

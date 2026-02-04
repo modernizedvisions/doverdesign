@@ -2,12 +2,13 @@ import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
-import { fetchProductById, fetchRelatedProducts } from '../lib/api';
-import { Product } from '../lib/types';
+import { fetchCategories, fetchProductById, fetchRelatedProducts } from '../lib/api';
+import { Category, Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
 import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 import { getDiscountedCents, isPromotionEligible, usePromotions } from '@/lib/promotions';
+import { buildCategoryOptionLookup, resolveCategoryOptionGroup } from '../lib/categoryOptions';
 
 export function ProductDetailPage() {
   const { productId } = useParams();
@@ -24,6 +25,8 @@ export function ProductDetailPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const relatedRef = useRef<HTMLDivElement | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -44,6 +47,18 @@ export function ProductDetailPage() {
     load();
   }, [productId]);
 
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to load categories', error);
+      }
+    };
+    void loadCategories();
+  }, []);
+
   const images = useMemo(() => {
     if (!product) return [];
     if (product.imageUrls && product.imageUrls.length > 0) return product.imageUrls;
@@ -53,6 +68,7 @@ export function ProductDetailPage() {
   useEffect(() => {
     setCurrentIndex(0);
     setQuantity(1);
+    setSelectedOption(null);
   }, [productId]);
 
   const handlePrev = () => {
@@ -68,6 +84,14 @@ export function ProductDetailPage() {
   const hasPrice = product?.priceCents !== undefined && product?.priceCents !== null;
   const isSold = product?.isSold || (product?.quantityAvailable !== undefined && (product.quantityAvailable ?? 0) <= 0);
   const canPurchase = !!product && hasPrice && !isSold;
+  const optionLookup = useMemo(() => buildCategoryOptionLookup(categories), [categories]);
+  const optionGroup = useMemo(() => {
+    if (!product) return null;
+    const categoryKey = product.category || product.type || '';
+    return resolveCategoryOptionGroup(categoryKey, optionLookup);
+  }, [product, optionLookup]);
+  const requiresOption = !!optionGroup;
+  const hasSelectedOption = !requiresOption || !!selectedOption;
   const promoEligible = product ? isPromotionEligible(promotion, product) : false;
   const discountedPriceCents =
     product?.priceCents !== undefined && product?.priceCents !== null && promoEligible && promotion
@@ -79,6 +103,7 @@ export function ProductDetailPage() {
   const handleAddToCart = () => {
     if (!product || !hasPrice || isSold) return;
     if (product.oneoff && isOneOffInCart(product.id)) return;
+    if (requiresOption && !selectedOption) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -90,6 +115,8 @@ export function ProductDetailPage() {
       stripePriceId: product.stripePriceId ?? null,
       category: product.category ?? null,
       categories: product.categories ?? null,
+      optionGroupLabel: optionGroup?.label ?? null,
+      optionValue: selectedOption ?? null,
     });
     setCartDrawerOpen(true);
   };
@@ -208,13 +235,38 @@ export function ProductDetailPage() {
                   <p className="text-base leading-relaxed text-charcoal/80">{product?.description}</p>
                 </div>
 
+                {optionGroup && (
+                  <div className="lux-panel bg-linen/80 px-5 py-4 space-y-3">
+                    <p className="lux-label text-[10px]">{optionGroup.label}</p>
+                    <div className="space-y-2">
+                      {optionGroup.options.map((opt) => (
+                        <label key={opt} className="flex items-center gap-3 text-sm text-charcoal/80">
+                          <input
+                            type="radio"
+                            name="option-group"
+                            value={opt}
+                            checked={selectedOption === opt}
+                            onChange={() => setSelectedOption(opt)}
+                            className="h-4 w-4 rounded-full border-driftwood/70 text-deep-ocean"
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {!selectedOption && (
+                      <p className="text-xs text-rose-600">Please choose an option to continue.</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <button
                     onClick={handleAddToCart}
                     disabled={
                       !canPurchase ||
                       (product?.oneoff && isOneOffInCart(product.id)) ||
-                      (!product?.oneoff && maxQty !== null && effectiveQty > maxQty)
+                      (!product?.oneoff && maxQty !== null && effectiveQty > maxQty) ||
+                      !hasSelectedOption
                     }
                     className="lux-button w-full justify-center"
                   >
@@ -311,6 +363,13 @@ export function ProductDetailPage() {
                         </button>
                         <button
                           onClick={() => {
+                            const relatedCategoryKey = item.category || item.type || '';
+                            const relatedOptionGroup = resolveCategoryOptionGroup(relatedCategoryKey, optionLookup);
+                            const relatedRequiresOption = !!relatedOptionGroup;
+                            if (relatedRequiresOption) {
+                              navigate(`/product/${item.id}`);
+                              return;
+                            }
                             if (!item.priceCents || item.isSold) return;
                             if (item.oneoff && isOneOffInCart(item.id)) return;
                             addItem({
@@ -362,7 +421,8 @@ export function ProductDetailPage() {
               disabled={
                 !canPurchase ||
                 (product?.oneoff && isOneOffInCart(product.id)) ||
-                (!product?.oneoff && maxQty !== null && effectiveQty > maxQty)
+                (!product?.oneoff && maxQty !== null && effectiveQty > maxQty) ||
+                !hasSelectedOption
               }
               className="lux-button flex-1 justify-center"
             >

@@ -105,6 +105,11 @@ export function CheckoutReturnPage() {
                             )}
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-deep-ocean truncate">{item.productName}</p>
+                              {item.optionGroupLabel && item.optionValue && (
+                                <p className="text-xs text-charcoal/70">
+                                  {item.optionGroupLabel}: {item.optionValue}
+                                </p>
+                              )}
                               {showQuantity && (
                                 <p className="text-xs text-charcoal/70">Qty: {quantity}</p>
                               )}

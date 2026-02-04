@@ -164,6 +164,9 @@ export async function adminCreateCategory(payload: {
   name: string;
   subtitle?: string;
   shippingCents?: number;
+  sortOrder?: number;
+  optionGroupLabel?: string | null;
+  optionGroupOptions?: string[];
 }): Promise<Category | null> {
   const response = await adminFetch(ADMIN_CATEGORIES_PATH, {
     method: 'POST',

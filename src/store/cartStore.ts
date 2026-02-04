@@ -4,17 +4,19 @@ import { CartItem, CartItemLegacy } from '../lib/types';
 interface CartStore {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: string, optionValue?: string | null) => void;
+  updateQuantity: (productId: string, quantity: number, optionValue?: string | null) => void;
   clearCart: () => void;
   isOneOffInCart: (productId: string) => boolean;
-  isProductInCart: (productId: string) => boolean;
-  getQuantityForProduct: (productId: string) => number;
+  isProductInCart: (productId: string, optionValue?: string | null) => boolean;
+  getQuantityForProduct: (productId: string, optionValue?: string | null) => number;
   getTotalItems: () => number;
   getSubtotal: () => number;
 }
 
 const CART_STORAGE_KEY = 'artist-cart';
+const buildCartKey = (productId: string, optionValue?: string | null) =>
+  `${productId}::${(optionValue || '').trim()}`;
 
 const getStorage = () => {
   if (typeof localStorage === 'undefined') return null;
@@ -45,6 +47,8 @@ const loadCartFromStorage = (): CartItem[] => {
             stripePriceId: (item as CartItem).stripePriceId ?? (item as CartItemLegacy).stripePriceId ?? null,
             category: (item as CartItem).category ?? null,
             categories: (item as CartItem).categories ?? null,
+            optionGroupLabel: (item as CartItem).optionGroupLabel ?? null,
+            optionValue: (item as CartItem).optionValue ?? null,
           }))
       : [];
   } catch (error) {
@@ -72,7 +76,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
         return state;
       }
 
-      const existingIndex = state.items.findIndex((i) => i.productId === item.productId);
+      const incomingKey = buildCartKey(item.productId, item.optionValue);
+      const existingIndex = state.items.findIndex((i) => buildCartKey(i.productId, i.optionValue) === incomingKey);
 
       let newItems: CartItem[];
 
@@ -103,24 +108,26 @@ export const useCartStore = create<CartStore>((set, get) => ({
     });
   },
 
-  removeItem: (productId: string) => {
+  removeItem: (productId: string, optionValue?: string | null) => {
     set((state) => {
-      const newItems = state.items.filter((i) => i.productId !== productId);
+      const targetKey = buildCartKey(productId, optionValue);
+      const newItems = state.items.filter((i) => buildCartKey(i.productId, i.optionValue) !== targetKey);
       saveCartToStorage(newItems);
       return { items: newItems };
     });
   },
 
-  updateQuantity: (productId: string, quantity: number) => {
+  updateQuantity: (productId: string, quantity: number, optionValue?: string | null) => {
     set((state) => {
-      const item = state.items.find((i) => i.productId === productId);
+      const targetKey = buildCartKey(productId, optionValue);
+      const item = state.items.find((i) => buildCartKey(i.productId, i.optionValue) === targetKey);
 
       if (item?.oneoff) {
         return state;
       }
 
       if (quantity <= 0) {
-        const newItems = state.items.filter((i) => i.productId !== productId);
+        const newItems = state.items.filter((i) => buildCartKey(i.productId, i.optionValue) !== targetKey);
         saveCartToStorage(newItems);
         return { items: newItems };
       }
@@ -131,7 +138,9 @@ export const useCartStore = create<CartStore>((set, get) => ({
         alert(`Only ${max} available.`);
       }
 
-      const newItems = state.items.map((i) => (i.productId === productId ? { ...i, quantity: clamped } : i));
+      const newItems = state.items.map((i) =>
+        buildCartKey(i.productId, i.optionValue) === targetKey ? { ...i, quantity: clamped } : i
+      );
 
       saveCartToStorage(newItems);
       return { items: newItems };
@@ -148,12 +157,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
     return items.some((item) => item.productId === productId && item.oneoff);
   },
 
-  isProductInCart: (productId: string) => {
-    return get().items.some((item) => item.productId === productId);
+  isProductInCart: (productId: string, optionValue?: string | null) => {
+    const targetKey = buildCartKey(productId, optionValue);
+    return get().items.some((item) => buildCartKey(item.productId, item.optionValue) === targetKey);
   },
 
-  getQuantityForProduct: (productId: string) => {
-    return get().items.find((item) => item.productId === productId)?.quantity ?? 0;
+  getQuantityForProduct: (productId: string, optionValue?: string | null) => {
+    const targetKey = buildCartKey(productId, optionValue);
+    return get().items.find((item) => buildCartKey(item.productId, item.optionValue) === targetKey)?.quantity ?? 0;
   },
 
   getTotalItems: () => {

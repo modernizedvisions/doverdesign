@@ -36,6 +36,8 @@ type CategoryRow = {
   name: string | null;
   slug: string | null;
   shipping_cents?: number | null;
+  option_group_label?: string | null;
+  option_group_options_json?: string | null;
 };
 
 type PromotionRow = {
@@ -87,6 +89,53 @@ const normalizeCategoryKey = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
 
+const parseOptionGroupOptions = (value?: string | null): string[] => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
+  } catch {
+    return [];
+  }
+};
+
+const normalizeOptionGroupOptions = (values: string[]): string[] => {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  values.forEach((entry) => {
+    const trimmed = entry.trim();
+    if (!trimmed) return;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    normalized.push(trimmed);
+  });
+  return normalized;
+};
+
+const buildCategoryOptionGroupLookup = (categories: CategoryRow[]) => {
+  const map = new Map<string, { label: string; options: string[] }>();
+  categories.forEach((cat) => {
+    const label = (cat.option_group_label || '').trim();
+    const options = normalizeOptionGroupOptions(parseOptionGroupOptions(cat.option_group_options_json));
+    if (!label || options.length === 0) return;
+    const slugKey = cat.slug ? normalizeCategoryKey(cat.slug) : '';
+    const nameKey = cat.name ? normalizeCategoryKey(cat.name) : '';
+    [slugKey, nameKey].filter(Boolean).forEach((key) => {
+      if (!map.has(key)) map.set(key, { label, options });
+    });
+  });
+  return map;
+};
+
+const resolveOptionValue = (options: string[], rawValue?: string | null): string | null => {
+  const trimmed = (rawValue || '').trim();
+  if (!trimmed || options.length === 0) return null;
+  const match = options.find((opt) => opt.toLowerCase() === trimmed.toLowerCase());
+  return match || null;
+};
+
 const parseCategorySlugs = (value?: string | null): string[] => {
   if (!value) return [];
   try {
@@ -129,7 +178,15 @@ export const onRequestPost = async (context: {
 
   try {
     const body = (await request.json()) as {
-      items?: Array<{ productId?: string; quantity?: number; stripePriceId?: string; priceCents?: number; price?: number }>;
+      items?: Array<{
+        productId?: string;
+        quantity?: number;
+        stripePriceId?: string;
+        priceCents?: number;
+        price?: number;
+        optionGroupLabel?: string | null;
+        optionValue?: string | null;
+      }>;
       promoCode?: string;
     };
     const itemsPayload = Array.isArray(body.items) ? body.items : [];
@@ -154,6 +211,8 @@ export const onRequestPost = async (context: {
       .map((i) => ({
         productId: i.productId?.trim(),
         quantity: Math.max(1, Number(i.quantity || 1)),
+        optionGroupLabel: typeof i.optionGroupLabel === 'string' ? i.optionGroupLabel.trim() : null,
+        optionValue: typeof i.optionValue === 'string' ? i.optionValue.trim() : null,
       }))
       .filter((i) => i.productId);
 
@@ -161,13 +220,23 @@ export const onRequestPost = async (context: {
       return json({ error: 'Invalid items' }, 400);
     }
 
-    const summedByProduct = normalizedItems.reduce<Record<string, number>>((acc, item) => {
-      if (!item.productId) return acc;
-      acc[item.productId] = (acc[item.productId] || 0) + item.quantity;
-      return acc;
-    }, {});
+    const groupedByKey = new Map<
+      string,
+      { productId: string; quantity: number; optionGroupLabel?: string | null; optionValue?: string | null }
+    >();
+    normalizedItems.forEach((item) => {
+      if (!item.productId) return;
+      const key = `${item.productId}::${(item.optionValue || '').trim()}`;
+      const existing = groupedByKey.get(key);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        groupedByKey.set(key, { ...item, quantity: item.quantity });
+      }
+    });
 
-    const productIds = Object.keys(summedByProduct);
+    const groupedItems = Array.from(groupedByKey.values());
+    const productIds = Array.from(new Set(groupedItems.map((item) => item.productId)));
     if (!productIds.length) {
       return json({ error: 'No products to checkout' }, 400);
     }
@@ -299,7 +368,11 @@ export const onRequestPost = async (context: {
     const codeUsed = !!codePromo;
     const freeShippingApplied = !!codePromo?.freeShipping;
 
-    for (const pid of productIds) {
+    const optionCategories = await loadCategoryOptionGroups(env.DB, shippingDebug);
+    const optionGroupLookup = buildCategoryOptionGroupLookup(optionCategories);
+
+    for (const item of groupedItems) {
+      const pid = item.productId;
       const product = productMap.get(pid);
       if (!product) {
         return json({ error: `Product not found: ${pid}` }, 404);
@@ -324,7 +397,7 @@ export const onRequestPost = async (context: {
       if (!product.stripe_price_id) {
         return json({ error: `Product missing Stripe price: ${product.name || pid}` }, 400);
       }
-      const requestedQuantity = summedByProduct[pid] || 1;
+      const requestedQuantity = item.quantity || 1;
       const quantity =
         product.is_one_off === 1
           ? 1
@@ -335,6 +408,14 @@ export const onRequestPost = async (context: {
       }
 
       const categoryKey = product.category ? normalizeCategoryKey(product.category) : '';
+      const optionGroup = categoryKey ? optionGroupLookup.get(categoryKey) : null;
+      const resolvedOptionValue = optionGroup
+        ? resolveOptionValue(optionGroup.options, item.optionValue)
+        : null;
+
+      if (optionGroup && !resolvedOptionValue) {
+        return json({ error: `Selection required for ${product.name || pid}` }, 400);
+      }
       const autoEligible =
         !!autoPromo &&
         (autoPromo.scope === 'global' ||
@@ -348,30 +429,34 @@ export const onRequestPost = async (context: {
       const codePercent = codePercentEligible ? codePromo?.percentOff || 0 : 0;
       const appliedPercent = Math.max(autoPercent, codePercent);
 
-      if (appliedPercent > 0) {
-        if (!product.stripe_product_id) {
-          return json({ error: `Product missing Stripe product: ${product.name || pid}` }, 400);
-        }
-        const discountedCents = Math.max(
-          0,
-          Math.round(((product.price_cents ?? 0) * (100 - appliedPercent)) / 100)
-        );
-        lineItems.push({
-          price_data: {
-            currency: 'usd',
-            unit_amount: discountedCents,
-            product: product.stripe_product_id,
-          },
-          quantity,
-        });
-        if (autoPercent === appliedPercent && autoPercent > 0) autoPercentApplied = true;
-        maxPercentApplied = Math.max(maxPercentApplied, appliedPercent);
-      } else {
-        lineItems.push({
-          price: product.stripe_price_id,
-          quantity,
-        });
+      const discountedCents = Math.max(
+        0,
+        Math.round(((product.price_cents ?? 0) * (100 - appliedPercent)) / 100)
+      );
+      const unitAmount = appliedPercent > 0 ? discountedCents : product.price_cents ?? 0;
+      const metadata: Stripe.MetadataParam = {
+        dd_product_id: product.stripe_product_id || product.id,
+      };
+      if (optionGroup && resolvedOptionValue) {
+        metadata.option_group_label = optionGroup.label;
+        metadata.option_value = resolvedOptionValue;
       }
+
+      const imageUrls = resolveProductImages(product);
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          unit_amount: unitAmount,
+          product_data: {
+            name: product.name || 'Item',
+            images: imageUrls.length ? imageUrls : undefined,
+            metadata,
+          },
+        },
+        quantity,
+      });
+      if (autoPercent === appliedPercent && autoPercent > 0) autoPercentApplied = true;
+      maxPercentApplied = Math.max(maxPercentApplied, appliedPercent);
       subtotalCents += (product.price_cents ?? 0) * quantity;
       itemsForShipping.push({ category: product.category ?? null });
     }
@@ -485,6 +570,56 @@ export const onRequestPost = async (context: {
     return json({ error: 'Failed to create checkout session' }, 500);
   }
 };
+
+const safeParseJsonArray = (value?: string | null): string[] => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entry) => typeof entry === 'string');
+  } catch {
+    return [];
+  }
+};
+
+const resolveProductImages = (product: ProductRow): string[] => {
+  const extras = safeParseJsonArray(product.image_urls_json);
+  const primary = product.image_url || extras[0] || '';
+  const combined = [primary, ...extras.filter((url) => url !== primary)].filter(Boolean);
+  return combined.slice(0, 8);
+};
+
+async function loadCategoryOptionGroups(db: D1Database, debug: boolean): Promise<CategoryRow[]> {
+  try {
+    await ensureCategoryOptionColumns(db);
+    const { results } = await db
+      .prepare(`SELECT id, name, slug, option_group_label, option_group_options_json FROM categories`)
+      .all<CategoryRow>();
+    return results || [];
+  } catch (error) {
+    if (debug) {
+      console.error('[checkout] failed to load category option groups', error);
+    }
+    return [];
+  }
+}
+
+async function ensureCategoryOptionColumns(db: D1Database) {
+  const columns = [
+    'option_group_label TEXT',
+    'option_group_options_json TEXT',
+  ];
+  for (const ddl of columns) {
+    try {
+      await db.prepare(`ALTER TABLE categories ADD COLUMN ${ddl};`).run();
+    } catch (error) {
+      const message = (error as Error)?.message || '';
+      if (!/duplicate column|already exists/i.test(message)) {
+        throw error;
+      }
+    }
+  }
+}
 
 async function loadCategoryShipping(db: D1Database, debug: boolean): Promise<CategoryRow[]> {
   try {

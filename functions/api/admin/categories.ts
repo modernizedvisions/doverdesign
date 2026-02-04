@@ -27,6 +27,9 @@ type CategoryRow = {
   hero_image_url?: string | null;
   image_id?: string | null;
   hero_image_id?: string | null;
+  sort_order?: number | null;
+  option_group_label?: string | null;
+  option_group_options_json?: string | null;
   show_on_homepage?: number | null;
   shipping_cents?: number | null;
 };
@@ -42,14 +45,10 @@ type Category = {
   heroImageId?: string;
   showOnHomePage: boolean;
   shippingCents?: number | null;
+  sortOrder?: number;
+  optionGroupLabel?: string | null;
+  optionGroupOptions?: string[];
 };
-
-const BASE_CATEGORY_ORDER = [
-  { name: 'Ring Dishes', slug: 'ring-dish' },
-  { name: 'Ornaments', slug: 'ornament' },
-  { name: 'Decor', slug: 'decor' },
-  { name: 'Wine Stoppers', slug: 'wine-stopper' },
-];
 
 const OTHER_ITEMS_CATEGORY = {
   id: 'other-items',
@@ -67,6 +66,9 @@ const createCategoriesTable = `
     hero_image_url TEXT,
     image_id TEXT,
     hero_image_id TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    option_group_label TEXT,
+    option_group_options_json TEXT,
     show_on_homepage INTEGER DEFAULT 0,
     shipping_cents INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -81,6 +83,9 @@ const REQUIRED_CATEGORY_COLUMNS: Record<string, string> = {
   image_id: 'image_id TEXT',
   hero_image_id: 'hero_image_id TEXT',
   shipping_cents: 'shipping_cents INTEGER DEFAULT 0',
+  sort_order: 'sort_order INTEGER NOT NULL DEFAULT 0',
+  option_group_label: 'option_group_label TEXT',
+  option_group_options_json: 'option_group_options_json TEXT',
 };
 
 const isDataUrl = (value?: string | null) => typeof value === 'string' && value.trim().toLowerCase().startsWith('data:');
@@ -120,6 +125,55 @@ const resolveCategoryImageInput = async (
   };
 };
 
+const parseOptionGroupOptions = (value?: string | null): string[] => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
+  } catch {
+    return [];
+  }
+};
+
+const normalizeOptionGroupLabel = (value: unknown): string | null => {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  return raw ? raw : null;
+};
+
+const normalizeOptionGroupOptions = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  value.forEach((entry) => {
+    const trimmed = typeof entry === 'string' ? entry.trim() : '';
+    if (!trimmed) return;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    normalized.push(trimmed);
+  });
+  return normalized;
+};
+
+const normalizeOptionGroup = (labelInput: unknown, optionsInput: unknown) => {
+  const label = normalizeOptionGroupLabel(labelInput);
+  const options = normalizeOptionGroupOptions(optionsInput);
+  if (!label || options.length === 0) {
+    return { label: null, optionsJson: null, options: [] as string[] };
+  }
+  return { label, optionsJson: JSON.stringify(options), options };
+};
+
+const normalizeSortOrder = (value: unknown, fallback: number | null): number | null => {
+  if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+    return fallback;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed);
+};
+
 export async function onRequest(context: { env: { DB: D1Database }; request: Request }): Promise<Response> {
   const method = context.request.method.toUpperCase();
 
@@ -157,12 +211,14 @@ async function handleGet(
 ): Promise<Response> {
   const { results } = await db
     .prepare(
-      `SELECT id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, show_on_homepage, shipping_cents FROM categories`
+      `SELECT id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, sort_order, option_group_label, option_group_options_json, show_on_homepage, shipping_cents, created_at
+       FROM categories
+       ORDER BY sort_order ASC, datetime(created_at) ASC, name ASC`
     )
     .all<CategoryRow>();
-  const categories = orderCategories(
-    (results || []).map((row) => mapRowToCategory(row, request, env)).filter((c): c is Category => Boolean(c))
-  );
+  const categories = (results || [])
+    .map((row) => mapRowToCategory(row, request, env))
+    .filter((c): c is Category => Boolean(c));
   return json({ categories });
 }
 
@@ -193,6 +249,11 @@ async function handlePost(
     Number.isFinite(body?.shippingCents as number) && (body?.shippingCents as number) >= 0
       ? Number(body?.shippingCents)
       : 0;
+  const sortOrder = normalizeSortOrder(body?.sortOrder, 0);
+  if (sortOrder === null) {
+    return json({ error: 'sort_order_invalid', detail: 'Order must be a non-negative integer.' }, 400);
+  }
+  const normalizedOptionGroup = normalizeOptionGroup(body?.optionGroupLabel, body?.optionGroupOptions);
 
   if (isDataUrl(imageUrl) || isDataUrl(heroImageUrl)) {
     return json({ error: 'image_url_invalid', detail: 'Image URLs must be normal URLs (data URLs are not allowed).' }, 400);
@@ -200,8 +261,8 @@ async function handlePost(
 
   const result = await db
     .prepare(
-      `INSERT INTO categories (id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, show_on_homepage, shipping_cents)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+      `INSERT INTO categories (id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, sort_order, option_group_label, option_group_options_json, show_on_homepage, shipping_cents)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
     )
     .bind(
       id,
@@ -212,6 +273,9 @@ async function handlePost(
       heroImageUrl,
       resolvedImage.imageId,
       resolvedHero.imageId,
+      sortOrder,
+      normalizedOptionGroup.label,
+      normalizedOptionGroup.optionsJson,
       showOnHomePage ? 1 : 0,
       shippingCents
     )
@@ -221,7 +285,7 @@ async function handlePost(
 
   const created = await db
     .prepare(
-      `SELECT id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, show_on_homepage, shipping_cents
+      `SELECT id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, sort_order, option_group_label, option_group_options_json, show_on_homepage, shipping_cents
        FROM categories WHERE id = ?;`
     )
     .bind(id)
@@ -302,6 +366,31 @@ async function handlePut(
         : 0;
     addSet('shipping_cents = ?', shippingCents);
   }
+  if (body.sortOrder !== undefined) {
+    const normalizedSortOrder = normalizeSortOrder(body.sortOrder, 0);
+    if (normalizedSortOrder === null) {
+      return json({ error: 'sort_order_invalid', detail: 'Order must be a non-negative integer.' }, 400);
+    }
+    addSet('sort_order = ?', normalizedSortOrder);
+  }
+  if (body.optionGroupLabel !== undefined || body.optionGroupOptions !== undefined) {
+    let existingLabel: string | null = null;
+    let existingOptions: string[] = [];
+    if (body.optionGroupLabel === undefined || body.optionGroupOptions === undefined) {
+      const existing = await db
+        .prepare(`SELECT option_group_label, option_group_options_json FROM categories WHERE id = ?;`)
+        .bind(id)
+        .first<CategoryRow>();
+      existingLabel = existing?.option_group_label ?? null;
+      existingOptions = parseOptionGroupOptions(existing?.option_group_options_json ?? null);
+    }
+    const normalized = normalizeOptionGroup(
+      body.optionGroupLabel !== undefined ? body.optionGroupLabel : existingLabel,
+      body.optionGroupOptions !== undefined ? body.optionGroupOptions : existingOptions
+    );
+    addSet('option_group_label = ?', normalized.label);
+    addSet('option_group_options_json = ?', normalized.optionsJson);
+  }
 
   if (!sets.length) return json({ error: 'No fields to update' }, 400);
 
@@ -315,7 +404,7 @@ async function handlePut(
 
   const updated = await db
     .prepare(
-      `SELECT id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, show_on_homepage, shipping_cents
+      `SELECT id, name, subtitle, slug, image_url, hero_image_url, image_id, hero_image_id, sort_order, option_group_label, option_group_options_json, show_on_homepage, shipping_cents
        FROM categories WHERE id = ?;`
     )
     .bind(id)
@@ -377,6 +466,8 @@ const mapRowToCategory = (
   env: { PUBLIC_IMAGES_BASE_URL?: string }
 ): Category | null => {
   if (!row || !row.id || !row.name || !row.slug) return null;
+  const options = parseOptionGroupOptions(row.option_group_options_json);
+  const optionGroupLabel = (row.option_group_label || '').trim() || null;
   return {
     id: row.id,
     name: row.name,
@@ -388,6 +479,9 @@ const mapRowToCategory = (
     heroImageId: row.hero_image_id || undefined,
     showOnHomePage: row.show_on_homepage === 1,
     shippingCents: row.shipping_cents ?? 0,
+    sortOrder: Number.isFinite(Number(row.sort_order)) ? Number(row.sort_order) : 0,
+    optionGroupLabel,
+    optionGroupOptions: optionGroupLabel && options.length ? options : undefined,
   };
 };
 
@@ -397,37 +491,6 @@ const toSlug = (value: string | undefined | null) =>
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
-
-const orderCategories = (items: Category[]): Category[] => {
-  const normalize = (value: string) => toSlug(value);
-  const used = new Set<string>();
-  const ordered: Category[] = [];
-
-  BASE_CATEGORY_ORDER.forEach((base) => {
-    const match = items.find(
-      (item) => normalize(item.slug) === normalize(base.slug) || normalize(item.name) === normalize(base.name)
-    );
-    if (match) {
-      const key = normalize(match.slug);
-      if (!used.has(key)) {
-        ordered.push(match);
-        used.add(key);
-      }
-    }
-  });
-
-  const remaining = items
-    .filter((item) => !used.has(normalize(item.slug)))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const combined = [...ordered, ...remaining];
-  const otherItemsKey = normalize(OTHER_ITEMS_CATEGORY.slug);
-  const isOtherItems = (item: Category) =>
-    normalize(item.slug) === otherItemsKey || normalize(item.name) === otherItemsKey;
-  const otherItems = combined.filter(isOtherItems);
-  const withoutOtherItems = combined.filter((item) => !isOtherItems(item));
-  return [...withoutOtherItems, ...otherItems];
-};
 
 async function seedDefaultCategories(db: D1Database) {
   const existing = await db.prepare('SELECT COUNT(*) as count FROM categories').first<{ count: number | string }>();
@@ -474,6 +537,7 @@ async function ensureCategorySchema(db: D1Database) {
     }
   }
   await db.prepare(`UPDATE categories SET show_on_homepage = 0 WHERE show_on_homepage IS NULL;`).run();
+  await db.prepare(`UPDATE categories SET sort_order = 0 WHERE sort_order IS NULL;`).run();
   await db
     .prepare(
       `UPDATE categories SET hero_image_url = image_url WHERE (hero_image_url IS NULL OR hero_image_url = '') AND image_url IS NOT NULL;`

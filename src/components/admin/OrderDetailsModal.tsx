@@ -216,6 +216,11 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
                         <div className="text-sm font-medium text-charcoal truncate">
                           {getDisplayItemName(item)}
                         </div>
+                        {item.optionGroupLabel && item.optionValue && (
+                          <div className="text-xs text-charcoal/70">
+                            {item.optionGroupLabel}: {item.optionValue}
+                          </div>
+                        )}
                         <div className="text-xs text-charcoal/70">
                           Qty: {item.quantity || 0} — {formatCurrency(item.priceCents, currency)}
                         </div>

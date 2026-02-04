@@ -48,6 +48,8 @@ type OrderItemRow = {
   item_image_url?: string | null;
   custom_order_image_url?: string | null;
   custom_order_display_id?: string | null;
+  option_group_label?: string | null;
+  option_value?: string | null;
 };
 
 export const onRequestGet = async (context: { env: { DB: D1Database }; request: Request }): Promise<Response> => {
@@ -153,6 +155,10 @@ export const onRequestGet = async (context: { env: { DB: D1Database }; request: 
         ? `COALESCE(oi.image_url, co.image_url, ${imageSelect})`
         : `COALESCE(co.image_url, ${imageSelect})`;
 
+      const joinClause =
+        joinColumn === 'id'
+          ? `oi.product_id = p.id`
+          : `oi.product_id = p.${joinColumn} OR oi.product_id = p.id`;
       const itemsStmt = context.env.DB.prepare(
         `
         SELECT oi.*,
@@ -162,7 +168,7 @@ export const onRequestGet = async (context: { env: { DB: D1Database }; request: 
                co.display_custom_order_id AS custom_order_display_id,
                ${productImageSelect} AS product_image_url
         FROM order_items oi
-        LEFT JOIN products p ON oi.product_id = p.${joinColumn}
+        LEFT JOIN products p ON ${joinClause}
         LEFT JOIN custom_orders co ON oi.product_id = ('custom_order:' || co.id)
         WHERE oi.order_id IN (${placeholders});
       `
@@ -211,6 +217,8 @@ export const onRequestGet = async (context: { env: { DB: D1Database }; request: 
         productImageUrl: i.product_image_url ?? null,
         imageUrl: i.item_image_url ?? i.custom_order_image_url ?? null,
         customOrderDisplayId: i.custom_order_display_id ?? null,
+        optionGroupLabel: i.option_group_label ?? null,
+        optionValue: i.option_value ?? null,
       })),
     }));
     const unseenRow = await context.env.DB.prepare(

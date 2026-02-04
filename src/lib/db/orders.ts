@@ -6,6 +6,8 @@ export type AdminOrderItem = {
   productImageUrl?: string | null;
   imageUrl?: string | null;
   customOrderDisplayId?: string | null;
+  optionGroupLabel?: string | null;
+  optionValue?: string | null;
 };
 
 export type AdminOrder = {

@@ -13,6 +13,8 @@ type EmailItem = {
   amountCents: number;
   imageUrl?: string | null;
   description?: string | null;
+  optionGroupLabel?: string | null;
+  optionValue?: string | null;
 };
 
 type EmailAddress = Stripe.Address | Stripe.ShippingAddress | null;

@@ -102,7 +102,12 @@ export function CheckoutPage() {
 
   const buildSessionItems = useCallback(() => {
     if (cartItems.length) {
-      return cartItems.map((ci) => ({ productId: ci.productId, quantity: ci.quantity }));
+      return cartItems.map((ci) => ({
+        productId: ci.productId,
+        quantity: ci.quantity,
+        optionGroupLabel: ci.optionGroupLabel ?? null,
+        optionValue: ci.optionValue ?? null,
+      }));
     }
     if (targetProductId) {
       return [{ productId: targetProductId, quantity: 1 }];
@@ -202,7 +207,12 @@ export function CheckoutPage() {
         setProduct(displayProduct);
 
         const sessionItems = cartItems.length
-          ? cartItems.map((ci) => ({ productId: ci.productId, quantity: ci.quantity }))
+          ? cartItems.map((ci) => ({
+              productId: ci.productId,
+              quantity: ci.quantity,
+              optionGroupLabel: ci.optionGroupLabel ?? null,
+              optionValue: ci.optionValue ?? null,
+            }))
           : targetProductId
           ? [{ productId: targetProductId, quantity: 1 }]
           : [];
@@ -301,6 +311,8 @@ export function CheckoutPage() {
           priceCents: item.priceCents,
           category: item.category ?? null,
           categories: item.categories ?? null,
+          optionGroupLabel: item.optionGroupLabel ?? null,
+          optionValue: item.optionValue ?? null,
         }));
     }
     if (product) {
@@ -315,6 +327,8 @@ export function CheckoutPage() {
           priceCents: product.priceCents ?? 0,
           category: product.category ?? null,
           categories: product.categories ?? null,
+          optionGroupLabel: null,
+          optionValue: null,
         },
       ];
     }
@@ -427,6 +441,11 @@ export function CheckoutPage() {
                       </div>
                       {item.collection && (
                         <p className="text-[11px] uppercase tracking-[0.24em] text-charcoal/60">{item.collection}</p>
+                      )}
+                      {item.optionGroupLabel && item.optionValue && (
+                        <p className="text-xs text-charcoal/70 mt-1">
+                          {item.optionGroupLabel}: {item.optionValue}
+                        </p>
                       )}
                       {item.description && (
                         <p className="text-xs text-charcoal/70 line-clamp-2">{item.description}</p>

@@ -1,6 +1,8 @@
 import { ShoppingCart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../lib/types';
+import type { CategoryOptionGroup } from '../lib/categoryOptions';
+import { resolveCategoryOptionGroup } from '../lib/categoryOptions';
 import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
 import { ProgressiveImage } from './ui/ProgressiveImage';
@@ -9,9 +11,10 @@ import { getDiscountedCents, isPromotionEligible, usePromotions } from '../lib/p
 
 interface ProductCardProps {
   product: Product;
+  categoryOptionLookup?: Map<string, CategoryOptionGroup>;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, categoryOptionLookup }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const qtyInCart = useCartStore((state) => {
     const found = state.items.find((i) => i.productId === product.id);
@@ -68,6 +71,9 @@ export function ProductCard({ product }: ProductCardProps) {
     discountedCents !== null ? `$${(discountedCents / 100).toFixed(2)}` : '';
 
   const productHref = `/product/${product.id}`;
+  const categoryKey = product.category || product.type || '';
+  const optionGroup = categoryOptionLookup ? resolveCategoryOptionGroup(categoryKey, categoryOptionLookup) : null;
+  const requiresOption = !!optionGroup;
 
   return (
     <div className="group lux-card bg-white/90 overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
@@ -127,12 +133,18 @@ export function ProductCard({ product }: ProductCardProps) {
             View
           </button>
           <button
-            onClick={handleAddToCart}
-            disabled={isDisabled || !isPurchaseReady}
+            onClick={() => {
+              if (requiresOption) {
+                navigate(productHref);
+                return;
+              }
+              handleAddToCart();
+            }}
+            disabled={!requiresOption && (isDisabled || !isPurchaseReady)}
             className="lux-button w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Add to Cart"
+            aria-label={requiresOption ? 'Choose options' : 'Add to Cart'}
           >
-            <ShoppingCart className="h-5 w-5" />
+            {requiresOption ? 'Choose' : <ShoppingCart className="h-5 w-5" />}
           </button>
         </div>
       </div>

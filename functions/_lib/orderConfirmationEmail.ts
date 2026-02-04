@@ -4,6 +4,8 @@ export type OrderConfirmationEmailItem = {
   unitAmount?: number | null;
   lineTotal: number;
   imageUrl?: string | null;
+  optionGroupLabel?: string | null;
+  optionValue?: string | null;
 };
 
 export type OrderConfirmationEmailParams = {
@@ -42,6 +44,10 @@ export function renderOrderConfirmationEmailHtml(params: OrderConfirmationEmailP
     (params.items || [])
       .map((item) => {
         const qty = item.qty && item.qty > 1 ? `x ${item.qty}` : '';
+        const optionLine =
+          item.optionGroupLabel && item.optionValue
+            ? `<span class="item-option">${escapeHtml(item.optionGroupLabel)}: ${escapeHtml(item.optionValue)}</span>`
+            : '';
         const imageMarkup = item.imageUrl
           ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" width="56" height="56" class="item-img" />`
           : '<span class="item-placeholder"></span>';
@@ -51,6 +57,7 @@ export function renderOrderConfirmationEmailHtml(params: OrderConfirmationEmailP
           <span class="item-media">${imageMarkup}</span>
           <span class="item-text">
             <span class="item-name">${escapeHtml(item.name)}${qty ? ` <span class="item-qty">${escapeHtml(qty)}</span>` : ''}</span>
+            ${optionLine}
           </span>
         </td>
         <td class="item-price" align="right">${formatMoney(item.lineTotal)}</td>
@@ -133,6 +140,7 @@ export function renderOrderConfirmationEmailHtml(params: OrderConfirmationEmailP
     .item-placeholder { width:56px; height:56px; border:1px solid ${borderColor}; background:#f3f4f6; display:block; border-radius:14px; }
     .item-name { font-size:16px; font-weight:600; color:${baseColor}; font-family:${serifFont}; }
     .item-qty { font-size:13px; font-weight:500; color:${mutedColor}; }
+    .item-option { display:block; font-size:12px; color:${mutedColor}; margin-top:2px; }
     .item-price { font-size:15px; font-weight:600; color:${baseColor}; white-space:nowrap; }
     .item-empty { padding:12px 0; font-size:14px; color:${mutedColor}; }
     .totals-label { padding:4px 0; font-size:14px; color:${mutedColor}; }
@@ -225,7 +233,11 @@ export function renderOrderConfirmationEmailText(params: OrderConfirmationEmailP
     'Items:',
     ...(params.items || []).map((item) => {
       const qty = item.qty && item.qty > 1 ? ` x${item.qty}` : '';
-      return `- ${item.name}${qty}: ${formatMoney(item.lineTotal)}`;
+      const option =
+        item.optionGroupLabel && item.optionValue
+          ? ` (${item.optionGroupLabel}: ${item.optionValue})`
+          : '';
+      return `- ${item.name}${qty}${option}: ${formatMoney(item.lineTotal)}`;
     }),
     '',
     `Subtotal: ${formatMoney(params.subtotal)}`,

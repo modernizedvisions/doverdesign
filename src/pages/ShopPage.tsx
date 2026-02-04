@@ -2,14 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { fetchCategories, fetchProducts } from '../lib/api';
 import { Category, Product } from '../lib/types';
+import { buildCategoryOptionLookup, normalizeCategoryKey } from '../lib/categoryOptions';
 import { ProductGrid } from '../components/ProductGrid';
-
-const BASE_CATEGORY_ORDER: Category[] = [
-  { id: 'ornaments', name: 'Ornaments', slug: 'ornaments', showOnHomePage: true },
-  { id: 'ring-dish', name: 'Ring Dishes', slug: 'ring-dish', showOnHomePage: true },
-  { id: 'decor', name: 'Decor', slug: 'decor', showOnHomePage: true },
-  { id: 'wine-stopper', name: 'Wine Stoppers', slug: 'wine-stopper', showOnHomePage: true },
-];
 
 const OTHER_ITEMS_CATEGORY: Category = {
   id: 'other-items',
@@ -18,43 +12,7 @@ const OTHER_ITEMS_CATEGORY: Category = {
   showOnHomePage: true,
 };
 
-const toSlug = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '');
-
-const orderCategorySummaries = (items: Category[]): Category[] => {
-  const normalize = (value: string) => toSlug(value);
-  const used = new Set<string>();
-  const ordered: Category[] = [];
-
-  BASE_CATEGORY_ORDER.forEach((base) => {
-    const match = items.find(
-      (item) => normalize(item.slug) === normalize(base.slug) || normalize(item.name) === normalize(base.name)
-    );
-    if (match) {
-      const key = normalize(match.slug);
-      if (!used.has(key)) {
-        ordered.push(match);
-        used.add(key);
-      }
-    }
-  });
-
-  const remaining = items
-    .filter((item) => !used.has(normalize(item.slug)))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const combined = [...ordered, ...remaining];
-  const otherItemsKey = normalize(OTHER_ITEMS_CATEGORY.slug);
-  const isOtherItems = (item: Category) =>
-    normalize(item.slug) === otherItemsKey || normalize(item.name) === otherItemsKey;
-  const otherItems = combined.filter(isOtherItems);
-  const withoutOtherItems = combined.filter((item) => !isOtherItems(item));
-  return [...withoutOtherItems, ...otherItems];
-};
+const toSlug = (value: string) => normalizeCategoryKey(value);
 
 const ensureCategoryDefaults = (category: Category): Category => ({
   ...category,
@@ -117,7 +75,7 @@ const deriveCategoriesFromProducts = (items: Product[]): Category[] => {
   const derived = Array.from(names.entries()).map(
     ([slug, name]): Category => ({ id: slug, slug, name, showOnHomePage: true })
   );
-  return orderCategorySummaries(derived);
+  return derived;
 };
 
 const getProductCategoryNames = (product: Product): string[] => {
@@ -265,7 +223,7 @@ export function ShopPage() {
     const baseList = categories.length ? categories : deriveCategoriesFromProducts(products);
     const deduped = dedupeCategories(baseList);
     const withFallback = ensureOtherItemsCategory(deduped, products);
-    return orderCategorySummaries(dedupeCategories(withFallback));
+    return dedupeCategories(withFallback);
   }, [categories, products]);
 
   useEffect(() => {
@@ -295,7 +253,7 @@ export function ShopPage() {
         console.error('Error loading categories:', categoryError);
       }
 
-      const orderedCategories = orderCategorySummaries(dedupeCategories(apiCategories));
+      const orderedCategories = dedupeCategories(apiCategories);
       console.log(
         '[ShopPage] merged category list',
         orderedCategories.map((c) => ({ slug: c.slug, name: c.name }))
@@ -341,6 +299,8 @@ export function ShopPage() {
     return groups;
   }, [categoryList, products]);
 
+  const optionLookup = useMemo(() => buildCategoryOptionLookup(categoryList), [categoryList]);
+
   const visibleCategories = useMemo(
     () => categoryList.filter((category) => (groupedProducts[category.slug] || []).length > 0),
     [categoryList, groupedProducts]
@@ -370,14 +330,7 @@ export function ShopPage() {
     }
   }, [searchParams, visibleCategories, activeCategorySlug, setSearchParams]);
 
-  const orderedSections = useMemo(() => {
-    const resolvedActiveSlug = activeCategorySlug || visibleCategories[0]?.slug;
-    const active = resolvedActiveSlug
-      ? visibleCategories.find((c) => c.slug === resolvedActiveSlug)
-      : undefined;
-    if (!active) return visibleCategories;
-    return [active, ...visibleCategories.filter((c) => c.slug !== active.slug)];
-  }, [activeCategorySlug, visibleCategories]);
+  const orderedSections = useMemo(() => visibleCategories, [visibleCategories]);
 
   useEffect(() => {
     if (!categoryList.length) return;
@@ -452,7 +405,7 @@ export function ShopPage() {
                     )}
                   </div>
                   <div className="rounded-2xl border border-driftwood/40 bg-linen/90 shadow-sm p-4 sm:p-6">
-                    <ProductGrid products={items} />
+                    <ProductGrid products={items} categoryOptionLookup={optionLookup} />
                   </div>
                 </section>
               );

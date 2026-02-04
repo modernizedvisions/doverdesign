@@ -38,6 +38,8 @@ export interface CartItem {
   stripePriceId?: string | null;
   category?: string | null;
   categories?: string[] | null;
+  optionGroupLabel?: string | null;
+  optionValue?: string | null;
 }
 
 export interface CartItemLegacy {
@@ -155,6 +157,9 @@ export interface Category {
   heroImageId?: string;
   showOnHomePage: boolean;
   shippingCents?: number | null;
+  sortOrder?: number;
+  optionGroupLabel?: string | null;
+  optionGroupOptions?: string[];
 }
 
 export type ShopCategoryTile = {
@@ -215,6 +220,8 @@ export interface AdminOrderItem {
   productImageUrl?: string | null;
   imageUrl?: string | null;
   customOrderDisplayId?: string | null;
+  optionGroupLabel?: string | null;
+  optionValue?: string | null;
 }
 
 export interface AdminOrder {

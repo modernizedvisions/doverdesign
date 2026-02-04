@@ -3,6 +3,8 @@ export type OwnerNewSaleItem = {
   qtyLabel?: string | null;
   lineTotal: string;
   imageUrl?: string | null;
+  optionGroupLabel?: string | null;
+  optionValue?: string | null;
 };
 
 export type OwnerNewSaleParams = {
@@ -39,6 +41,10 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
     (params.items || [])
       .map((item) => {
         const qty = item.qtyLabel ? item.qtyLabel.trim() : '';
+        const optionLine =
+          item.optionGroupLabel && item.optionValue
+            ? `<span class="item-option">${escapeHtml(item.optionGroupLabel)}: ${escapeHtml(item.optionValue)}</span>`
+            : '';
         const imageMarkup = item.imageUrl
           ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" width="56" height="56" class="item-img" />`
           : '<span class="item-placeholder"></span>';
@@ -48,6 +54,7 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
           <span class="item-media">${imageMarkup}</span>
           <span class="item-text">
             <span class="item-name">${escapeHtml(item.name)}${qty ? ` <span class="item-qty">${escapeHtml(qty)}</span>` : ''}</span>
+            ${optionLine}
           </span>
         </td>
         <td class="item-price" align="right">${escapeHtml(item.lineTotal)}</td>
@@ -141,6 +148,7 @@ export function renderOwnerNewSaleEmailHtml(params: OwnerNewSaleParams): string 
     .item-placeholder { width:56px; height:56px; border:1px solid ${borderColor}; background:#f3f4f6; display:block; border-radius:14px; }
     .item-name { font-size:16px; font-weight:600; color:${baseColor}; font-family:${serifFont}; }
     .item-qty { font-size:13px; font-weight:500; color:${mutedColor}; }
+    .item-option { display:block; font-size:12px; color:${mutedColor}; margin-top:2px; }
     .item-price { font-size:15px; font-weight:600; color:${baseColor}; white-space:nowrap; }
     .item-empty { padding:12px 0; font-size:14px; color:${mutedColor}; }
     .totals-label { padding:4px 0; font-size:14px; color:${mutedColor}; }
@@ -245,7 +253,11 @@ export function renderOwnerNewSaleEmailText(params: OwnerNewSaleParams): string 
     'Items:',
     ...(params.items || []).map((item) => {
       const qty = item.qtyLabel ? ` (${item.qtyLabel})` : '';
-      return `- ${item.name}${qty}: ${item.lineTotal}`;
+      const option =
+        item.optionGroupLabel && item.optionValue
+          ? ` (${item.optionGroupLabel}: ${item.optionValue})`
+          : '';
+      return `- ${item.name}${qty}${option}: ${item.lineTotal}`;
     }),
     '',
     `Subtotal: ${params.subtotal}`,

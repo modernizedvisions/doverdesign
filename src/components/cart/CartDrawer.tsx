@@ -91,8 +91,10 @@ export function CartDrawer() {
               <p className="text-charcoal/70">Your cart is empty</p>
             </div>
           ) : (
-            items.map((item) => (
-              <div key={item.productId} className="flex gap-4 pb-4 border-b border-driftwood/50 last:border-b-0">
+            items.map((item) => {
+              const itemKey = `${item.productId}::${(item.optionValue || '').trim()}`;
+              return (
+              <div key={itemKey} className="flex gap-4 pb-4 border-b border-driftwood/50 last:border-b-0">
                 {item.imageUrl && (
                   <img
                     src={item.imageUrl}
@@ -102,6 +104,11 @@ export function CartDrawer() {
                 )}
                 <div className="flex-1">
                   <h3 className="font-serif font-semibold text-deep-ocean leading-snug">{item.name}</h3>
+                  {item.optionGroupLabel && item.optionValue && (
+                    <p className="text-xs text-charcoal/70 mt-1">
+                      {item.optionGroupLabel}: {item.optionValue}
+                    </p>
+                  )}
                   <div className="text-sm text-charcoal/80 mt-1">
                     {isPromotionEligible(promotion, item) ? (
                       <div className="flex items-baseline gap-2">
@@ -125,14 +132,14 @@ export function CartDrawer() {
                     ) : (
                       <div className="lux-quantity">
                         <button
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.productId, item.quantity - 1, item.optionValue)}
                           className="lux-button--ghost px-2 py-1 rounded-full"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
                         <span className="w-8 text-center text-sm font-semibold text-deep-ocean">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.productId, item.quantity + 1, item.optionValue)}
                           disabled={item.quantityAvailable !== null && item.quantityAvailable !== undefined && item.quantity >= item.quantityAvailable}
                           className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -141,7 +148,7 @@ export function CartDrawer() {
                       </div>
                     )}
                     <button
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => removeItem(item.productId, item.optionValue)}
                       className="ml-auto lux-button--ghost px-3 py-2 rounded-full text-red-700 border-red-200"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -149,7 +156,8 @@ export function CartDrawer() {
                   </div>
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
 
