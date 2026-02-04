@@ -316,8 +316,8 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
         <SectionWrapper id="contact" className="py-16 sm:py-20 bg-transparent relative z-10">
           <SectionHeading
             eyebrow="Contact"
-            title="Send us a message"
-            subtitle="Tell us about your space, palette, or the story you want a shell to hold."
+            title="Send me a message"
+            subtitle="Tell me about your space, palette, or the story you want a shell to hold."
           />
           <div className="mt-10 rounded-shell-lg border border-driftwood/70 bg-white/80 lux-shadow">
             <div className="flex justify-center">
