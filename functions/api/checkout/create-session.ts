@@ -82,6 +82,33 @@ const normalizeOrigin = (request: Request) => {
 const normalizeSiteUrl = (value?: string | null) =>
   value ? value.trim().replace(/\/+$/, '') : '';
 
+const resolveCheckoutOrigin = (envValue: string | undefined, request: Request): string => {
+  const raw = typeof envValue === 'string' ? envValue.trim().replace(/\/+$/, '') : '';
+  if (raw) {
+    const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+      return new URL(withScheme).origin;
+    } catch {
+      // fall through to request origin
+    }
+  }
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return '';
+  }
+};
+
+const isAbsoluteHttpUrl = (value: string): boolean => {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 const normalizeCategoryKey = (value: string) =>
   value
     .toLowerCase()
@@ -169,6 +196,7 @@ export const onRequestPost = async (context: {
   const { request, env } = context;
   const stripeSecretKey = env.STRIPE_SECRET_KEY;
   const shippingDebug = env.SHIPPING_DEBUG === '1';
+  const invalidImageSamples: string[] = [];
 
   if (!stripeSecretKey) {
     console.error('STRIPE_SECRET_KEY is not configured');
@@ -443,13 +471,18 @@ export const onRequestPost = async (context: {
       }
 
       const imageUrls = resolveProductImages(product);
+      const stripeImages = imageUrls.filter((url) => {
+        if (isAbsoluteHttpUrl(url)) return true;
+        if (invalidImageSamples.length < 2) invalidImageSamples.push(url);
+        return false;
+      });
       lineItems.push({
         price_data: {
           currency: 'usd',
           unit_amount: unitAmount,
           product_data: {
             name: product.name || 'Item',
-            images: imageUrls.length ? imageUrls : undefined,
+            images: stripeImages.length ? stripeImages.slice(0, 4) : undefined,
             metadata,
           },
         },
@@ -461,8 +494,8 @@ export const onRequestPost = async (context: {
       itemsForShipping.push({ category: product.category ?? null });
     }
 
-    const baseUrl = normalizeSiteUrl(env.VITE_PUBLIC_SITE_URL) || normalizeOrigin(request);
-    if (!baseUrl) {
+    const checkoutOrigin = resolveCheckoutOrigin(env.VITE_PUBLIC_SITE_URL, request);
+    if (!checkoutOrigin) {
       console.error('Missing VITE_PUBLIC_SITE_URL in env');
       return json({ error: 'Server configuration error: missing site URL' }, 500);
     }
@@ -515,7 +548,7 @@ export const onRequestPost = async (context: {
         mode: 'payment',
         ui_mode: 'embedded',
         line_items: lineItems,
-        return_url: `${baseUrl}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+        return_url: `${checkoutOrigin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
         metadata: {
           shipping_cents: String(shippingCentsEffective),
           mv_promo_code: codePromo?.code || '',
@@ -558,7 +591,13 @@ export const onRequestPost = async (context: {
         },
       });
     } catch (stripeError: any) {
-      console.error('Stripe checkout session error:', stripeError?.message || stripeError, stripeError?.raw);
+      console.error('Stripe checkout session error:', {
+        message: stripeError?.message || stripeError,
+        raw: stripeError?.raw,
+        origin: checkoutOrigin,
+        envUrl: env.VITE_PUBLIC_SITE_URL,
+        invalidImages: invalidImageSamples.slice(0, 2),
+      });
       const message =
         stripeError?.raw?.message ||
         stripeError?.message ||

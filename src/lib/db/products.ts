@@ -1,4 +1,6 @@
 import type { Product } from '../types';
+import { getLocalProducts } from './localProducts';
+import { mockProducts } from './mockData';
 const PRODUCTS_API_PATH = '/api/products';
 
 async function fetchProductsFromApi(): Promise<Product[] | null> {
