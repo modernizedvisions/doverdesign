@@ -306,6 +306,13 @@ export function ShopPage() {
     [categoryList, groupedProducts]
   );
 
+  const displayCategories = useMemo(() => {
+    if (!activeCategorySlug) return visibleCategories;
+    const selected = visibleCategories.find((category) => category.slug === activeCategorySlug);
+    if (!selected) return visibleCategories;
+    return [selected, ...visibleCategories.filter((category) => category.slug !== activeCategorySlug)];
+  }, [activeCategorySlug, visibleCategories]);
+
   useEffect(() => {
     const typeParam = searchParams.get('type');
     const normalized = typeParam ? toSlug(typeParam) : '';
@@ -354,7 +361,7 @@ export function ShopPage() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-10">
-          {visibleCategories.map((category) => {
+          {displayCategories.map((category) => {
             const isActive = activeCategorySlug === category.slug;
             return (
               <button
