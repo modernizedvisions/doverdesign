@@ -174,6 +174,7 @@ export const onRequestGet = async (context: {
       .filter(Boolean) as string[];
 
     const productLookup = new Map<string, ProductRow>();
+    const nameLookup = new Map<string, ProductRow[]>();
     if (env.DB && (stripeProductIds.length || stripePriceIds.length || sourceProductIds.length)) {
       const placeholdersProd = stripeProductIds.map(() => '?').join(',');
       const placeholdersPrice = stripePriceIds.map(() => '?').join(',');
@@ -206,6 +207,41 @@ export const onRequestGet = async (context: {
         });
       } catch (dbError) {
         console.error('Failed to lookup products for checkout session', dbError);
+      }
+    }
+
+    if (env.DB && sourceProductIds.length === 0) {
+      const names = Array.from(
+        new Set(
+          lineItemsRaw
+            .map((li) => li.description || '')
+            .map((name) => name.trim())
+            .filter(Boolean)
+        )
+      );
+      if (names.length) {
+        const placeholdersNames = names.map(() => '?').join(',');
+        try {
+          const { results } = await env.DB
+            .prepare(
+              `
+              SELECT id, name, stripe_product_id, stripe_price_id, image_url, image_urls_json, is_one_off, price_cents
+              FROM products
+              WHERE name IN (${placeholdersNames});
+            `
+            )
+            .bind(...names)
+            .all<ProductRow & { price_cents?: number | null }>();
+          (results || []).forEach((row) => {
+            const key = (row.name || '').trim();
+            if (!key) return;
+            const list = nameLookup.get(key) || [];
+            list.push(row);
+            nameLookup.set(key, list);
+          });
+        } catch (dbError) {
+          console.error('Failed to lookup products by name for checkout session', dbError);
+        }
       }
     }
 
@@ -275,14 +311,22 @@ export const onRequestGet = async (context: {
             (li.price.product as Stripe.Product).name) ||
           li.description ||
           'Item';
+        const quantity = li.quantity ?? 0;
+        const unitAmount = li.price?.unit_amount ?? 0;
         const metaMatch = sourceProductId ? productLookup.get(sourceProductId) : null;
         const keyMatch = !metaMatch && stripeProductId ? productLookup.get(stripeProductId) : null;
         const priceMatch = !metaMatch && !keyMatch && stripePriceId ? productLookup.get(stripePriceId) : null;
-        const matchedProduct = metaMatch || keyMatch || priceMatch || null;
+        let matchedProduct = metaMatch || keyMatch || priceMatch || null;
+        if (!matchedProduct && productName) {
+          const candidates = nameLookup.get(productName) || [];
+          if (candidates.length === 1) {
+            matchedProduct = candidates[0];
+          } else if (candidates.length > 1 && unitAmount != null) {
+            matchedProduct = candidates.find((row: any) => row.price_cents === unitAmount) || candidates[0] || null;
+          }
+        }
         const isShipping = isShippingLineItem(li) && !matchedProduct;
         const isCustomOrder = /custom order/i.test(productName) && !matchedProduct;
-        const quantity = li.quantity ?? 0;
-        const unitAmount = li.price?.unit_amount ?? 0;
         const lineSubtotal = li.amount_subtotal ?? unitAmount * quantity;
         const lineTotal = li.amount_total ?? lineSubtotal;
         return {
