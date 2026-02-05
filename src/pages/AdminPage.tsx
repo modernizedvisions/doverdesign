@@ -419,11 +419,24 @@ export function AdminPage() {
   };
 
   const handleProductFormChange = (field: keyof ProductFormState, value: string | number | boolean) => {
-    setProductForm((prev) => ({ ...prev, [field]: value }));
+    setProductForm((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === 'isOneOff' && value === true) {
+        next.quantityAvailable = 1;
+      }
+      return next;
+    });
   };
 
   const handleEditFormChange = (field: keyof ProductFormState, value: string | number | boolean) => {
-    setEditProductForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setEditProductForm((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, [field]: value };
+      if (field === 'isOneOff' && value === true) {
+        next.quantityAvailable = 1;
+      }
+      return next;
+    });
   };
 
   const resetProductForm = () => {
@@ -1224,14 +1237,19 @@ export function AdminPage() {
             onSendPaymentLink={async (orderId: string) => {
               try {
                 setCustomOrdersError(null);
-                setIsLoadingCustomOrders(true);
-                await sendAdminCustomOrderPaymentLink(orderId);
-                await loadCustomOrders();
+                const hadLink = customOrders.some((order) => order.id === orderId && !!order.paymentLink);
+                const result = await sendAdminCustomOrderPaymentLink(orderId);
+                setCustomOrders((prev) =>
+                  prev.map((order) =>
+                    order.id === orderId
+                      ? { ...order, paymentLink: result.paymentLink || order.paymentLink }
+                      : order
+                  )
+                );
+                toast.success(hadLink ? 'Payment link resent.' : 'Payment link sent.');
               } catch (err) {
                 console.error('Failed to send payment link', err);
                 setCustomOrdersError(err instanceof Error ? err.message : 'Failed to send payment link');
-              } finally {
-                setIsLoadingCustomOrders(false);
               }
             }}
           />

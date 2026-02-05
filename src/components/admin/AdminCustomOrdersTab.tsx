@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Archive } from 'lucide-react';
+import { Archive, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useForm } from 'react-hook-form';
@@ -68,6 +68,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [archiveNotice, setArchiveNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [sendingPaymentLinks, setSendingPaymentLinks] = useState<Set<string>>(new Set());
   const draftDefaults = useMemo(() => {
     if (!initialDraft) return undefined;
     const draftShipping =
@@ -266,6 +267,23 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
       setIsArchiving(false);
     }
   };
+  const handleSendPaymentLink = async (orderId: string) => {
+    if (!onSendPaymentLink) return;
+    setSendingPaymentLinks((prev) => {
+      const next = new Set(prev);
+      next.add(orderId);
+      return next;
+    });
+    try {
+      await onSendPaymentLink(orderId);
+    } finally {
+      setSendingPaymentLinks((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+    }
+  };
   const formatCurrency = (cents: number | null | undefined) => `${((cents ?? 0) / 100).toFixed(2)}`;
   const safeDate = (value?: string | null) =>
     value ? formatEasternDateTime(value) || 'Unknown date' : 'Unknown date';
@@ -351,6 +369,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                   const statusLabel = order.status || 'pending';
                   const hasPaymentLink = !!order.paymentLink;
                   const isPaid = statusLabel === 'paid';
+                  const isSending = sendingPaymentLinks.has(order.id);
                   return (
                     <div
                       key={order.id}
@@ -370,12 +389,21 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                         <button
                           type="button"
                           className="w-full lux-button--ghost px-3 py-1 text-[10px] h-9 leading-tight disabled:opacity-60 disabled:cursor-not-allowed"
-                          disabled={isPaid}
+                          disabled={isPaid || isSending}
                           title={isPaid ? 'Already paid' : hasPaymentLink ? 'Resend payment link' : ''}
-                          onClick={() => onSendPaymentLink?.(order.id)}
+                          onClick={() => handleSendPaymentLink(order.id)}
                         >
-                          <span className="block leading-tight">{hasPaymentLink ? 'Resend' : 'Send'}</span>
-                          <span className="block leading-tight">Payment</span>
+                          {isSending ? (
+                            <span className="inline-flex items-center justify-center gap-2 leading-tight">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Sending
+                            </span>
+                          ) : (
+                            <>
+                              <span className="block leading-tight">{hasPaymentLink ? 'Resend' : 'Send'}</span>
+                              <span className="block leading-tight">Payment</span>
+                            </>
+                          )}
                         </button>
                       </div>
                       <div className="flex items-start justify-end pt-1">
@@ -416,6 +444,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
       const statusLabel = order.status || 'pending';
       const displayId = normalizeDisplayId(order);
       const hasPaymentLink = !!order.paymentLink;
+      const isSending = sendingPaymentLinks.has(order.id);
       return (
         <tr key={order.id}>
           <td className="px-4 py-2 text-center align-middle font-mono text-xs text-charcoal/70">{displayId}</td>
@@ -439,11 +468,20 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
               <button
                 type="button"
                 className="lux-button--ghost px-3 py-1 text-[10px] disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={statusLabel === 'paid'}
+                disabled={statusLabel === 'paid' || isSending}
                 title={statusLabel === 'paid' ? 'Already paid' : hasPaymentLink ? 'Resend payment link' : ''}
-                onClick={() => onSendPaymentLink?.(order.id)}
+                onClick={() => handleSendPaymentLink(order.id)}
               >
-                {hasPaymentLink ? 'Resend Payment Link' : 'Send Payment Link'}
+                {isSending ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Sending...
+                  </span>
+                ) : hasPaymentLink ? (
+                  'Resend Payment Link'
+                ) : (
+                  'Send Payment Link'
+                )}
               </button>
             </div>
           </td>
