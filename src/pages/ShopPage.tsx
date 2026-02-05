@@ -218,6 +218,7 @@ export function ShopPage() {
   const [activeCategorySlug, setActiveCategorySlug] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const isDev = import.meta.env?.DEV;
 
   const categoryList = useMemo(() => {
     const baseList = categories.length ? categories : deriveCategoriesFromProducts(products);
@@ -234,16 +235,18 @@ export function ShopPage() {
     try {
       const allProducts = await fetchProducts({ visible: true });
       const availableProducts = (allProducts || []).filter((p) => !p.isSold);
-      console.log(
-        '[ShopPage] product sample (first 3)',
-        availableProducts.slice(0, 3).map((p) => ({
-          id: p.id,
-          name: p.name,
-          type: p.type,
-          category: (p as any).category ?? null,
-          categories: Array.isArray((p as any).categories) ? (p as any).categories : null,
-        }))
-      );
+      if (isDev) {
+        console.log(
+          '[ShopPage] product sample (first 3)',
+          availableProducts.slice(0, 3).map((p) => ({
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            category: (p as any).category ?? null,
+            categories: Array.isArray((p as any).categories) ? (p as any).categories : null,
+          }))
+        );
+      }
       setProducts(availableProducts);
 
       let apiCategories: Category[] = [];
@@ -254,10 +257,12 @@ export function ShopPage() {
       }
 
       const orderedCategories = dedupeCategories(apiCategories);
-      console.log(
-        '[ShopPage] merged category list',
-        orderedCategories.map((c) => ({ slug: c.slug, name: c.name }))
-      );
+      if (isDev) {
+        console.log(
+          '[ShopPage] merged category list',
+          orderedCategories.map((c) => ({ slug: c.slug, name: c.name }))
+        );
+      }
       setCategories(orderedCategories);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -280,7 +285,7 @@ export function ShopPage() {
     products.forEach((product) => {
       const resolution = resolveCategorySlugForProduct(product, categoryList, lookups, fallbackSlug);
       const key = resolution.slug || fallbackSlug;
-      if (resolution.matchedBy === 'fallback' || !resolution.slug) {
+      if (isDev && (resolution.matchedBy === 'fallback' || !resolution.slug)) {
         console.log('[ShopPage][category-fallback]', {
           productId: product.id,
           productName: product.name,
@@ -306,7 +311,7 @@ export function ShopPage() {
     [categoryList, groupedProducts]
   );
 
-  const displayCategories = useMemo(() => {
+  const sectionCategories = useMemo(() => {
     if (!activeCategorySlug) return visibleCategories;
     const selected = visibleCategories.find((category) => category.slug === activeCategorySlug);
     if (!selected) return visibleCategories;
@@ -314,38 +319,60 @@ export function ShopPage() {
   }, [activeCategorySlug, visibleCategories]);
 
   useEffect(() => {
+    if (!visibleCategories.length) return;
     const typeParam = searchParams.get('type');
     const normalized = typeParam ? toSlug(typeParam) : '';
-    const match = normalized
-      ? visibleCategories.find(
-          (c) => toSlug(c.slug) === normalized || toSlug(c.name) === normalized
-        )
-      : undefined;
+    if (!normalized || normalized === 'all') {
+      if (activeCategorySlug) setActiveCategorySlug('');
+      return;
+    }
+    const match = visibleCategories.find(
+      (c) => toSlug(c.slug) === normalized || toSlug(c.name) === normalized
+    );
 
     if (match) {
-      setActiveCategorySlug(match.slug);
+      if (activeCategorySlug !== match.slug) setActiveCategorySlug(match.slug);
       return;
     }
 
-    if (visibleCategories.length) {
-      const nextSlug = visibleCategories[0].slug;
-      if (activeCategorySlug !== nextSlug) {
-        setActiveCategorySlug(nextSlug);
-        searchParams.set('type', nextSlug);
-        setSearchParams(searchParams, { replace: true });
-      }
-    }
+    if (activeCategorySlug) setActiveCategorySlug('');
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('type');
+    setSearchParams(nextParams, { replace: true });
   }, [searchParams, visibleCategories, activeCategorySlug, setSearchParams]);
 
-  const orderedSections = useMemo(() => visibleCategories, [visibleCategories]);
+  useEffect(() => {
+    if (!activeCategorySlug) return;
+    const id = `category-section-${activeCategorySlug}`;
+    const raf = requestAnimationFrame(() => {
+      const target = document.getElementById(id);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [activeCategorySlug]);
 
   useEffect(() => {
     if (!categoryList.length) return;
-    console.log(
-      '[ShopPage] categoryList effect',
-      categoryList.map((c) => ({ slug: c.slug, name: c.name }))
-    );
+    if (isDev) {
+      console.log(
+        '[ShopPage] categoryList effect',
+        categoryList.map((c) => ({ slug: c.slug, name: c.name }))
+      );
+    }
   }, [categoryList]);
+
+  const handleCategorySelect = (slug?: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (!slug) {
+      if (activeCategorySlug) setActiveCategorySlug('');
+      nextParams.delete('type');
+      setSearchParams(nextParams, { replace: true });
+      return;
+    }
+    if (activeCategorySlug !== slug) setActiveCategorySlug(slug);
+    nextParams.set('type', slug);
+    setSearchParams(nextParams, { replace: true });
+  };
 
   return (
     <div className="py-14 bg-linen min-h-screen">
@@ -361,16 +388,23 @@ export function ShopPage() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-10">
-          {displayCategories.map((category) => {
+          <button
+            key="all"
+            onClick={() => handleCategorySelect()}
+            className={`px-4 py-2 rounded-shell border text-[11px] uppercase tracking-[0.22em] transition ${
+              !activeCategorySlug
+                ? 'bg-deep-ocean text-white border-deep-ocean shadow-md'
+                : 'bg-white/80 text-deep-ocean border-driftwood/60 hover:bg-sand/70'
+            }`}
+          >
+            All
+          </button>
+          {visibleCategories.map((category) => {
             const isActive = activeCategorySlug === category.slug;
             return (
               <button
                 key={category.slug}
-                onClick={() => {
-                  setActiveCategorySlug(category.slug);
-                  searchParams.set('type', category.slug);
-                  setSearchParams(searchParams, { replace: true });
-                }}
+                onClick={() => handleCategorySelect(category.slug)}
                 className={`px-4 py-2 rounded-shell border text-[11px] uppercase tracking-[0.22em] transition ${
                   isActive
                     ? 'bg-deep-ocean text-white border-deep-ocean shadow-md'
@@ -389,7 +423,7 @@ export function ShopPage() {
           </div>
         ) : (
           <div className="space-y-12">
-            {orderedSections.map((category) => {
+            {sectionCategories.map((category) => {
               const items = groupedProducts[category.slug] || [];
               if (items.length === 0) return null;
 
@@ -402,7 +436,11 @@ export function ShopPage() {
               const title = copy?.title || category.name;
 
               return (
-                <section key={category.slug} className="mb-10">
+                <section
+                  key={category.slug}
+                  id={`category-section-${category.slug}`}
+                  className="mb-10"
+                >
                   <div className="text-center mb-6 space-y-2">
                     <h2 className="text-2xl sm:text-3xl font-serif tracking-[0.03em] text-deep-ocean">
                       {title}

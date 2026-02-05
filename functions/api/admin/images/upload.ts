@@ -258,7 +258,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     const year = now.getUTCFullYear();
     const month = String(now.getUTCMonth() + 1).padStart(2, '0');
     const ext = extensionForMime(file.type);
-    const key = `chesapeake-shell/${scope}/${year}/${month}/${crypto.randomUUID()}.${ext}`;
+    const key = `doverdesign/${scope}/${year}/${month}/${crypto.randomUUID()}.${ext}`;
 
     try {
       await env.IMAGES_BUCKET.put(key, file.stream(), {

@@ -13,7 +13,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
   if (env.IMAGES_BUCKET?.list) {
     try {
       const result = await env.IMAGES_BUCKET.list({
-        prefix: 'chesapeake-shell/',
+        prefix: 'doverdesign/',
         limit: 10,
       });
       keys = result.objects.map((obj) => obj.key);

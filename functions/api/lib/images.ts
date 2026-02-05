@@ -93,7 +93,7 @@ export function extractStorageKey(value?: string | null): string | null {
   if (trimmed.startsWith('/images/')) {
     return trimmed.replace(/^\/images\//, '');
   }
-  if (trimmed.startsWith('chesapeake-shell/')) {
+  if (trimmed.startsWith('doverdesign/')) {
     return trimmed;
   }
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
@@ -101,7 +101,7 @@ export function extractStorageKey(value?: string | null): string | null {
       const url = new URL(trimmed);
       const match = url.pathname.match(/\/images\/(.+)$/);
       if (match?.[1]) return match[1];
-      const idx = url.pathname.indexOf('/chesapeake-shell/');
+      const idx = url.pathname.indexOf('/doverdesign/');
       if (idx >= 0) return url.pathname.slice(idx + 1);
     } catch {
       return null;

@@ -36,7 +36,7 @@ export async function onRequest(context: {
     return json({ ok: false, code: 'MISSING_KEY', message: 'Image key is required' }, 400);
   }
 
-  if (!storageKey.startsWith('chesapeake-shell/')) {
+  if (!storageKey.startsWith('doverdesign/')) {
     return context.next();
   }
 
