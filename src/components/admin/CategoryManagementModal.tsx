@@ -65,7 +65,7 @@ export function CategoryManagementModal({
 }: CategoryManagementModalProps) {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategorySubtitle, setNewCategorySubtitle] = useState('');
-  const [newCategoryShipping, setNewCategoryShipping] = useState('0.00');
+  const [newCategoryShipping, setNewCategoryShipping] = useState('');
   const [newOptionLabel, setNewOptionLabel] = useState('');
   const [newOptionInput, setNewOptionInput] = useState('');
   const [newOptionList, setNewOptionList] = useState<string[]>([]);
@@ -118,10 +118,34 @@ export function CategoryManagementModal({
     }
   }, [editCategoryId]);
 
+  const sanitizeShippingInput = (value: string): string => {
+    const cleaned = value.replace(/[^0-9.]/g, '');
+    if (!cleaned) return '';
+    const firstDot = cleaned.indexOf('.');
+    if (firstDot === -1) return cleaned;
+    const intPart = cleaned.slice(0, firstDot);
+    const decPart = cleaned.slice(firstDot + 1).replace(/\./g, '');
+    return `${intPart}.${decPart.slice(0, 2)}`;
+  };
+
+  const formatShippingDisplay = (value: string): string => {
+    const sanitized = sanitizeShippingInput(value);
+    if (!sanitized) return '';
+    return `$${sanitized}`;
+  };
+
+  const formatShippingValue = (value: string): string => {
+    const sanitized = sanitizeShippingInput(value);
+    if (!sanitized) return '';
+    const parsed = Number(sanitized);
+    if (!Number.isFinite(parsed) || parsed < 0) return '';
+    return parsed.toFixed(2);
+  };
+
   const normalizeShippingInput = (raw: string): number | null => {
-    const trimmed = raw.trim();
-    if (!trimmed) return 0;
-    const parsed = Number(trimmed);
+    const sanitized = sanitizeShippingInput(raw);
+    if (!sanitized) return 0;
+    const parsed = Number(sanitized);
     if (!Number.isFinite(parsed) || parsed < 0) return null;
     return Math.round(parsed * 100);
   };
@@ -193,7 +217,7 @@ export function CategoryManagementModal({
         onCategorySelected?.(created.name);
         setNewCategoryName('');
         setNewCategorySubtitle('');
-        setNewCategoryShipping('0.00');
+        setNewCategoryShipping('');
         setNewOptionLabel('');
         setNewOptionInput('');
         setNewOptionList([]);
@@ -318,9 +342,11 @@ export function CategoryManagementModal({
                 <input
                   type="text"
                   inputMode="decimal"
-                  pattern="^\\d*(\\.\\d{0,2})?$"
-                  value={newCategoryShipping}
-                  onChange={(e) => setNewCategoryShipping(e.target.value)}
+                  pattern="^\\$?\\d*(\\.\\d{0,2})?$"
+                  value={formatShippingDisplay(newCategoryShipping)}
+                  onChange={(e) => setNewCategoryShipping(sanitizeShippingInput(e.target.value))}
+                  onBlur={(e) => setNewCategoryShipping(formatShippingValue(e.target.value))}
+                  placeholder="$0.00"
                   className="lux-input text-sm mt-1"
                 />
               </div>
@@ -455,7 +481,7 @@ export function CategoryManagementModal({
                             setEditDraft({
                               name: cat.name || '',
                               subtitle: cat.subtitle || '',
-                              shipping: (cents / 100).toFixed(2),
+                              shipping: cents > 0 ? (cents / 100).toFixed(2) : '',
                               optionGroupLabel: cat.optionGroupLabel || '',
                               optionGroupOptions: normalizeOptionList(cat.optionGroupOptions || []),
                             });
@@ -515,11 +541,17 @@ export function CategoryManagementModal({
                             <input
                               type="text"
                               inputMode="decimal"
-                              pattern="^\\d*(\\.\\d{0,2})?$"
-                              value={editDraft.shipping}
-                              onChange={(e) =>
-                                setEditDraft((prev) => (prev ? { ...prev, shipping: e.target.value } : prev))
-                              }
+                              pattern="^\\$?\\d*(\\.\\d{0,2})?$"
+                              value={formatShippingDisplay(editDraft.shipping)}
+                              onChange={(e) => {
+                                const next = sanitizeShippingInput(e.target.value);
+                                setEditDraft((prev) => (prev ? { ...prev, shipping: next } : prev));
+                              }}
+                              onBlur={(e) => {
+                                const formatted = formatShippingValue(e.target.value);
+                                setEditDraft((prev) => (prev ? { ...prev, shipping: formatted } : prev));
+                              }}
+                              placeholder="$0.00"
                               className="lux-input text-sm mt-1"
                             />
                           </div>

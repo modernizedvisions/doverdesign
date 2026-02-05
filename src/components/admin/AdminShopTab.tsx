@@ -368,12 +368,13 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       <label className="lux-label mb-2 block">Price</label>
                       <input
                         required
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={productForm.price}
-                        onChange={(e) => onProductFormChange('price', e.target.value)}
-                        placeholder="0.00"
+                        type="text"
+                        inputMode="decimal"
+                        pattern="^\\$?\\d*(\\.\\d{0,2})?$"
+                        value={formatCurrencyDisplay(productForm.price)}
+                        onChange={(e) => onProductFormChange('price', sanitizeCurrencyInput(e.target.value))}
+                        onBlur={(e) => onProductFormChange('price', formatCurrencyValue(e.target.value))}
+                        placeholder="$0.00"
                         className="lux-input"
                       />
                     </div>
@@ -741,12 +742,13 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     <div>
                       <label className="lux-label mb-2 block">Price</label>
                       <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={editProductForm?.price || ''}
-                        onChange={(e) => onEditFormChange('price', e.target.value)}
-                        placeholder="0.00"
+                        type="text"
+                        inputMode="decimal"
+                        pattern="^\\$?\\d*(\\.\\d{0,2})?$"
+                        value={formatCurrencyDisplay(editProductForm?.price || '')}
+                        onChange={(e) => onEditFormChange('price', sanitizeCurrencyInput(e.target.value))}
+                        onBlur={(e) => onEditFormChange('price', formatCurrencyValue(e.target.value))}
+                        placeholder="$0.00"
                         className="lux-input text-sm"
                       />
                     </div>
@@ -947,6 +949,30 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 function formatPriceDisplay(priceCents?: number) {
   if (priceCents === undefined || priceCents === null) return '$0.00';
   return `$${(priceCents / 100).toFixed(2)}`;
+}
+
+function sanitizeCurrencyInput(value: string): string {
+  const cleaned = value.replace(/[^0-9.]/g, '');
+  if (!cleaned) return '';
+  const firstDot = cleaned.indexOf('.');
+  if (firstDot === -1) return cleaned;
+  const intPart = cleaned.slice(0, firstDot);
+  const decPart = cleaned.slice(firstDot + 1).replace(/\./g, '');
+  return `${intPart}.${decPart.slice(0, 2)}`;
+}
+
+function formatCurrencyDisplay(value: string): string {
+  const sanitized = sanitizeCurrencyInput(value);
+  if (!sanitized) return '';
+  return `$${sanitized}`;
+}
+
+function formatCurrencyValue(value: string): string {
+  const sanitized = sanitizeCurrencyInput(value);
+  if (!sanitized) return '';
+  const parsed = Number(sanitized);
+  if (!Number.isFinite(parsed) || parsed < 0) return '';
+  return parsed.toFixed(2);
 }
 
 interface ToggleSwitchProps {
