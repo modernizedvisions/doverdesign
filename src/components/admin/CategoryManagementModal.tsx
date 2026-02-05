@@ -288,7 +288,7 @@ export function CategoryManagementModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="flex w-full max-w-2xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0 bg-white">
+      <DialogContent className="flex w-full max-w-3xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0 bg-white">
         {/* Keep header fixed and allow body to scroll within the modal. */}
         <div className="flex items-start justify-between gap-3 border-b border-driftwood/60 px-6 pt-6 pb-4">
           <DialogHeader className="space-y-1">
@@ -316,7 +316,7 @@ export function CategoryManagementModal({
           )}
 
           <div className="lux-panel p-4 space-y-3">
-            <div className="grid gap-3 md:grid-cols-[1.2fr_1.2fr_0.6fr_auto] md:items-end">
+            <div className="grid gap-3 md:grid-cols-[1.3fr_1.3fr_0.9fr_160px] md:items-end">
               <div>
                 <label className="lux-label text-[10px]">Title</label>
                 <input
@@ -387,7 +387,7 @@ export function CategoryManagementModal({
                       setNewOptionList((prev) => addOptionToList(prev, newOptionInput));
                       setNewOptionInput('');
                     }}
-                    className="lux-button--ghost px-3 py-2 text-[10px]"
+                    className="lux-button--ghost px-4 py-2 text-[10px] min-w-[96px]"
                   >
                     Add
                   </button>
@@ -419,7 +419,7 @@ export function CategoryManagementModal({
             </p>
           </div>
 
-          <div className="border border-driftwood/60 rounded-shell-lg">
+          <div className="mt-4 border border-driftwood/60 rounded-shell-lg">
             <div className="max-h-72 overflow-y-auto divide-y divide-driftwood/60">
               {isLoading ? (
                 <div className="flex items-center gap-2 px-3 py-2 text-sm text-charcoal/60">
