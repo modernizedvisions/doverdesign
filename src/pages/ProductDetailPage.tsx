@@ -214,7 +214,7 @@ export function ProductDetailPage() {
 
               <div className="space-y-5 bg-white/75 border border-driftwood/60 rounded-shell-lg p-6 sm:p-8 lux-shadow">
                 <div className="space-y-3">
-                  <p className="lux-eyebrow">Product Studio</p>
+                  <p className="lux-eyebrow">{product?.category || product?.type || 'Product'}</p>
                   <h1 className="font-serif text-3xl sm:text-4xl leading-tight text-deep-ocean">
                     {loadingProduct ? 'Loading...' : product?.name}
                   </h1>
