@@ -112,13 +112,15 @@ export default function CustomOrdersPage() {
                   key={item.id}
                   type="button"
                   onClick={() => setSelectedItem(item)}
-                  className="text-left"
+                  className="text-left w-full"
                 >
-                  <div className="relative overflow-hidden rounded-shell-lg bg-white/85 border border-driftwood/50 lux-shadow aspect-[4/5] sm:aspect-square">
+                  <div className="relative w-full overflow-hidden rounded-shell-lg bg-white/85 border border-driftwood/50 lux-shadow aspect-[4/5] sm:aspect-square">
                     <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                   </div>
                   <div className="mt-3 space-y-1">
-                    <h3 className="font-semibold font-serif text-deep-ocean line-clamp-1">{item.title}</h3>
+                    <h3 className="font-semibold font-serif text-deep-ocean line-clamp-1 min-h-[1.5rem]">
+                      {item.title}
+                    </h3>
                     <p className="text-sm text-charcoal/80 leading-6 line-clamp-3">
                       {item.description}
                     </p>
