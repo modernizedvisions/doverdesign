@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { AdminOrder } from '../../lib/db/orders';
+import { formatEasternDateTime } from '../../lib/dates';
 
 interface OrderDetailsModalProps {
   open: boolean;
@@ -23,7 +24,7 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
   if (!open || !order) return null;
 
   const idLabel = order.displayOrderId || order.id?.slice(0, 8) || 'Order';
-  const placedAt = order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Unknown date';
+  const placedAt = order.createdAt ? formatEasternDateTime(order.createdAt) : 'Unknown date';
   const customerName = order.shippingName || order.customerName || 'Customer';
   const customerEmail = order.customerEmail || 'No email provided';
   const hasPromo =

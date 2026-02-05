@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { AdminSectionHeader } from './AdminSectionHeader';
 import { AdminSaveButton } from './AdminSaveButton';
 import { adminUploadImageScoped } from '../../lib/api';
+import { formatEasternDateTime } from '../../lib/dates';
 
 interface AdminCustomOrdersTabProps {
   allCustomOrders: any[];
@@ -266,7 +267,8 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
     }
   };
   const formatCurrency = (cents: number | null | undefined) => `${((cents ?? 0) / 100).toFixed(2)}`;
-  const safeDate = (value?: string | null) => (value ? new Date(value).toLocaleString() : 'Unknown date');
+  const safeDate = (value?: string | null) =>
+    value ? formatEasternDateTime(value) || 'Unknown date' : 'Unknown date';
   const normalizeDisplayId = (order: any) =>
     order.displayCustomOrderId || order.display_custom_order_id || order.id || 'Order';
   const normalizeShippingCents = (raw: string): number => {

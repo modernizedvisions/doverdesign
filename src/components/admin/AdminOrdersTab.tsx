@@ -1,6 +1,7 @@
 import React from 'react';
 import { AdminSectionHeader } from './AdminSectionHeader';
 import type { AdminOrder } from '../../lib/db/orders';
+import { formatEasternDateTime } from '../../lib/dates';
 
 export interface AdminOrdersTabProps {
   searchQuery: string;
@@ -98,7 +99,7 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
                       {order.displayOrderId || order.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal">
-                      {new Date(order.createdAt).toLocaleString()}
+                      {formatEasternDateTime(order.createdAt)}
                     </td>
                     <td className="px-6 py-4 text-sm text-charcoal">
                       <div className="flex items-center gap-2">

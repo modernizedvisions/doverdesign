@@ -2,6 +2,7 @@ import React from 'react';
 import type { Product } from '../../lib/types';
 import { AdminSectionHeader } from './AdminSectionHeader';
 import { ProgressiveImage } from '../ui/ProgressiveImage';
+import { formatEasternDate } from '../../lib/dates';
 
 export interface AdminSoldTabProps {
   soldProducts: Product[];
@@ -36,7 +37,7 @@ export function AdminSoldTab({ soldProducts }: AdminSoldTabProps) {
               <div className="p-4">
                 <h3 className="font-medium text-charcoal mb-1">{product.name}</h3>
                 <p className="text-sm text-charcoal/60">
-                  {product.soldAt ? `Sold on ${new Date(product.soldAt).toLocaleDateString()}` : 'Sold'}
+                  {product.soldAt ? `Sold on ${formatEasternDate(product.soldAt)}` : 'Sold'}
                 </p>
               </div>
             </div>

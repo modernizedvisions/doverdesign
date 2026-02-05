@@ -12,6 +12,7 @@ import {
   deleteAdminPromoCode,
 } from '../../lib/api';
 import type { Category, PromoCode, Promotion } from '../../lib/types';
+import { formatEasternDateTime, toEasternDateTimeLocal, fromEasternDateTimeLocal } from '../../lib/dates';
 
 type PromotionFormState = {
   name: string;
@@ -59,29 +60,9 @@ const emptyPromoCodeForm: PromoCodeFormState = {
   enabled: false,
 };
 
-const toDateTimeLocal = (value?: string | null) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const pad = (num: number) => String(num).padStart(2, '0');
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
-const fromDateTimeLocal = (value?: string) => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString();
-};
-
 const formatRange = (startsAt?: string | null, endsAt?: string | null) => {
-  const start = startsAt ? new Date(startsAt).toLocaleString() : 'Anytime';
-  const end = endsAt ? new Date(endsAt).toLocaleString() : 'Anytime';
+  const start = startsAt ? formatEasternDateTime(startsAt) : 'Anytime';
+  const end = endsAt ? formatEasternDateTime(endsAt) : 'Anytime';
   return `${start} - ${end}`;
 };
 
@@ -157,8 +138,8 @@ export function AdminPromotionsTab() {
       categorySlugs: promo.categorySlugs || [],
       bannerEnabled: promo.bannerEnabled,
       bannerText: promo.bannerText || '',
-      startsAt: toDateTimeLocal(promo.startsAt),
-      endsAt: toDateTimeLocal(promo.endsAt),
+      startsAt: toEasternDateTimeLocal(promo.startsAt),
+      endsAt: toEasternDateTimeLocal(promo.endsAt),
       enabled: promo.enabled,
     });
     setEditingPromotionId(promo.id);
@@ -171,8 +152,8 @@ export function AdminPromotionsTab() {
       freeShipping: code.freeShipping,
       scope: code.scope,
       categorySlugs: code.categorySlugs || [],
-      startsAt: toDateTimeLocal(code.startsAt),
-      endsAt: toDateTimeLocal(code.endsAt),
+      startsAt: toEasternDateTimeLocal(code.startsAt),
+      endsAt: toEasternDateTimeLocal(code.endsAt),
       enabled: code.enabled,
     });
     setEditingPromoCodeId(code.id);
@@ -189,8 +170,8 @@ export function AdminPromotionsTab() {
         categorySlugs: promotionForm.scope === 'categories' ? promotionForm.categorySlugs : [],
         bannerEnabled: promotionForm.bannerEnabled,
         bannerText: promotionForm.bannerText.trim(),
-        startsAt: fromDateTimeLocal(promotionForm.startsAt),
-        endsAt: fromDateTimeLocal(promotionForm.endsAt),
+        startsAt: fromEasternDateTimeLocal(promotionForm.startsAt),
+        endsAt: fromEasternDateTimeLocal(promotionForm.endsAt),
         enabled: promotionForm.enabled,
       };
 
@@ -219,8 +200,8 @@ export function AdminPromotionsTab() {
         freeShipping: promoCodeForm.freeShipping,
         scope: promoCodeForm.scope,
         categorySlugs: promoCodeForm.scope === 'categories' ? promoCodeForm.categorySlugs : [],
-        startsAt: fromDateTimeLocal(promoCodeForm.startsAt),
-        endsAt: fromDateTimeLocal(promoCodeForm.endsAt),
+        startsAt: fromEasternDateTimeLocal(promoCodeForm.startsAt),
+        endsAt: fromEasternDateTimeLocal(promoCodeForm.endsAt),
         enabled: promoCodeForm.enabled,
       };
 
