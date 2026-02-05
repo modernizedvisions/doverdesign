@@ -279,14 +279,14 @@ export function ContactForm({
         >
           <form onSubmit={handleSubmit} className={variant === 'embedded' ? 'space-y-6' : 'space-y-6'}>
             <div className="flex justify-center max-sm:px-1">
-              <div className="inline-flex rounded-full rounded-ui border border-slate-200 bg-white p-1 shadow-sm max-sm:w-full max-sm:max-w-full max-sm:flex-nowrap max-sm:justify-center max-sm:items-center max-sm:box-border max-sm:overflow-hidden">
+              <div className="inline-flex rounded-shell border border-driftwood/60 bg-white/90 p-1 shadow-sm max-sm:w-full max-sm:max-w-full max-sm:flex-nowrap max-sm:justify-center max-sm:items-center max-sm:box-border max-sm:overflow-hidden">
                 <button
                   type="button"
                   onClick={() => handleInquiryTypeChange('message')}
-                  className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition whitespace-nowrap max-sm:px-3 max-sm:py-2.5 max-sm:text-[10px] ${
+                  className={`rounded-shell px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition whitespace-nowrap max-sm:px-3 max-sm:py-2.5 max-sm:text-[10px] ${
                     inquiryType === 'message'
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-700 hover:text-slate-900'
+                      ? 'bg-deep-ocean text-white shadow-sm'
+                      : 'text-deep-ocean hover:bg-sand/70'
                   }`}
                 >
                   Message
@@ -294,10 +294,10 @@ export function ContactForm({
                 <button
                   type="button"
                   onClick={() => handleInquiryTypeChange('custom_order')}
-                  className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition whitespace-nowrap max-sm:px-3 max-sm:py-2.5 max-sm:text-[10px] ${
+                  className={`rounded-shell px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] transition whitespace-nowrap max-sm:px-3 max-sm:py-2.5 max-sm:text-[10px] ${
                     inquiryType === 'custom_order'
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-700 hover:text-slate-900'
+                      ? 'bg-deep-ocean text-white shadow-sm'
+                      : 'text-deep-ocean hover:bg-sand/70'
                   }`}
                 >
                   Custom Order
@@ -330,10 +330,10 @@ export function ContactForm({
                             type="button"
                             aria-pressed={isSelected}
                             onClick={() => handleSelectCategory(chip)}
-                            className={`rounded-full rounded-ui px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] min-h-[40px] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c89f6e] ${
+                            className={`rounded-shell px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] min-h-[40px] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#c89f6e] ${
                               isSelected
-                                ? 'border border-transparent bg-slate-900 text-white hover:bg-slate-800'
-                                : 'border border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-white'
+                                ? 'border border-deep-ocean bg-deep-ocean text-white hover:brightness-105'
+                                : 'border border-driftwood/70 bg-white/90 text-deep-ocean hover:border-driftwood hover:bg-sand/60'
                             }`}
                           >
                             {chip.name}
@@ -453,7 +453,7 @@ export function ContactForm({
             <button
               type="submit"
               disabled={isSubmitting || isImageProcessing}
-              className="w-full bg-gray-900 text-white py-3 px-6 rounded-md font-sans font-semibold uppercase tracking-[0.3em] text-[10px] sm:text-[11px] hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="lux-button w-full text-[10px] sm:text-[11px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting || isImageProcessing ? 'Sending...' : 'SEND MESSAGE'}
             </button>
