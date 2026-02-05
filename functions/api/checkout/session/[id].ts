@@ -38,8 +38,16 @@ const extractLineItemMetadata = (line: Stripe.LineItem): Record<string, string> 
     line.price?.product && typeof line.price.product !== 'string'
       ? (line.price.product as Stripe.Product)
       : null;
-  const meta = productObj?.metadata || {};
-  return meta as Record<string, string>;
+  const productMeta = (productObj?.metadata || {}) as Record<string, string>;
+  const priceMeta = ((line.price as any)?.metadata || {}) as Record<string, string>;
+  const productDataMeta = ((line.price as any)?.product_data?.metadata || {}) as Record<string, string>;
+  const lineMeta = ((line as any)?.metadata || {}) as Record<string, string>;
+  return {
+    ...productMeta,
+    ...productDataMeta,
+    ...priceMeta,
+    ...lineMeta,
+  };
 };
 
 export const onRequestGet = async (context: {
@@ -284,6 +292,7 @@ export const onRequestGet = async (context: {
           lineSubtotal,
           lineTotal,
           imageUrl: resolveLineItemImage(li, matchedProduct, customOrderImageUrl, isCustomOrder),
+          image_url: resolveLineItemImage(li, matchedProduct, customOrderImageUrl, isCustomOrder),
           oneOff: matchedProduct ? matchedProduct.is_one_off === 1 : false,
           isShipping,
           stripeProductId: sourceProductId || stripeProductId,

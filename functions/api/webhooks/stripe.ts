@@ -350,20 +350,55 @@ export const onRequestPost = async (context: {
       } else if (isPaid) {
         // Update inventory for all line items (skip shipping)
         const lineItems = rawLineItems;
-        const aggregate: Record<string, number> = {};
+        const aggregate = new Map<string, { qty: number; sources: Set<string> }>();
+        const missingKeys: Array<{ priceId?: string | null; stripeProductId?: string | null }> = [];
         for (const line of lineItems) {
           if (isShippingLineItem(line)) continue;
+          const meta = extractOptionMetadata(line);
+          const metadataProductId = meta.sourceProductId ? meta.sourceProductId.trim() : '';
           const productIdFromPrice =
             typeof line.price?.product === 'string'
               ? line.price.product
               : (line.price?.product as Stripe.Product | undefined)?.id;
-          const key = productIdFromPrice || (typeof line.price?.id === 'string' ? line.price.id : null) || productId || 'unknown';
+          const priceId = typeof line.price?.id === 'string' ? line.price.id : null;
+          const fallbackSessionProductId = typeof productId === 'string' ? productId : null;
+          const key = metadataProductId || productIdFromPrice || priceId || fallbackSessionProductId;
           const qty = line.quantity ?? 1;
-          if (!key) continue;
-          aggregate[key] = (aggregate[key] || 0) + qty;
+          if (!key) {
+            missingKeys.push({ priceId, stripeProductId: productIdFromPrice });
+            continue;
+          }
+          const source = metadataProductId
+            ? 'metadata'
+            : productIdFromPrice
+            ? 'stripe_product'
+            : priceId
+            ? 'stripe_price'
+            : 'session_metadata';
+          const existing = aggregate.get(key);
+          if (existing) {
+            existing.qty += qty;
+            existing.sources.add(source);
+          } else {
+            aggregate.set(key, { qty, sources: new Set([source]) });
+          }
         }
 
-        for (const [key, qty] of Object.entries(aggregate)) {
+        if (missingKeys.length) {
+          console.warn('[sold-update] line items missing product keys', {
+            sessionId: session.id,
+            count: missingKeys.length,
+            sample: missingKeys.slice(0, 3),
+          });
+        }
+        console.log('[sold-update] aggregate', {
+          sessionId: session.id,
+          totalKeys: aggregate.size,
+          keys: Array.from(aggregate.keys()).slice(0, 10),
+        });
+
+        for (const [key, entry] of aggregate.entries()) {
+          const qty = entry.qty;
           const updateResult = await env.DB.prepare(
             `
             UPDATE products
@@ -378,14 +413,31 @@ export const onRequestPost = async (context: {
                 WHEN quantity_available <= ? THEN 1
                 ELSE is_sold
               END
-            WHERE stripe_product_id = ? OR id = ?;
+            WHERE id = ? OR stripe_product_id = ? OR stripe_price_id = ?;
           `
           )
-            .bind(qty, qty, qty, key, key)
+            .bind(qty, qty, qty, key, key, key)
             .run();
 
           if (!updateResult.success) {
             console.error('Failed to update product as sold', { key, error: updateResult.error });
+          } else {
+            const changes = updateResult.meta?.changes ?? 0;
+            if (changes === 0) {
+              console.warn('[sold-update] no product rows updated', {
+                sessionId: session.id,
+                key,
+                qty,
+                sources: Array.from(entry.sources),
+              });
+            }
+            console.log('[sold-update] inventory update', {
+              sessionId: session.id,
+              key,
+              qty,
+              changes,
+              sources: Array.from(entry.sources),
+            });
           }
         }
       }

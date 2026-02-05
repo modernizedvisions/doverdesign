@@ -126,7 +126,7 @@ export async function fetchCheckoutSession(sessionId: string): Promise<CheckoutS
           unitAmount: li.unitAmount ?? null,
           lineSubtotal: li.lineSubtotal ?? null,
           lineTotal: li.lineTotal ?? 0,
-          imageUrl: li.imageUrl ?? null,
+          imageUrl: li.imageUrl ?? li.image_url ?? null,
           oneOff: li.oneOff ?? false,
           isShipping: li.isShipping ?? false,
           stripeProductId: li.stripeProductId ?? null,
