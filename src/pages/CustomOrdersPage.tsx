@@ -96,7 +96,7 @@ export default function CustomOrdersPage() {
           )}
 
           {isLoadingExamples ? (
-            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 items-start">
               {skeletonExamples.map((_, idx) => (
                 <div key={`example-skeleton-${idx}`} className="space-y-3">
                   <div className="aspect-[4/5] sm:aspect-square rounded-shell-lg bg-stone animate-pulse" />
@@ -106,19 +106,19 @@ export default function CustomOrdersPage() {
               ))}
             </div>
           ) : examples.length ? (
-            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 items-start">
               {examples.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setSelectedItem(item)}
-                  className="text-left w-full"
+                  className="text-left w-full flex flex-col items-stretch"
                 >
-                  <div className="relative w-full overflow-hidden rounded-shell-lg bg-white/85 border border-driftwood/50 lux-shadow aspect-[4/5] sm:aspect-square">
+                  <div className="relative w-full flex-none overflow-hidden rounded-shell-lg bg-white/85 border border-driftwood/50 lux-shadow aspect-[4/5] sm:aspect-square">
                     <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                   </div>
                   <div className="mt-3 space-y-1">
-                    <h3 className="font-semibold font-serif text-deep-ocean line-clamp-1 min-h-[1.5rem]">
+                    <h3 className="font-semibold font-serif text-deep-ocean line-clamp-1 min-h-[1.75rem]">
                       {item.title}
                     </h3>
                     <p className="text-sm text-charcoal/80 leading-6 line-clamp-3">
