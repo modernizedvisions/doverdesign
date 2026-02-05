@@ -342,6 +342,13 @@
     color: var(--deep-ocean);
     border: 1px solid rgba(203, 191, 175, 0.65);
   }
+  .lux-pill--cart {
+    @apply inline-flex items-center gap-2 rounded-shell px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-semibold;
+    background: var(--deep-ocean);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    box-shadow: 0 10px 22px rgba(31, 41, 51, 0.2);
+  }
   .lux-quantity {
     @apply inline-flex items-center gap-3 rounded-shell px-3 py-2 border bg-white/70;
     border-color: rgba(203, 191, 175, 0.7);
