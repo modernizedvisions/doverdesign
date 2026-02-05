@@ -160,7 +160,7 @@ export default function CustomOrdersPage() {
             <div className="mt-10 lux-card bg-white">
               <div className="flex justify-center">
                 <div className="p-6 sm:p-8 bg-white w-full max-w-4xl dd-form-serif">
-                  <ContactForm backgroundColor="transparent" variant="embedded" />
+                  <ContactForm backgroundColor="transparent" variant="embedded" defaultInquiryType="custom_order" />
                 </div>
               </div>
             </div>

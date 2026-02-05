@@ -5,15 +5,20 @@ import type { Category } from '../lib/types';
 interface ContactFormProps {
   backgroundColor?: string;
   variant?: 'card' | 'embedded';
+  defaultInquiryType?: 'message' | 'custom_order';
 }
 
-export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: ContactFormProps) {
+export function ContactForm({
+  backgroundColor = '#FAC6C8',
+  variant = 'card',
+  defaultInquiryType = 'message',
+}: ContactFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     message: '',
   });
-  const [inquiryType, setInquiryType] = useState<'message' | 'custom_order'>('message');
+  const [inquiryType, setInquiryType] = useState<'message' | 'custom_order'>(defaultInquiryType);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
@@ -21,7 +26,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submittedType, setSubmittedType] = useState<'message' | 'custom_order'>('message');
+  const [submittedType, setSubmittedType] = useState<'message' | 'custom_order'>(defaultInquiryType);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
@@ -120,7 +125,7 @@ export function ContactForm({ backgroundColor = '#FAC6C8', variant = 'card' }: C
       setSubmitStatus('success');
       setSubmittedType(inquiryType);
       setFormData({ name: '', email: '', message: '' });
-      setInquiryType('message');
+      setInquiryType(defaultInquiryType);
       setSelectedCategories([]);
       setImageFile(null);
       setImagePreview(null);
