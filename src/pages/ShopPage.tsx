@@ -388,17 +388,6 @@ export function ShopPage() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-10">
-          <button
-            key="all"
-            onClick={() => handleCategorySelect()}
-            className={`px-4 py-2 rounded-shell border text-[11px] uppercase tracking-[0.22em] transition ${
-              !activeCategorySlug
-                ? 'bg-deep-ocean text-white border-deep-ocean shadow-md'
-                : 'bg-white/80 text-deep-ocean border-driftwood/60 hover:bg-sand/70'
-            }`}
-          >
-            All
-          </button>
           {visibleCategories.map((category) => {
             const isActive = activeCategorySlug === category.slug;
             return (
