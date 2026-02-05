@@ -210,7 +210,7 @@ export const onRequestGet = async (context: {
       }
     }
 
-    if (env.DB && sourceProductIds.length === 0) {
+    if (env.DB) {
       const names = Array.from(
         new Set(
           lineItemsRaw
