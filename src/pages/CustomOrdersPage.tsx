@@ -112,15 +112,17 @@ export default function CustomOrdersPage() {
                   key={item.id}
                   type="button"
                   onClick={() => setSelectedItem(item)}
-                  className="text-left"
+                  className="text-left flex flex-col h-full"
                 >
                   <div className="relative overflow-hidden rounded-shell-lg bg-white/85 border border-driftwood/50 lux-shadow aspect-[4/5] sm:aspect-square">
                     <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                   </div>
-                  <div className="mt-3 space-y-1">
-                    <h3 className="font-semibold font-serif text-deep-ocean">{item.title}</h3>
-                    <p className="text-sm text-charcoal/80 leading-6">{item.description}</p>
-                    <div className="mt-2 min-h-[34px] flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-col flex-1 space-y-1">
+                    <h3 className="font-semibold font-serif text-deep-ocean line-clamp-1">{item.title}</h3>
+                    <p className="text-sm text-charcoal/80 leading-6 line-clamp-3 min-h-[4.5rem]">
+                      {item.description}
+                    </p>
+                    <div className="mt-auto min-h-[34px] flex flex-wrap gap-2">
                       {item.tags?.length ? (
                         item.tags.map((tag) => (
                           <span
