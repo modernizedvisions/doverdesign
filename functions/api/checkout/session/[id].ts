@@ -1,5 +1,6 @@
 import type Stripe from 'stripe';
 import { isShippingLineItem } from '../../lib/shipping';
+import { normalizeImageUrl } from '../../lib/images';
 import { listCheckoutSessionLineItems, retrieveCheckoutSession } from '../../../_lib/stripeClient';
 
 type D1PreparedStatement = {
@@ -43,9 +44,10 @@ const extractLineItemMetadata = (line: Stripe.LineItem): Record<string, string> 
 
 export const onRequestGet = async (context: {
   params: Record<string, string>;
-  env: { STRIPE_SECRET_KEY?: string; DB?: D1Database };
+  request: Request;
+  env: { STRIPE_SECRET_KEY?: string; DB?: D1Database; PUBLIC_IMAGES_BASE_URL?: string };
 }) => {
-  const { params, env } = context;
+  const { params, env, request } = context;
 
   if (!env.STRIPE_SECRET_KEY) {
     console.error('STRIPE_SECRET_KEY is not configured');
@@ -214,6 +216,21 @@ export const onRequestGet = async (context: {
       }
       return null;
     };
+    const resolveLineItemImage = (
+      line: Stripe.LineItem,
+      matchedProduct: ProductRow | null,
+      customOrderImage: string | null,
+      isCustomOrder: boolean
+    ) => {
+      const productObj =
+        line.price?.product && typeof line.price.product !== 'string'
+          ? (line.price.product as Stripe.Product)
+          : null;
+      const stripeImage =
+        productObj?.images?.[0] || (line.price as any)?.product_data?.images?.[0] || null;
+      const raw = isCustomOrder ? customOrderImage : pickPrimaryImage(matchedProduct) || stripeImage;
+      return raw ? normalizeImageUrl(raw, request, env) : null;
+    };
 
     const toCents = (value: unknown) => (Number.isFinite(Number(value)) ? Math.round(Number(value)) : 0);
     const totalDetails = session.total_details as Stripe.Checkout.Session.TotalDetails | null;
@@ -266,7 +283,7 @@ export const onRequestGet = async (context: {
           unitAmount,
           lineSubtotal,
           lineTotal,
-          imageUrl: isCustomOrder ? customOrderImageUrl : pickPrimaryImage(matchedProduct),
+          imageUrl: resolveLineItemImage(li, matchedProduct, customOrderImageUrl, isCustomOrder),
           oneOff: matchedProduct ? matchedProduct.is_one_off === 1 : false,
           isShipping,
           stripeProductId: sourceProductId || stripeProductId,
