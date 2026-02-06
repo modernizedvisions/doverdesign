@@ -458,7 +458,7 @@ export function AdminPage() {
     });
     setImages((prev) =>
       prev.map((img) =>
-        img.id === id
+        img && img.id === id
           ? {
               ...img,
               uploading: true,
@@ -473,7 +473,7 @@ export function AdminPage() {
         onStatus: (status) => {
           setImages((prev) =>
             prev.map((img) =>
-              img.id === id
+              img && img.id === id
                 ? {
                     ...img,
                     uploading: true,
@@ -487,7 +487,7 @@ export function AdminPage() {
       URL.revokeObjectURL(previewUrl);
       setImages((prev) =>
         prev.map((img) =>
-          img.id === id
+          img && img.id === id
             ? {
                 ...img,
                 url: result.url,
@@ -513,7 +513,7 @@ export function AdminPage() {
       const message = err instanceof Error ? err.message : 'Upload failed';
       setImages((prev) =>
         prev.map((img) =>
-          img.id === id
+          img && img.id === id
             ? {
                 ...img,
                 uploading: false,
@@ -532,7 +532,7 @@ export function AdminPage() {
     } finally {
       setImages((prev) =>
         prev.map((img) =>
-          img.id === id && img.uploading
+          img && img.id === id && img.uploading
             ? {
                 ...img,
                 uploading: false,
@@ -559,7 +559,7 @@ export function AdminPage() {
     setImages((prev) => {
       const maxSlots = 4;
       const selected = incoming.slice(0, maxSlots);
-      let result = [...prev];
+      let result = prev.slice();
 
       // If a slot index is provided, replace starting at that slot.
       if (slotIndex !== undefined && slotIndex !== null && slotIndex >= 0) {
@@ -582,14 +582,19 @@ export function AdminPage() {
           result[pos] = newEntry;
         });
       } else {
-        // Default behavior: append into remaining slots
-        const remaining = Math.max(0, maxSlots - result.length);
-        if (remaining === 0) return result;
-        const toAdd = selected.slice(0, remaining).map((file) => {
+        // Default behavior: fill first available empty slots
+        const emptySlots: number[] = [];
+        for (let i = 0; i < maxSlots; i += 1) {
+          if (!result[i]) emptySlots.push(i);
+        }
+        if (emptySlots.length === 0) return result;
+        const toAdd = selected.slice(0, emptySlots.length);
+        toAdd.forEach((file, offset) => {
+          const pos = emptySlots[offset];
           const previewUrl = URL.createObjectURL(file);
           const id = crypto.randomUUID();
           uploads.push({ id, file, previewUrl });
-          return {
+          const newEntry: ManagedImage = {
             id,
             url: previewUrl,
             previewUrl,
@@ -598,9 +603,9 @@ export function AdminPage() {
             isNew: true,
             uploading: true,
             optimizing: true,
-          } as ManagedImage;
+          };
+          result[pos] = newEntry;
         });
-        result = [...result, ...toAdd];
       }
 
       // Limit to 4 slots
@@ -659,6 +664,7 @@ export function AdminPage() {
       let uploadingCountAfter = 0;
       setImages((prev) => {
         const next = prev.map((img) => {
+          if (!img) return img;
           if (!img.uploading) return img;
           const hasFinalUrl =
             !!img.url && !img.url.startsWith('blob:') && !img.url.startsWith('data:');
@@ -672,16 +678,16 @@ export function AdminPage() {
           }
           return { ...img, uploading: false };
         });
-        uploadingCountAfter = next.filter((img) => img.uploading).length;
+        uploadingCountAfter = next.filter((img) => img?.uploading).length;
         console.log(
           '[shop images] post-reconcile',
           next.map((img) => ({
-            id: img.id,
-            uploading: img.uploading,
-            hasFile: !!img.file,
-            hasUrl: !!img.url,
-            hasError: !!img.uploadError,
-            urlPrefix: img.url?.slice(0, 40),
+            id: img?.id,
+            uploading: img?.uploading,
+            hasFile: !!img?.file,
+            hasUrl: !!img?.url,
+            hasError: !!img?.uploadError,
+            urlPrefix: img?.url?.slice(0, 40),
           }))
         );
         return next;
@@ -696,7 +702,7 @@ export function AdminPage() {
     id: string,
     setImages: React.Dispatch<React.SetStateAction<ManagedImage[]>>
   ) => {
-    setImages((prev) => prev.map((img) => ({ ...img, isPrimary: img.id === id })));
+    setImages((prev) => prev.map((img) => (img ? { ...img, isPrimary: img.id === id } : img)));
   };
 
   const moveImage = (
@@ -705,11 +711,11 @@ export function AdminPage() {
     setImages: React.Dispatch<React.SetStateAction<ManagedImage[]>>
   ) => {
     setImages((prev) => {
-      const idx = prev.findIndex((img) => img.id === id);
+      const idx = prev.findIndex((img) => img?.id === id);
       if (idx === -1) return prev;
       const swapWith = direction === 'up' ? idx - 1 : idx + 1;
       if (swapWith < 0 || swapWith >= prev.length) return prev;
-      const newOrder = [...prev];
+      const newOrder = prev.slice();
       [newOrder[idx], newOrder[swapWith]] = [newOrder[swapWith], newOrder[idx]];
       return newOrder;
     });
@@ -720,14 +726,14 @@ export function AdminPage() {
     setImages: React.Dispatch<React.SetStateAction<ManagedImage[]>>
   ) => {
     setImages((prev) => {
-      const target = prev.find((img) => img.id === id);
+      const target = prev.find((img) => img?.id === id);
       if (target?.imageId) {
         void adminDeleteImage(target.imageId).catch((err) => {
           console.warn('[shop images] delete failed', { imageId: target.imageId, err });
         });
       }
-      const filtered = prev.filter((img) => img.id !== id);
-      if (filtered.length > 0 && !filtered.some((img) => img.isPrimary)) {
+      const filtered = prev.filter((img) => img && img.id !== id);
+      if (filtered.length > 0 && !filtered.some((img) => img?.isPrimary)) {
         filtered[0].isPrimary = true;
       }
       return filtered;
@@ -736,8 +742,9 @@ export function AdminPage() {
 
   const normalizeImageOrder = (images: ManagedImage[]): ManagedImage[] => {
     if (!images.length) return images;
-    const primary = images.find((i) => i.isPrimary) || images[0];
-    return [primary, ...images.filter((i) => i.id !== primary.id)];
+    const primary = images.find((i) => i?.isPrimary) || images.find((i) => !!i);
+    if (!primary) return images;
+    return [primary, ...images.filter((i) => i && i.id !== primary.id)];
   };
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -750,6 +757,7 @@ export function AdminPage() {
     const urls: string[] = [];
 
     for (const img of ordered) {
+      if (!img) continue;
       if (img.file) {
         const uploadedUrl = await uploadImage(img.file);
         urls.push(uploadedUrl);
@@ -770,7 +778,7 @@ export function AdminPage() {
   } => {
     const normalized = normalizeImageOrder(images);
     const urls = normalized
-      .filter((img) => !img.uploading && !img.uploadError)
+      .filter((img) => img && !img.uploading && !img.uploadError)
       .map((img) => img.url)
       .filter((url) => !!url && !url.startsWith('blob:') && !url.startsWith('data:'));
     const unique = Array.from(new Set(urls));
@@ -780,13 +788,13 @@ export function AdminPage() {
     const primaryImageId = primaryImage?.imageId || undefined;
     const imageIds = normalized
       .slice(1)
-      .map((img) => img.imageId)
+      .map((img) => img?.imageId)
       .filter((id): id is string => typeof id === 'string' && id.length > 0);
     return { imageUrl: primary, imageUrls: rest, primaryImageId, imageIds };
   };
 
-  const hasPendingUploads = (images: ManagedImage[]) => images.some((img) => img.uploading);
-  const hasUploadErrors = (images: ManagedImage[]) => images.some((img) => img.uploadError);
+  const hasPendingUploads = (images: ManagedImage[]) => images.some((img) => img?.uploading);
+  const hasUploadErrors = (images: ManagedImage[]) => images.some((img) => img?.uploadError);
 
   const startEditProduct = (product: Product) => {
     console.debug('[edit modal] open', {
@@ -821,11 +829,11 @@ export function AdminPage() {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const uploadingCount = productImages.filter((img) => img.uploading).length;
+    const uploadingCount = productImages.filter((img) => img?.uploading).length;
     const missingUrlCount = productImages.filter(
-      (img) => !img.uploading && !img.uploadError && !!img.previewUrl && !img.url
+      (img) => img && !img.uploading && !img.uploadError && !!img.previewUrl && !img.url
     ).length;
-    const failedCount = productImages.filter((img) => img.uploadError).length;
+    const failedCount = productImages.filter((img) => img?.uploadError).length;
     console.debug('[shop save] clicked', {
       mode: 'new',
       name: productForm.name,
@@ -865,8 +873,11 @@ export function AdminPage() {
       }
 
       const manualUrls = mergeManualImages(productForm);
-      const base64Urls = findBase64Urls([...manualUrls.imageUrls, ...productImages.map((img) => img.url)]);
-      const needsMigration = productImages.some((img) => img.needsMigration);
+      const base64Urls = findBase64Urls([
+        ...manualUrls.imageUrls,
+        ...productImages.map((img) => img?.url).filter((url): url is string => !!url),
+      ]);
+      const needsMigration = productImages.some((img) => img?.needsMigration);
       if (needsMigration || base64Urls.length > 0) {
         console.error('[shop save] blocked: invalid image URLs detected. Re-upload images using Cloudflare upload.', {
           base64Count: base64Urls.length,
@@ -947,8 +958,10 @@ export function AdminPage() {
         return false;
       }
 
-      const base64Urls = findBase64Urls([...editProductImages.map((img) => img.url)]);
-      const needsMigration = editProductImages.some((img) => img.needsMigration);
+      const base64Urls = findBase64Urls(
+        editProductImages.map((img) => img?.url).filter((url): url is string => !!url)
+      );
+      const needsMigration = editProductImages.some((img) => img?.needsMigration);
       if (needsMigration || base64Urls.length > 0) {
         console.error('[shop save] blocked: invalid image URLs detected. Re-upload images using Cloudflare upload.', {
           base64Count: base64Urls.length,

@@ -196,17 +196,17 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const maxModalImages = 4;
-  const isOptimizing = productImages.some((img) => img.optimizing);
-  const isUploading = productImages.some((img) => img.uploading);
+  const isOptimizing = productImages.some((img) => img?.optimizing);
+  const isUploading = productImages.some((img) => img?.uploading);
   const missingUrlCount = productImages.filter(
-    (img) => !img.uploading && !img.uploadError && !!img.previewUrl && !img.url
+    (img) => img && !img.uploading && !img.uploadError && !!img.previewUrl && !img.url
   ).length;
-  const failedCount = productImages.filter((img) => img.uploadError).length;
+  const failedCount = productImages.filter((img) => img?.uploadError).length;
 
   useEffect(() => {
     console.debug('[shop save] disable check', {
       isUploading,
-      uploadingCount: productImages.filter((img) => img.uploading).length,
+      uploadingCount: productImages.filter((img) => img?.uploading).length,
       missingUrlCount,
       failedCount,
       imageCount: productImages.length,
@@ -280,14 +280,14 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
   const handleSetPrimaryModalImage = (id: string) => {
     onSetPrimaryEditImage(id);
-    setEditImages((prev) => prev.map((img) => ({ ...img, isPrimary: img.id === id })));
+    setEditImages((prev) => prev.map((img) => (img ? { ...img, isPrimary: img.id === id } : img)));
   };
 
   const handleRemoveModalImage = (id: string) => {
     onRemoveEditImage(id);
     setEditImages((prev) => {
-      const filtered = prev.filter((img) => img.id !== id);
-      if (filtered.length > 0 && !filtered.some((img) => img.isPrimary)) {
+      const filtered = prev.filter((img) => img && img.id !== id);
+      if (filtered.length > 0 && !filtered.some((img) => img?.isPrimary)) {
         filtered[0].isPrimary = true;
       }
       return filtered;
@@ -321,8 +321,10 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
 
   useEffect(() => {
     if (isEditModalOpen) {
-      const imgs = editProductImages.length && !editProductImages.some((img) => img.isPrimary)
-        ? [{ ...editProductImages[0], isPrimary: true }, ...editProductImages.slice(1)]
+      const hasPrimary = editProductImages.some((img) => img?.isPrimary);
+      const fallbackPrimary = editProductImages.find((img) => !!img) || null;
+      const imgs = editProductImages.length && !hasPrimary && fallbackPrimary
+        ? [{ ...fallbackPrimary, isPrimary: true }, ...editProductImages.filter((img) => img && img.id !== fallbackPrimary.id)]
         : editProductImages;
       setEditImages(imgs);
     }
