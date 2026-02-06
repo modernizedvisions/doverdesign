@@ -124,13 +124,18 @@ export function CartDrawer() {
                       <span>${(item.priceCents / 100).toFixed(2)}</span>
                     )}
                   </div>
-                  {item.oneoff && (
-                    <span className="lux-pill--cart mt-2 inline-flex">One-of-a-kind</span>
-                  )}
-                  <div className="mt-3 flex items-center gap-3">
-                    {item.oneoff ? (
-                      <span className="text-sm text-charcoal/70">Qty: 1</span>
-                    ) : (
+                  {item.oneoff ? (
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <span className="lux-pill--cart inline-flex">One-of-a-kind</span>
+                      <button
+                        onClick={() => removeItem(item.productId, item.optionValue)}
+                        className="lux-button--ghost px-3 py-2 rounded-full text-red-700 border-red-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-3">
                       <div className="lux-quantity">
                         <button
                           onClick={() => updateQuantity(item.productId, item.quantity - 1, item.optionValue)}
@@ -147,14 +152,14 @@ export function CartDrawer() {
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
-                    )}
-                    <button
-                      onClick={() => removeItem(item.productId, item.optionValue)}
-                      className="ml-auto lux-button--ghost px-3 py-2 rounded-full text-red-700 border-red-200"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => removeItem(item.productId, item.optionValue)}
+                        className="ml-auto lux-button--ghost px-3 py-2 rounded-full text-red-700 border-red-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
