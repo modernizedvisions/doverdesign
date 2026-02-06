@@ -33,7 +33,7 @@ const services = [
   },
   {
     title: 'Handcrafted Art',
-    copy: 'Every shell is individually selected, painted, and finished by hand.',
+    copy: 'Every shell is carefully selected and finished by hand.',
   },
   {
     title: 'Custom Interior Pieces',
@@ -62,8 +62,9 @@ const testimonials = [
     name: 'TJ',
   },
   {
-    quote: 'Rachel was quick to respond to my messages. The quality of the ornaments exceeded my expectations.',
-    name: 'Alexis',
+    quote:
+      'It is absolutely gorgeous! The colors are stunning! Rachel was quick to respond & answer my questions! Highly recommend!',
+    name: 'Christine',
   },
 ];
 
@@ -180,7 +181,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
           <SectionHeading
             eyebrow="Offerings"
             title="What makes this special"
-            subtitle="A boutique coastal studio blending fine-art detail with interior design sensibility."
+            subtitle="A boutique coastal studio where fine-art detail meets interior design sensibility."
           />
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
             {services.map((service, index) => (
