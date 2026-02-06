@@ -281,7 +281,7 @@ export function ProductDetailPage() {
                 )}
 
                 {showQuantitySelector && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 items-center">
                     <div className="w-full">
                       <div className="lux-quantity w-full justify-between">
                         <button
