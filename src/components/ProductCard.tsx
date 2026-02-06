@@ -125,7 +125,7 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
           </div>
         )}
 
-        <div className="flex flex-row gap-2 mt-2">
+        <div className="flex flex-col sm:flex-row gap-2 mt-2">
           <button
             onClick={() => navigate(productHref)}
             className="lux-button--ghost w-full justify-center flex-1 min-w-0 px-3 sm:px-5"
