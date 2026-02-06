@@ -19,6 +19,10 @@ const formatCurrency = (cents: number | null | undefined, currency: string = 'us
     return `$${amount.toFixed(2)}`;
   }
 };
+const formatShipping = (cents: number | null | undefined, currency: string = 'usd') => {
+  if ((cents ?? 0) <= 0) return 'FREE';
+  return formatCurrency(cents, currency);
+};
 
 export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalProps) {
   if (!open || !order) return null;
@@ -244,7 +248,7 @@ export function OrderDetailsModal({ open, order, onClose }: OrderDetailsModalPro
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-charcoal/70">Shipping</span>
-                  <span className="font-medium text-charcoal">{formatCurrency(shippingCents, currency)}</span>
+                  <span className="font-medium text-charcoal">{formatShipping(shippingCents, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-charcoal/70">Tax</span>

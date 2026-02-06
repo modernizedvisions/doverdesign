@@ -61,9 +61,9 @@ export function GalleryPage() {
               ) : (
                 <div className="gallery-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {galleryImages.map((item) => (
-                    <div key={item.id} className="relative group cursor-pointer rounded-2xl border border-driftwood/30 bg-linen shadow-sm overflow-hidden">
+                    <div key={item.id} className="relative group cursor-pointer rounded-2xl overflow-hidden">
                       <div
-                        className="aspect-[4/3] overflow-hidden rounded-2xl bg-linen"
+                        className="aspect-[4/3] overflow-hidden rounded-2xl"
                         onClick={() => setSelectedImage(item.imageUrl)}
                       >
                         <ProgressiveImage
@@ -88,9 +88,9 @@ export function GalleryPage() {
               {soldProducts.length > 0 && (
                 <div className="sold-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {soldProducts.map((item) => (
-                    <div key={item.id} className="group bg-linen rounded-2xl overflow-hidden border border-driftwood/30 shadow-sm hover:shadow-md transition-all">
+                    <div key={item.id} className="group rounded-2xl overflow-hidden transition-all">
                       <div
-                        className="relative aspect-square overflow-hidden bg-linen cursor-pointer"
+                        className="relative aspect-square overflow-hidden cursor-pointer"
                         onClick={() => setSelectedImage(item.imageUrl)}
                       >
                         {item.imageUrl ? (

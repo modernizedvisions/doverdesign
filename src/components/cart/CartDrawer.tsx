@@ -56,6 +56,7 @@ export function CartDrawer() {
   }, 0);
   const shippingCents = calculateShippingCents(items, categories);
   const totalCents = effectiveSubtotal + shippingCents;
+  const formatShipping = (cents: number) => (cents <= 0 ? 'FREE' : `$${(cents / 100).toFixed(2)}`);
 
   const handleCheckout = () => {
     if (!items.length) return;
@@ -170,7 +171,7 @@ export function CartDrawer() {
               </div>
               <div className="flex justify-between text-charcoal/80">
                 <span>Shipping</span>
-                <span className="font-semibold text-deep-ocean">${(shippingCents / 100).toFixed(2)}</span>
+                <span className="font-semibold text-deep-ocean">{formatShipping(shippingCents)}</span>
               </div>
               <div className="flex justify-between text-charcoal/70 text-xs">
                 <span>Tax</span>

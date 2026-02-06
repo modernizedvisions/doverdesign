@@ -14,6 +14,11 @@ const formatCurrency = (amountCents?: number, currency: string = 'usd') => {
     currency: currency.toUpperCase(),
   }).format(amount);
 };
+const formatShipping = (amountCents?: number, currency: string = 'usd') => {
+  if (amountCents == null) return '';
+  if (amountCents <= 0) return 'FREE';
+  return formatCurrency(amountCents, currency);
+};
 
 export function CheckoutReturnPage() {
   const [searchParams] = useSearchParams();
@@ -138,7 +143,7 @@ export function CheckoutReturnPage() {
                   <div className="mt-2 flex items-center justify-between text-sm text-charcoal/80">
                     <span>Shipping</span>
                     <span className="font-medium">
-                      {formatCurrency(session.amountShipping ?? 0, session.currency)}
+                      {formatShipping(session.amountShipping ?? 0, session.currency)}
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-sm text-charcoal/80">

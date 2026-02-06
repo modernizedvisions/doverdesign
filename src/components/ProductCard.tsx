@@ -78,7 +78,7 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
   return (
     <div className="group lux-card bg-white/90 overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
       <div className="relative aspect-square overflow-hidden rounded-shell-lg bg-sand">
-        {product.oneoff && inCart && (
+        {inCart && (
           <span className="absolute top-3 right-3 z-10 lux-pill--cart">In Your Cart</span>
         )}
         <Link

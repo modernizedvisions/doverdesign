@@ -119,7 +119,7 @@ function buildEmail(model: BaseEmailModel & { subject: string }) {
             <span>Subtotal</span><span>${formatAmount(subtotalCents, currency)}</span>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:14px; color:#475569; margin-bottom:6px;">
-            <span>Shipping</span><span>${formatAmount(shippingCents, currency)}</span>
+            <span>Shipping</span><span>${formatShippingAmount(shippingCents, currency)}</span>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:16px; color:#0f172a; font-weight:700; margin-top:8px;">
             <span>Total</span><span>${formatAmount(totalCents, currency)}</span>
@@ -148,7 +148,7 @@ function buildEmail(model: BaseEmailModel & { subject: string }) {
       return `- ${item.name}${qty}: ${formatAmount(item.amountCents, currency)}`;
     }),
     `Subtotal: ${formatAmount(subtotalCents, currency)}`,
-    `Shipping: ${formatAmount(shippingCents, currency)}`,
+    `Shipping: ${formatShippingAmount(shippingCents, currency)}`,
     `Total: ${formatAmount(totalCents, currency)}`,
     `Time: ${formatDate(createdAt)}`,
     model.adminUrl ? `Admin: ${model.adminUrl}` : null,
@@ -170,6 +170,11 @@ function formatAmount(amountCents: number, currency: string) {
   } catch {
     return `$${((amountCents || 0) / 100).toFixed(2)} ${currency}`;
   }
+}
+
+function formatShippingAmount(amountCents: number, currency: string) {
+  if ((amountCents ?? 0) <= 0) return 'FREE';
+  return formatAmount(amountCents, currency);
 }
 
 function formatAddress(address: EmailAddress) {

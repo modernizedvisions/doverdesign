@@ -133,7 +133,7 @@ export function renderCustomOrderPaymentLinkEmailHtml(
                 </tr>
                 <tr>
                   <td class="totals-label" align="right">Shipping</td>
-                  <td class="totals-value" align="right">${formatMoney(shippingCents)}</td>
+                  <td class="totals-value" align="right">${formatShippingMoney(shippingCents)}</td>
                 </tr>
                 <tr>
                   <td class="totals-label" align="right">Tax</td>
@@ -185,7 +185,7 @@ export function renderCustomOrderPaymentLinkEmailText(
     params.orderLabel ? `Order: ${params.orderLabel}` : null,
     params.description ? `Details: ${params.description}` : null,
     `Subtotal: ${formatMoney(subtotalCents)}`,
-    `Shipping: ${formatMoney(shippingCents)}`,
+    `Shipping: ${formatShippingMoney(shippingCents)}`,
     'Tax: Calculated at checkout',
     `Total: ${formatMoney(totalCents)}`,
     '',
@@ -198,6 +198,12 @@ export function renderCustomOrderPaymentLinkEmailText(
 export function formatMoney(cents: number | null | undefined): string {
   const value = Number.isFinite(cents as number) ? Number(cents) / 100 : 0;
   return `$${value.toFixed(2)}`;
+}
+
+export function formatShippingMoney(cents: number | null | undefined): string {
+  const value = Number.isFinite(cents as number) ? Number(cents) : 0;
+  if (value <= 0) return 'FREE';
+  return formatMoney(value);
 }
 
 function escapeHtml(value: string) {

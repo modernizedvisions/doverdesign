@@ -278,6 +278,12 @@ export function formatMoney(cents: number | null | undefined): string {
   return `$${value.toFixed(2)}`;
 }
 
+export function formatShippingMoney(cents: number | null | undefined): string {
+  const value = Number.isFinite(cents as number) ? Number(cents) : 0;
+  if (value <= 0) return 'FREE';
+  return formatMoney(value);
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')

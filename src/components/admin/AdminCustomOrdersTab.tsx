@@ -285,6 +285,8 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
     }
   };
   const formatCurrency = (cents: number | null | undefined) => `${((cents ?? 0) / 100).toFixed(2)}`;
+  const formatShipping = (cents: number | null | undefined) =>
+    (cents ?? 0) <= 0 ? 'FREE' : formatCurrency(cents);
   const safeDate = (value?: string | null) =>
     value ? formatEasternDateTime(value) || 'Unknown date' : 'Unknown date';
   const normalizeDisplayId = (order: any) =>
@@ -601,7 +603,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-charcoal/70">Shipping</span>
                     <span className="font-medium text-charcoal">
-                      {formatCurrency(resolveShippingCents(selectedOrder))}
+                      {formatShipping(resolveShippingCents(selectedOrder))}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -624,7 +626,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
                     onChange={(e) => setViewShipping(e.target.value)}
                     className="lux-input text-sm"
                   />
-                  <p className="text-[11px] text-charcoal/60">Leave blank for $0.00.</p>
+                  <p className="text-[11px] text-charcoal/60">Leave blank for FREE.</p>
                 </div>
               </section>
 

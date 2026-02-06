@@ -80,7 +80,7 @@ export function renderOrderConfirmationEmailHtml(params: OrderConfirmationEmailP
       </tr>
       <tr>
         <td class="totals-label" align="right">Shipping</td>
-        <td class="totals-value" align="right">${formatMoney(params.shipping)}</td>
+        <td class="totals-value" align="right">${formatShippingMoney(params.shipping)}</td>
       </tr>
       <tr>
         <td class="totals-label" align="right">Tax</td>
@@ -241,7 +241,7 @@ export function renderOrderConfirmationEmailText(params: OrderConfirmationEmailP
     }),
     '',
     `Subtotal: ${formatMoney(params.subtotal)}`,
-    `Shipping: ${formatMoney(params.shipping)}`,
+    `Shipping: ${formatShippingMoney(params.shipping)}`,
     `Tax: ${formatMoney(params.tax)}`,
     params.discount && params.discount > 0 ? `Discount: -${formatMoney(params.discount)}` : null,
     `Total: ${formatMoney(params.total)}`,
@@ -256,6 +256,12 @@ export function renderOrderConfirmationEmailText(params: OrderConfirmationEmailP
 export function formatMoney(cents: number | null | undefined): string {
   const value = Number.isFinite(cents as number) ? Number(cents) / 100 : 0;
   return `$${value.toFixed(2)}`;
+}
+
+export function formatShippingMoney(cents: number | null | undefined): string {
+  const value = Number.isFinite(cents as number) ? Number(cents) : 0;
+  if (value <= 0) return 'FREE';
+  return formatMoney(value);
 }
 
 function escapeHtml(value: string) {

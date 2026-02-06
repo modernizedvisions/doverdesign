@@ -382,6 +382,7 @@ export function CheckoutPage() {
   const totalCents = (subtotalCents || 0) + effectiveShippingCents;
 
   const formatMoney = (cents: number) => `$${((cents ?? 0) / 100).toFixed(2)}`;
+  const formatShipping = (cents: number) => (cents <= 0 ? 'FREE' : formatMoney(cents));
 
   if (loading) {
     return (
@@ -516,7 +517,7 @@ export function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-charcoal/80">
                   <span>Shipping</span>
-                  <span className="font-medium text-deep-ocean">{formatMoney(effectiveShippingCents)}</span>
+                  <span className="font-medium text-deep-ocean">{formatShipping(effectiveShippingCents)}</span>
                 </div>
                 <div className="flex justify-between text-charcoal/60 text-xs">
                   <span>Tax</span>

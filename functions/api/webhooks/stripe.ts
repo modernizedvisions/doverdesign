@@ -8,6 +8,7 @@ import {
 import { renderOwnerInvoicePaidEmail, type EmailItem } from '../../_lib/emailTemplates';
 import {
   formatMoney,
+  formatShippingMoney,
   renderOwnerNewSaleEmailHtml,
   renderOwnerNewSaleEmailText,
   type OwnerNewSaleItem,
@@ -683,7 +684,7 @@ export const onRequestPost = async (context: {
         });
         const totals = {
           subtotal: formatMoney(totalsForEmail.itemsSubtotalCents),
-          shipping: formatMoney(totalsForEmail.shippingCents),
+          shipping: formatShippingMoney(totalsForEmail.shippingCents),
           tax: formatMoney(totalsForEmail.taxCents),
           discount: totalsForEmail.discountCents > 0 ? formatMoney(totalsForEmail.discountCents) : null,
           total: formatMoney(totalsForEmail.totalCents),
@@ -1905,7 +1906,7 @@ async function handleCustomOrderPayment(args: {
   });
   const ownerTotals = {
     subtotal: formatMoney(totalsForOwner.itemsSubtotalCents),
-    shipping: formatMoney(totalsForOwner.shippingCents),
+    shipping: formatShippingMoney(totalsForOwner.shippingCents),
     tax: formatMoney(totalsForOwner.taxCents),
     discount: totalsForOwner.discountCents > 0 ? formatMoney(totalsForOwner.discountCents) : null,
     total: formatMoney(totalsForOwner.totalCents),
