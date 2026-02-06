@@ -305,8 +305,8 @@ export function ProductDetailPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-center">
-                      <span className="text-xl font-serif font-semibold text-deep-ocean text-center">
+                    <div className="flex w-full items-center justify-center">
+                      <span className="text-[20px] font-serif font-semibold text-deep-ocean text-center">
                         {maxSelectable !== null ? `${maxSelectable} Left In Stock` : 'In Stock'}
                       </span>
                     </div>
