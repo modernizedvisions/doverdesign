@@ -606,9 +606,12 @@ export function AdminPage() {
       // Limit to 4 slots
       result = result.slice(0, maxSlots);
 
-      // Ensure there is a primary image
-      if (!result.some((img) => img?.isPrimary) && result.length > 0) {
-        result[0].isPrimary = true;
+      // Ensure there is a primary image (guard against sparse arrays)
+      if (!result.some((img) => img?.isPrimary)) {
+        const first = result.find((img) => !!img);
+        if (first) {
+          first.isPrimary = true;
+        }
       }
 
       return result;
