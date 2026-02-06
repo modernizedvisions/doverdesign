@@ -105,7 +105,7 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
         </Link>
       </div>
       <div className="p-4 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2">
           <h3 className="text-base font-serif font-semibold text-deep-ocean sm:truncate">{product.name}</h3>
           {promoEligible && discountedCents !== basePriceCents && basePriceCents !== null ? (
             <div className="sm:text-right whitespace-nowrap">
@@ -125,10 +125,10 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
           </div>
         )}
 
-        <div className="flex flex-row gap-3 mt-2">
+        <div className="flex flex-row gap-2 mt-2">
           <button
             onClick={() => navigate(productHref)}
-            className="lux-button--ghost w-full justify-center"
+            className="lux-button--ghost w-full justify-center flex-1 min-w-0 px-3 sm:px-5"
           >
             View
           </button>
@@ -141,7 +141,7 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
               handleAddToCart();
             }}
             disabled={!requiresOption && (isDisabled || !isPurchaseReady)}
-            className="lux-button w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="lux-button w-full justify-center flex-1 min-w-0 px-3 sm:px-5 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={requiresOption ? 'Choose options' : 'Add to Cart'}
           >
             {requiresOption ? (
