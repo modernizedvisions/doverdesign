@@ -125,7 +125,7 @@ export function CartDrawer() {
                     )}
                   </div>
                   {item.oneoff && (
-                    <span className="lux-pill mt-2 inline-flex">One-of-a-kind</span>
+                    <span className="lux-pill--cart mt-2 inline-flex">One-of-a-kind</span>
                   )}
                   <div className="mt-3 flex items-center gap-3">
                     {item.oneoff ? (
