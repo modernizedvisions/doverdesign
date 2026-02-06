@@ -106,7 +106,9 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
       </div>
       <div className="p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2">
-          <h3 className="text-base font-serif font-semibold text-deep-ocean sm:truncate">{product.name}</h3>
+          <h3 className="text-base font-serif font-semibold text-deep-ocean truncate sm:whitespace-normal sm:overflow-visible sm:text-ellipsis">
+            {product.name}
+          </h3>
           {promoEligible && discountedCents !== basePriceCents && basePriceCents !== null ? (
             <div className="sm:text-right whitespace-nowrap">
               <div className="text-xs text-charcoal/60 line-through">{priceLabel}</div>
