@@ -3,6 +3,23 @@ export const EASTERN_TIME_ZONE = 'America/New_York';
 const toDate = (value?: string | number | Date | null): Date | null => {
   if (!value) return null;
   if (value instanceof Date) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const hasTzOffset = /([+-]\d{2}:?\d{2}|Z)$/i.test(trimmed);
+    const isSqlTimestamp =
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/.test(trimmed);
+    const isIsoNoTz =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(trimmed) && !hasTzOffset;
+    const normalized = isSqlTimestamp
+      ? `${trimmed.replace(' ', 'T')}Z`
+      : isIsoNoTz
+      ? `${trimmed}Z`
+      : trimmed;
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return date;
@@ -57,8 +74,8 @@ export const formatEasternDate = (
 
 export const toEasternDateTimeLocal = (value?: string | null): string => {
   if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
+  const date = toDate(value);
+  if (!date) return '';
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: EASTERN_TIME_ZONE,
     year: 'numeric',

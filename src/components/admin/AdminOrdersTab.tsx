@@ -37,7 +37,6 @@ export function AdminOrdersTab({ searchQuery, filteredOrders, onSearchChange, on
       ) : filteredOrders.length === 0 ? (
         <div className="p-8 text-center text-charcoal/60">
           <div>No orders found</div>
-          <div className="text-xs text-charcoal/40 mt-1">Endpoint: /api/admin/orders</div>
         </div>
       ) : (
         <>
