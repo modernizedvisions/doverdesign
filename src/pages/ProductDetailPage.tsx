@@ -13,14 +13,6 @@ import { buildCategoryOptionLookup, resolveCategoryOptionGroup } from '../lib/ca
 export function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const addItem = useCartStore((state) => state.addItem);
-  const isOneOffInCart = useCartStore((state) => state.isOneOffInCart);
-  const qtyInCart = useCartStore((state) =>
-    product ? state.getQuantityForProduct(product.id, selectedOption) : 0
-  );
-  const setCartDrawerOpen = useUIStore((state) => state.setCartDrawerOpen);
-  const { promotion } = usePromotions();
-
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [loadingProduct, setLoadingProduct] = useState(true);
@@ -30,6 +22,13 @@ export function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const addItem = useCartStore((state) => state.addItem);
+  const isOneOffInCart = useCartStore((state) => state.isOneOffInCart);
+  const qtyInCart = useCartStore((state) =>
+    product ? state.getQuantityForProduct(product.id, selectedOption) : 0
+  );
+  const setCartDrawerOpen = useUIStore((state) => state.setCartDrawerOpen);
+  const { promotion } = usePromotions();
 
   useEffect(() => {
     const load = async () => {
@@ -103,6 +102,7 @@ export function ProductDetailPage() {
   const maxQty = product?.quantityAvailable ?? null;
   const maxSelectable =
     !product?.oneoff && maxQty !== null ? Math.max(0, maxQty - qtyInCart) : null;
+  const showQuantitySelector = !product?.oneoff && (maxQty === null || maxQty > 1);
   const hasSelectableStock =
     !product?.oneoff && maxSelectable !== null ? maxSelectable > 0 : true;
   const effectiveQty = product?.oneoff
@@ -279,7 +279,7 @@ export function ProductDetailPage() {
                   </div>
                 )}
 
-                {!product?.oneoff && (
+                {showQuantitySelector && (
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="lux-quantity">
                       <button
