@@ -105,10 +105,10 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
         </Link>
       </div>
       <div className="p-4 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-serif font-semibold text-deep-ocean truncate">{product.name}</h3>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+          <h3 className="text-base font-serif font-semibold text-deep-ocean sm:truncate">{product.name}</h3>
           {promoEligible && discountedCents !== basePriceCents && basePriceCents !== null ? (
-            <div className="text-right whitespace-nowrap">
+            <div className="sm:text-right whitespace-nowrap">
               <div className="text-xs text-charcoal/60 line-through">{priceLabel}</div>
               <div className="text-lg font-serif font-semibold text-deep-ocean">{discountedLabel}</div>
             </div>
@@ -125,7 +125,7 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 mt-2">
+        <div className="flex flex-row gap-3 mt-2">
           <button
             onClick={() => navigate(productHref)}
             className="lux-button--ghost w-full justify-center"
@@ -144,7 +144,14 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
             className="lux-button w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={requiresOption ? 'Choose options' : 'Add to Cart'}
           >
-            {requiresOption ? 'Choose' : <ShoppingCart className="h-5 w-5" />}
+            {requiresOption ? (
+              <>
+                <span className="hidden sm:inline">Choose</span>
+                <ShoppingCart className="h-5 w-5 sm:hidden" />
+              </>
+            ) : (
+              <ShoppingCart className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
