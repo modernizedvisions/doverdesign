@@ -102,7 +102,8 @@ export function ProductDetailPage() {
   const maxQty = product?.quantityAvailable ?? null;
   const maxSelectable =
     !product?.oneoff && maxQty !== null ? Math.max(0, maxQty - qtyInCart) : null;
-  const showQuantitySelector = !product?.oneoff && (maxQty === null || maxQty > 1);
+  const showQuantitySelector =
+    !!product && !product.oneoff && (maxQty === null || maxQty >= 1);
   const hasSelectableStock =
     !product?.oneoff && maxSelectable !== null ? maxSelectable > 0 : true;
   const effectiveQty = product?.oneoff
