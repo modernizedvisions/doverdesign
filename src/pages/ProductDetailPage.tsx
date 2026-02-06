@@ -281,31 +281,35 @@ export function ProductDetailPage() {
                 )}
 
                 {showQuantitySelector && (
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="lux-quantity">
-                      <button
-                        onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                        disabled={quantity <= 1}
-                        className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-semibold text-deep-ocean">{quantity}</span>
-                      <button
-                        onClick={() =>
-                          setQuantity((prev) =>
-                            maxSelectable !== null ? Math.min(prev + 1, Math.max(1, maxSelectable)) : prev + 1
-                          )
-                        }
-                        disabled={maxSelectable !== null && quantity >= maxSelectable}
-                        className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="w-full">
+                      <div className="lux-quantity w-full justify-between">
+                        <button
+                          onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                          disabled={quantity <= 1}
+                          className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-semibold text-deep-ocean">{quantity}</span>
+                        <button
+                          onClick={() =>
+                            setQuantity((prev) =>
+                              maxSelectable !== null ? Math.min(prev + 1, Math.max(1, maxSelectable)) : prev + 1
+                            )
+                          }
+                          disabled={maxSelectable !== null && quantity >= maxSelectable}
+                          className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <span className="text-sm font-serif font-semibold text-deep-ocean">
-                      {maxSelectable !== null ? `${maxSelectable} Left In Stock` : 'In Stock'}
-                    </span>
+                    <div className="flex items-center justify-center">
+                      <span className="text-base font-serif font-semibold text-deep-ocean text-center">
+                        {maxSelectable !== null ? `${maxSelectable} Left In Stock` : 'In Stock'}
+                      </span>
+                    </div>
                   </div>
                 )}
 
