@@ -12,6 +12,14 @@ export function GalleryPage() {
   const { images: galleryImages, isLoading: isLoadingGallery } = useGalleryImages();
   const getSoldCardTitle = (item: Product) =>
     item.id?.startsWith('custom_order:') ? 'Custom Order' : item.name;
+  const formatCategoryLabel = (value?: string | null) => {
+    if (!value) return '';
+    return value
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : ''))
+      .join(' ');
+  };
 
   useEffect(() => {
     const loadSold = async () => {
@@ -116,7 +124,7 @@ export function GalleryPage() {
                           <span className="text-sm font-serif font-medium text-deep-ocean whitespace-nowrap">SOLD</span>
                         </div>
                         {item.collection && (
-                          <p className="text-xs text-charcoal/70">{item.collection}</p>
+                          <p className="text-xs text-charcoal/70">{formatCategoryLabel(item.collection)}</p>
                         )}
                       </div>
                     </div>
