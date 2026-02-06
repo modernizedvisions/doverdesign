@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { fetchCategories, fetchProductById, fetchRelatedProducts } from '../lib/api';
 import { Category, Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
@@ -15,6 +15,9 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const addItem = useCartStore((state) => state.addItem);
   const isOneOffInCart = useCartStore((state) => state.isOneOffInCart);
+  const qtyInCart = useCartStore((state) =>
+    product ? state.getQuantityForProduct(product.id, selectedOption) : 0
+  );
   const setCartDrawerOpen = useUIStore((state) => state.setCartDrawerOpen);
   const { promotion } = usePromotions();
 
@@ -98,12 +101,28 @@ export function ProductDetailPage() {
       ? getDiscountedCents(product.priceCents, promotion.percentOff)
       : product?.priceCents ?? null;
   const maxQty = product?.quantityAvailable ?? null;
-  const effectiveQty = product?.oneoff ? 1 : quantity;
+  const maxSelectable =
+    !product?.oneoff && maxQty !== null ? Math.max(0, maxQty - qtyInCart) : null;
+  const hasSelectableStock =
+    !product?.oneoff && maxSelectable !== null ? maxSelectable > 0 : true;
+  const effectiveQty = product?.oneoff
+    ? 1
+    : maxSelectable !== null
+    ? Math.min(quantity, maxSelectable)
+    : quantity;
+
+  useEffect(() => {
+    if (!product || product.oneoff) return;
+    if (maxSelectable !== null && maxSelectable > 0) {
+      setQuantity((prev) => Math.min(Math.max(prev, 1), maxSelectable));
+    }
+  }, [product?.id, product?.oneoff, maxSelectable]);
 
   const handleAddToCart = () => {
     if (!product || !hasPrice || isSold) return;
     if (product.oneoff && isOneOffInCart(product.id)) return;
     if (requiresOption && !selectedOption) return;
+    if (!product.oneoff && !hasSelectableStock) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -111,6 +130,7 @@ export function ProductDetailPage() {
       quantity: effectiveQty,
       imageUrl: product.thumbnailUrl || product.imageUrl,
       oneoff: product.oneoff,
+      quantityAvailable: product.quantityAvailable ?? null,
       stripeProductId: product.stripeProductId ?? null,
       stripePriceId: product.stripePriceId ?? null,
       category: product.category ?? null,
@@ -259,13 +279,42 @@ export function ProductDetailPage() {
                   </div>
                 )}
 
+                {!product?.oneoff && (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="lux-quantity">
+                      <button
+                        onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                        disabled={quantity <= 1}
+                        className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-8 text-center text-sm font-semibold text-deep-ocean">{quantity}</span>
+                      <button
+                        onClick={() =>
+                          setQuantity((prev) =>
+                            maxSelectable !== null ? Math.min(prev + 1, Math.max(1, maxSelectable)) : prev + 1
+                          )
+                        }
+                        disabled={maxSelectable !== null && quantity >= maxSelectable}
+                        className="lux-button--ghost px-2 py-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <span className="text-sm font-serif font-semibold text-deep-ocean">
+                      {maxSelectable !== null ? `${maxSelectable} Left In Stock` : 'In Stock'}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <button
                     onClick={handleAddToCart}
                     disabled={
                       !canPurchase ||
                       (product?.oneoff && isOneOffInCart(product.id)) ||
-                      (!product?.oneoff && maxQty !== null && effectiveQty > maxQty) ||
+                      (!product?.oneoff && !hasSelectableStock) ||
                       !hasSelectedOption
                     }
                     className="lux-button w-full justify-center"
