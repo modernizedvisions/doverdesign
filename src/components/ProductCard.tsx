@@ -141,7 +141,7 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
               handleAddToCart();
             }}
             disabled={!requiresOption && (isDisabled || !isPurchaseReady)}
-            className="lux-button w-full justify-center flex-1 min-w-0 px-3 sm:px-5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="lux-button w-full justify-center flex-1 min-w-0 px-3 sm:px-5 border border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={requiresOption ? 'Choose options' : 'Add to Cart'}
           >
             {requiresOption ? (
