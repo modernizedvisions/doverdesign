@@ -1,0 +1,9 @@
+name = "ecommerce-template"
+compatibility_date = "2026-02-15"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ecommerce-template"
+database_id = "ba2a062b-f334-4c6e-ba1e-0e6cd14b3a63"
+preview_database_id = "ba2a062b-f334-4c6e-ba1e-0e6cd14b3a63"
+migrations_dir = "db/migrations"
