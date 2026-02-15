@@ -25,6 +25,16 @@ import { normalizeImageUrl } from './images';
 import { optimizeImageForUpload } from './imageOptimization';
 import { adminFetch, notifyAdminAuthRequired } from './adminAuth';
 
+const debugAdminImageUpload = (...args: unknown[]) => {
+  if (!import.meta.env.DEV) return;
+  console.debug(...args);
+};
+
+const warnAdminImageUpload = (...args: unknown[]) => {
+  if (!import.meta.env.DEV) return;
+  console.warn(...args);
+};
+
 // Aggregates the mock data layer and stubs so the UI can continue working while we
 // prepare for Cloudflare D1 + Stripe with the site/admin as the source of truth.
 
@@ -249,6 +259,12 @@ export async function adminUploadImageUnified(
   const targetBytes = scope === 'home' ? 900 * 1024 : 500 * 1024;
   let uploadFile = file;
 
+  debugAdminImageUpload('[admin image upload] C optimization started', {
+    scope,
+    name: file.name,
+    type: file.type,
+    size: file.size,
+  });
   opts?.onStatus?.('optimizing');
   try {
     const optimized = await optimizeImageForUpload(file, {
@@ -257,24 +273,40 @@ export async function adminUploadImageUnified(
       quality: 0.82,
     });
     uploadFile = optimized.file;
-    if (optimized.didOptimize) {
-      console.debug('[admin image upload] optimized', {
-        scope,
-        name: file.name,
-        originalBytes: optimized.originalBytes,
-        optimizedBytes: optimized.optimizedBytes,
-        usedType: optimized.usedType,
-        hadAlpha: optimized.hadAlpha,
-      });
-    }
+    debugAdminImageUpload('[admin image upload] D optimization finished', {
+      scope,
+      sourceName: file.name,
+      sourceType: file.type,
+      sourceBytes: file.size,
+      optimizedName: uploadFile.name,
+      optimizedType: uploadFile.type,
+      optimizedBytes: uploadFile.size,
+      didOptimize: optimized.didOptimize,
+      usedType: optimized.usedType,
+      hadAlpha: optimized.hadAlpha,
+    });
   } catch (err) {
     console.error('[admin image upload] optimize failed', err);
+    warnAdminImageUpload('[admin image upload] D optimization failed; fallback to original file', {
+      scope,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      error: err instanceof Error ? err.message : String(err),
+    });
     alert(
       'Image optimization failed. Uploading original file; large images may still fail.'
     );
   }
   opts?.onStatus?.('uploading');
 
+  debugAdminImageUpload('[admin image upload] E upload start', {
+    endpoint: '/api/admin/images/create-upload',
+    scope,
+    name: uploadFile.name,
+    type: uploadFile.type,
+    size: uploadFile.size,
+  });
   const createResponse = await adminFetch('/api/admin/images/create-upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -300,6 +332,11 @@ export async function adminUploadImageUnified(
 
   if (!createResponse.ok || createData?.ok === false) {
     const detail = createData?.detail || createData?.code || 'unknown';
+    warnAdminImageUpload('[admin image upload] F create-upload failed', {
+      scope,
+      status: createResponse.status,
+      detail,
+    });
     throw new Error(`Image create-upload failed (${createResponse.status}): ${detail}`);
   }
 
@@ -313,6 +350,15 @@ export async function adminUploadImageUnified(
   }
 
   if (mode === 'presigned' && createData?.upload?.url) {
+    debugAdminImageUpload('[admin image upload] E presigned upload start', {
+      scope,
+      method: createData.upload.method || 'PUT',
+      url: createData.upload.url,
+      imageId,
+      storageKey,
+      size: uploadFile.size,
+      type: uploadFile.type,
+    });
     const uploadRes = await fetch(createData.upload.url, {
       method: createData.upload.method || 'PUT',
       headers: createData.upload.headers || { 'Content-Type': uploadFile.type },
@@ -320,9 +366,19 @@ export async function adminUploadImageUnified(
     });
 
     if (!uploadRes.ok) {
+      warnAdminImageUpload('[admin image upload] F presigned upload failed', {
+        scope,
+        status: uploadRes.status,
+        imageId,
+      });
       throw new Error(`Presigned upload failed (${uploadRes.status})`);
     }
 
+    debugAdminImageUpload('[admin image upload] E finalize start', {
+      endpoint: '/api/admin/images/finalize',
+      scope,
+      imageId,
+    });
     const finalizeResponse = await adminFetch('/api/admin/images/finalize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -345,10 +401,23 @@ export async function adminUploadImageUnified(
 
     if (!finalizeResponse.ok || finalizeData?.ok === false) {
       const detail = finalizeData?.detail || finalizeData?.code || 'unknown';
+      warnAdminImageUpload('[admin image upload] F finalize failed', {
+        scope,
+        status: finalizeResponse.status,
+        detail,
+        imageId,
+      });
       throw new Error(`Finalize failed (${finalizeResponse.status}): ${detail}`);
     }
 
     const publicUrl = finalizeData?.image?.publicUrl || createdPublicUrl;
+    debugAdminImageUpload('[admin image upload] F upload success', {
+      scope,
+      mode: 'presigned',
+      imageId,
+      publicUrl,
+      storageKey: finalizeData?.image?.storageKey || storageKey,
+    });
     return {
       id: imageId,
       url: normalizeImageUrl(publicUrl),
@@ -366,6 +435,22 @@ export async function adminUploadImageUnified(
   if (opts?.isPrimary !== undefined) form.append('isPrimary', opts.isPrimary ? '1' : '0');
   if (opts?.sortOrder !== undefined) form.append('sortOrder', String(opts.sortOrder));
 
+  debugAdminImageUpload('[admin image upload] E upload start', {
+    endpoint: `/api/admin/images/upload?scope=${scope}`,
+    scope,
+    imageId,
+    storageKey,
+    payload: {
+      fileName: uploadFile.name,
+      fileType: uploadFile.type,
+      fileSize: uploadFile.size,
+      hasEntityType: !!opts?.entityType,
+      hasEntityId: !!opts?.entityId,
+      hasKind: !!opts?.kind,
+      hasSortOrder: opts?.sortOrder !== undefined,
+      isPrimary: !!opts?.isPrimary,
+    },
+  });
   const uploadResponse = await adminFetch(`/api/admin/images/upload?scope=${encodeURIComponent(scope)}`, {
     method: 'POST',
     headers: {
@@ -388,6 +473,12 @@ export async function adminUploadImageUnified(
 
   if (!uploadResponse.ok || data?.ok === false) {
     const detail = data?.detail || data?.code || 'unknown';
+    warnAdminImageUpload('[admin image upload] F upload failed', {
+      scope,
+      status: uploadResponse.status,
+      detail,
+      body: data,
+    });
     throw new Error(`Image upload failed (${uploadResponse.status}): ${detail}`);
   }
 
@@ -399,6 +490,14 @@ export async function adminUploadImageUnified(
   if (!publicUrl) {
     throw new Error('Image upload response missing publicUrl');
   }
+  debugAdminImageUpload('[admin image upload] F upload success', {
+    scope,
+    mode: 'server',
+    imageId: uploadedImageId,
+    publicUrl,
+    storageKey: uploadedStorageKey,
+    warning: warning || null,
+  });
   return {
     id: uploadedImageId,
     url: normalizeImageUrl(publicUrl),

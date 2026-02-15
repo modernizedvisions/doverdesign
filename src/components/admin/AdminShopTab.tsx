@@ -146,10 +146,12 @@ export interface AdminShopTabProps {
   onAddProductImages: (files: File[], slotIndex?: number) => void;
   onSetPrimaryProductImage: (id: string) => void;
   onRemoveProductImage: (id: string) => void;
+  onRetryProductImage: (id: string) => void;
   onAddEditProductImages: (files: File[], slotIndex?: number) => void;
   onSetPrimaryEditImage: (id: string) => void;
   onMoveEditImage: (id: string, direction: 'up' | 'down') => void;
   onRemoveEditImage: (id: string) => void;
+  onRetryEditImage: (id: string) => void;
   onEditFormChange: (field: keyof ProductFormState, value: string | number | boolean) => void;
   onUpdateProduct: (e: React.FormEvent) => Promise<boolean | void>;
   onCancelEditProduct: () => void;
@@ -176,10 +178,12 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
   onAddProductImages,
   onSetPrimaryProductImage,
   onRemoveProductImage,
+  onRetryProductImage,
   onAddEditProductImages,
   onSetPrimaryEditImage,
   onMoveEditImage,
   onRemoveEditImage,
+  onRetryEditImage,
   onEditFormChange,
   onUpdateProduct,
   onCancelEditProduct,
@@ -194,15 +198,24 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
   const [editImages, setEditImages] = useState<ManagedImage[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const isDev = import.meta.env.DEV;
   const maxModalImages = 4;
   const isOptimizing = productImages.some((img) => img?.optimizing);
   const isUploading = productImages.some((img) => img?.uploading);
   const missingUrlCount = productImages.filter(
-    (img) => img && !img.uploading && !img.uploadError && !!img.previewUrl && !img.url
+    (img) =>
+      img &&
+      !img.uploading &&
+      !img.uploadError &&
+      (!!img.file ||
+        !!img.previewUrl ||
+        img.url?.startsWith('blob:') ||
+        img.url?.startsWith('data:'))
   ).length;
   const failedCount = productImages.filter((img) => img?.uploadError).length;
 
   useEffect(() => {
+    if (!isDev) return;
     console.debug('[shop save] disable check', {
       isUploading,
       uploadingCount: productImages.filter((img) => img?.uploading).length,
@@ -210,7 +223,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
       failedCount,
       imageCount: productImages.length,
     });
-  }, [failedCount, isUploading, missingUrlCount, productImages]);
+  }, [failedCount, isDev, isUploading, missingUrlCount, productImages]);
 
   const normalizeCategory = (value: string | undefined | null) => (value || '').trim().toLowerCase();
   const getProductCategories = (product: Product): string[] => {
@@ -499,20 +512,24 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                   multiple
                   className="hidden"
                   onChange={(e) => {
-                    console.debug('[shop images] handler fired', {
-                      time: new Date().toISOString(),
-                      hasEvent: !!e,
-                      hasFiles: !!e?.target?.files,
-                      filesLen: e?.target?.files?.length ?? 0,
-                    });
+                    if (isDev) {
+                      console.debug('[shop images] handler fired', {
+                        time: new Date().toISOString(),
+                        hasEvent: !!e,
+                        hasFiles: !!e?.target?.files,
+                        filesLen: e?.target?.files?.length ?? 0,
+                      });
+                    }
                     const fileList = e?.target?.files;
                     const files = fileList ? Array.from(fileList) : [];
-                    console.debug(
-                      '[shop images] files extracted',
-                      files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
-                    );
+                    if (isDev) {
+                      console.debug(
+                        '[shop images] files extracted',
+                        files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
+                      );
+                    }
                     if (files.length === 0) {
-                      console.warn('[shop images] no files found; aborting upload');
+                      if (isDev) console.warn('[shop images] no files found; aborting upload');
                       if (e?.target) e.target.value = '';
                       return;
                     }
@@ -535,12 +552,14 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         e.preventDefault();
                         const fileList = e.dataTransfer?.files;
                         const files = Array.from(fileList ?? []);
-                        console.debug(
-                          '[shop images] drop files extracted',
-                          files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
-                        );
+                        if (isDev) {
+                          console.debug(
+                            '[shop images] drop files extracted',
+                            files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
+                          );
+                        }
                         if (files.length === 0) {
-                          console.warn('[shop images] no files found; aborting upload');
+                          if (isDev) console.warn('[shop images] no files found; aborting upload');
                           return;
                         }
                         onAddProductImages(files, index);
@@ -554,6 +573,16 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                           loading="lazy"
                           decoding="async"
                         />
+                        {(image.uploading || image.optimizing) && (
+                          <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-charcoal/70">
+                            {image.optimizing ? 'Optimizing image...' : 'Uploading...'}
+                          </div>
+                        )}
+                        {image.uploadError && (
+                          <div className="absolute inset-x-0 top-0 bg-red-600/90 text-white text-[10px] px-2 py-1">
+                            {image.uploadError}
+                          </div>
+                        )}
                         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/40 px-2 py-1 text-xs text-white">
                           <button
                             type="button"
@@ -565,6 +594,18 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                           >
                             {image.isPrimary ? 'Primary' : 'Set primary'}
                           </button>
+                          {image.uploadError && image.file && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRetryProductImage(image.id);
+                              }}
+                              className="text-sky-100 hover:text-sky-300"
+                            >
+                              Retry
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={(e) => {
@@ -584,16 +625,18 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       key={index}
                       className="flex items-center justify-center aspect-square rounded-shell-lg border-2 border-dashed border-driftwood/70 bg-linen/70 text-xs text-charcoal/40"
                       onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const fileList = e.dataTransfer?.files;
-                        const files = fileList ? Array.from(fileList) : [];
-                        console.debug(
-                          '[shop images] drop files extracted',
-                          files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
-                        );
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const fileList = e.dataTransfer?.files;
+                          const files = fileList ? Array.from(fileList) : [];
+                        if (isDev) {
+                          console.debug(
+                            '[shop images] drop files extracted',
+                            files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
+                          );
+                        }
                         if (files.length === 0) {
-                          console.warn('[shop images] no files found; aborting upload');
+                          if (isDev) console.warn('[shop images] no files found; aborting upload');
                           return;
                         }
                         onAddProductImages(files, index);
@@ -828,20 +871,24 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       multiple
                       className="hidden"
                     onChange={(e) => {
-                        console.debug('[shop images] handler fired', {
-                          time: new Date().toISOString(),
-                          hasEvent: !!e,
-                          hasFiles: !!e?.target?.files,
-                          filesLen: e?.target?.files?.length ?? 0,
-                        });
+                        if (isDev) {
+                          console.debug('[shop images] handler fired', {
+                            time: new Date().toISOString(),
+                            hasEvent: !!e,
+                            hasFiles: !!e?.target?.files,
+                            filesLen: e?.target?.files?.length ?? 0,
+                          });
+                        }
                         const fileList = e?.target?.files;
                         const files = fileList ? Array.from(fileList) : [];
-                        console.debug(
-                          '[shop images] files extracted',
-                          files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
-                        );
+                        if (isDev) {
+                          console.debug(
+                            '[shop images] files extracted',
+                            files.map((f) => ({ name: f.name, size: f.size, type: f.type }))
+                          );
+                        }
                         if (files.length === 0) {
-                          console.warn('[shop images] no files found; aborting upload');
+                          if (isDev) console.warn('[shop images] no files found; aborting upload');
                           if (e?.target) e.target.value = '';
                           return;
                         }
@@ -852,7 +899,6 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    {console.debug('[edit modal] render images', editImages)}
                     {Array.from({ length: maxModalImages }).map((_, idx) => {
                       const image = editImages[idx];
                       if (image) {
@@ -866,6 +912,16 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                               loading="lazy"
                               decoding="async"
                             />
+                            {(image.uploading || image.optimizing) && (
+                              <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs text-charcoal/70">
+                                {image.optimizing ? 'Optimizing image...' : 'Uploading...'}
+                              </div>
+                            )}
+                            {image.uploadError && (
+                              <div className="absolute inset-x-0 top-0 bg-red-600/90 text-white text-[10px] px-2 py-1">
+                                {image.uploadError}
+                              </div>
+                            )}
                             <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/40 px-2 py-1 text-xs text-white">
                               <button
                                 type="button"
@@ -877,6 +933,18 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                               >
                                 {image.isPrimary ? 'Primary' : 'Set primary'}
                               </button>
+                              {image.uploadError && image.file && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRetryEditImage(image.id);
+                                  }}
+                                  className="text-sky-100 hover:text-sky-300"
+                                >
+                                  Retry
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={(e) => {

@@ -8,7 +8,7 @@ import {
   adminCreateProduct,
   adminUpdateProduct,
   adminDeleteProduct,
-  adminUploadImage,
+  adminUploadImageUnified,
   adminDeleteImage,
 } from '../lib/api';
 import { adminFetch } from '../lib/adminAuth';
@@ -83,6 +83,39 @@ const initialProductForm: ProductFormState = {
   collection: '',
   stripePriceId: '',
   stripeProductId: '',
+};
+
+type ParsedUploadError = {
+  message: string;
+  httpStatus?: number;
+  code?: string;
+};
+
+const SHOP_UPLOAD_NO_FILE_MESSAGE = import.meta.env.DEV
+  ? 'Upload not started: missing file reference'
+  : 'Upload reference missing. Re-select the image.';
+
+const parseUploadError = (error: unknown): ParsedUploadError => {
+  const raw = error instanceof Error ? error.message : String(error || 'Upload failed');
+  const statusMatch = raw.match(/\((\d{3})\)/);
+  const codeMatch = raw.match(/:\s*([A-Z0-9_]+)$/);
+  const httpStatus = statusMatch ? Number(statusMatch[1]) : undefined;
+  const code = codeMatch ? codeMatch[1] : undefined;
+  return {
+    message: raw || 'Upload failed',
+    httpStatus: Number.isFinite(httpStatus) ? httpStatus : undefined,
+    code,
+  };
+};
+
+const debugShopUpload = (...args: unknown[]) => {
+  if (!import.meta.env.DEV) return;
+  console.debug(...args);
+};
+
+const warnShopUpload = (...args: unknown[]) => {
+  if (!import.meta.env.DEV) return;
+  console.warn(...args);
 };
 
 type AdminTabBadgeProps = {
@@ -267,7 +300,7 @@ export function AdminPage() {
       ]);
       setSoldProducts(soldData);
       setGalleryImages(
-        galleryData.map((img) => ({
+        galleryData.map((img: any) => ({
           id: img.id,
           url: img.imageUrl,
           imageId: img.imageId,
@@ -421,11 +454,12 @@ export function AdminPage() {
     previewUrl: string,
     setImages: React.Dispatch<React.SetStateAction<ManagedImage[]>>
   ) => {
-    console.debug('[shop images] upload start', {
+    debugShopUpload('[shop images] E upload start', {
       id,
       name: file.name,
       size: file.size,
       type: file.type,
+      endpoint: '/api/admin/images/upload?scope=products',
     });
     setImages((prev) =>
       prev.map((img) =>
@@ -440,8 +474,14 @@ export function AdminPage() {
       )
     );
     try {
-      const result = await adminUploadImage(file, {
+      const result = await adminUploadImageUnified(file, {
+        scope: 'products',
         onStatus: (status) => {
+          debugShopUpload('[shop images] C/D status', {
+            id,
+            name: file.name,
+            status,
+          });
           setImages((prev) =>
             prev.map((img) =>
               img && img.id === id
@@ -455,7 +495,7 @@ export function AdminPage() {
           );
         },
       });
-      URL.revokeObjectURL(previewUrl);
+      if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
       setImages((prev) =>
         prev.map((img) =>
           img && img.id === id
@@ -474,14 +514,16 @@ export function AdminPage() {
             : img
         )
       );
-      console.debug('[shop images] upload success', {
+      debugShopUpload('[shop images] F upload success', {
         id,
         name: file.name,
         url: result.url,
+        imageId: result.imageId ?? null,
+        storageKey: result.storageKey ?? null,
       });
       return result;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Upload failed';
+      const parsed = parseUploadError(err);
       setImages((prev) =>
         prev.map((img) =>
           img && img.id === id
@@ -489,15 +531,17 @@ export function AdminPage() {
                 ...img,
                 uploading: false,
                 optimizing: false,
-                uploadError: message,
+                uploadError: parsed.message,
               }
             : img
         )
       );
-      console.debug('[shop images] upload failure', {
+      warnShopUpload('[shop images] F upload failure', {
         id,
         name: file.name,
-        error: err instanceof Error ? err.message : String(err),
+        httpStatus: parsed.httpStatus ?? null,
+        code: parsed.code ?? null,
+        message: parsed.message,
       });
       throw err;
     } finally {
@@ -512,92 +556,94 @@ export function AdminPage() {
             : img
         )
       );
-      console.debug('[shop images] upload finally', { id, name: file.name });
+      debugShopUpload('[shop images] G transition settled', { id, name: file.name });
     }
+  };
+
+  type UploadJob = {
+    id: string;
+    file: File;
+    previewUrl: string;
+    slot: number;
   };
 
   const addImages = async (
     files: File[],
+    currentImages: ManagedImage[],
     setImages: React.Dispatch<React.SetStateAction<ManagedImage[]>>,
     slotIndex?: number
   ) => {
     if (!files.length) return;
-    const incoming = [...files];
-    const uploads: Array<{ id: string; file: File; previewUrl: string }> = [];
+    const maxSlots = 4;
+    const selected = [...files].slice(0, maxSlots);
+    const nextImages = currentImages.slice(0, maxSlots);
+    const uploads: UploadJob[] = [];
 
-    console.debug('[shop images] batch start', { count: incoming.length, slotIndex });
-
-    setImages((prev) => {
-      const maxSlots = 4;
-      const selected = incoming.slice(0, maxSlots);
-      let result = prev.slice();
-
-      // If a slot index is provided, replace starting at that slot.
-      if (slotIndex !== undefined && slotIndex !== null && slotIndex >= 0) {
-        const start = Math.min(slotIndex, maxSlots - 1);
-        selected.forEach((file, offset) => {
-          const pos = Math.min(start + offset, maxSlots - 1);
-          const previewUrl = URL.createObjectURL(file);
-          const id = crypto.randomUUID();
-          uploads.push({ id, file, previewUrl });
-          const newEntry: ManagedImage = {
-            id,
-            url: previewUrl,
-            previewUrl,
-            file,
-            isPrimary: false,
-            isNew: true,
-            uploading: true,
-            optimizing: true,
-          };
-          result[pos] = newEntry;
-        });
-      } else {
-        // Default behavior: fill first available empty slots
-        const emptySlots: number[] = [];
-        for (let i = 0; i < maxSlots; i += 1) {
-          if (!result[i]) emptySlots.push(i);
-        }
-        if (emptySlots.length === 0) return result;
-        const toAdd = selected.slice(0, emptySlots.length);
-        toAdd.forEach((file, offset) => {
-          const pos = emptySlots[offset];
-          const previewUrl = URL.createObjectURL(file);
-          const id = crypto.randomUUID();
-          uploads.push({ id, file, previewUrl });
-          const newEntry: ManagedImage = {
-            id,
-            url: previewUrl,
-            previewUrl,
-            file,
-            isPrimary: false,
-            isNew: true,
-            uploading: true,
-            optimizing: true,
-          };
-          result[pos] = newEntry;
-        });
-      }
-
-      // Limit to 4 slots
-      result = result.slice(0, maxSlots);
-
-      // Ensure there is a primary image (guard against sparse arrays)
-      if (!result.some((img) => img?.isPrimary)) {
-        const first = result.find((img) => !!img);
-        if (first) {
-          first.isPrimary = true;
-        }
-      }
-
-      return result;
+    debugShopUpload('[shop images] A files selected', {
+      count: selected.length,
+      slotIndex: slotIndex ?? null,
+      files: selected.map((file) => ({ name: file.name, type: file.type, size: file.size })),
     });
 
-    console.debug('[shop images] batch slots', {
+    const queueAt = (file: File, pos: number) => {
+      const existing = nextImages[pos];
+      if (existing?.previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(existing.previewUrl);
+      }
+      const previewUrl = URL.createObjectURL(file);
+      const id = crypto.randomUUID();
+      uploads.push({ id, file, previewUrl, slot: pos });
+      nextImages[pos] = {
+        id,
+        url: previewUrl,
+        previewUrl,
+        file,
+        isPrimary: false,
+        isNew: true,
+        uploading: true,
+        optimizing: true,
+      };
+      debugShopUpload('[shop images] B preview created', {
+        id,
+        slot: pos,
+        name: file.name,
+        previewUrl,
+      });
+    };
+
+    if (slotIndex !== undefined && slotIndex !== null && slotIndex >= 0) {
+      const start = Math.min(slotIndex, maxSlots - 1);
+      selected.forEach((file, offset) => {
+        queueAt(file, Math.min(start + offset, maxSlots - 1));
+      });
+    } else {
+      const emptySlots: number[] = [];
+      for (let i = 0; i < maxSlots; i += 1) {
+        if (!nextImages[i]) emptySlots.push(i);
+      }
+      if (emptySlots.length === 0) {
+        warnShopUpload('[shop images] no empty slots; skipping queue');
+        return;
+      }
+      selected.slice(0, emptySlots.length).forEach((file, offset) => {
+        queueAt(file, emptySlots[offset]);
+      });
+    }
+
+    if (!nextImages.some((img) => img?.isPrimary)) {
+      const first = nextImages.find((img) => !!img);
+      if (first) first.isPrimary = true;
+    }
+
+    setImages(nextImages);
+
+    debugShopUpload('[shop images] queue prepared', {
       count: uploads.length,
       ids: uploads.map((u) => u.id),
+      slots: uploads.map((u) => u.slot),
       names: uploads.map((u) => u.file.name),
     });
+    if (!uploads.length) return;
 
     const runUploads = async () => {
       let attempted = 0;
@@ -606,29 +652,33 @@ export function AdminPage() {
 
       for (const { id, file, previewUrl } of uploads) {
         attempted += 1;
-        console.debug('[shop images] uploading', {
+        debugShopUpload('[shop images] E upload attempt', {
           attempted,
+          id,
           name: file.name,
           size: file.size,
           type: file.type,
         });
         try {
           const result = await uploadManagedImage(id, file, previewUrl, setImages);
-          console.debug('[shop images] upload success', {
+          debugShopUpload('[shop images] F upload success', {
             name: file.name,
             id: result.id,
             url: result.url,
           });
-          console.debug('[shop images] settled', { name: file.name, ok: true, urlOrError: result.url });
+          debugShopUpload('[shop images] G slot transition', { id, name: file.name, next: 'uploaded' });
           succeeded += 1;
         } catch (err) {
           failed += 1;
-          console.error('[shop images] upload error', { name: file.name, err });
-          console.debug('[shop images] settled', {
+          const parsed = parseUploadError(err);
+          warnShopUpload('[shop images] F upload failure', {
+            id,
             name: file.name,
-            ok: false,
-            urlOrError: err instanceof Error ? err.message : String(err),
+            httpStatus: parsed.httpStatus ?? null,
+            code: parsed.code ?? null,
+            message: parsed.message,
           });
+          debugShopUpload('[shop images] G slot transition', { id, name: file.name, next: 'failed' });
         }
       }
 
@@ -644,26 +694,29 @@ export function AdminPage() {
             return {
               ...img,
               uploading: false,
-              uploadError: 'Upload did not complete. Please retry or remove.',
+              uploadError: import.meta.env.DEV
+                ? 'Upload not started: queue stopped before network request'
+                : 'Upload did not complete. Please retry or remove.',
             };
           }
           return { ...img, uploading: false };
         });
         uploadingCountAfter = next.filter((img) => img?.uploading).length;
-        console.log(
-          '[shop images] post-reconcile',
+        debugShopUpload(
+          '[shop images] G reconcile',
           next.map((img) => ({
             id: img?.id,
             uploading: img?.uploading,
             hasFile: !!img?.file,
             hasUrl: !!img?.url,
             hasError: !!img?.uploadError,
+            error: img?.uploadError || null,
             urlPrefix: img?.url?.slice(0, 40),
           }))
         );
         return next;
       });
-      console.debug('[shop images] batch done', { attempted, succeeded, failed, uploadingCountAfter });
+      debugShopUpload('[shop images] batch done', { attempted, succeeded, failed, uploadingCountAfter });
     };
 
     void runUploads();
@@ -698,9 +751,12 @@ export function AdminPage() {
   ) => {
     setImages((prev) => {
       const target = prev.find((img) => img?.id === id);
+      if (target?.previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
       if (target?.imageId) {
         void adminDeleteImage(target.imageId).catch((err) => {
-          console.warn('[shop images] delete failed', { imageId: target.imageId, err });
+          warnShopUpload('[shop images] delete failed', { imageId: target.imageId, err });
         });
       }
       const filtered = prev.filter((img) => img && img.id !== id);
@@ -711,6 +767,64 @@ export function AdminPage() {
     });
   };
 
+  const retryManagedImage = async (
+    id: string,
+    images: ManagedImage[],
+    setImages: React.Dispatch<React.SetStateAction<ManagedImage[]>>
+  ) => {
+    const target = images.find((img) => img?.id === id);
+    if (!target) return;
+    if (!target.file) {
+      setImages((prev) =>
+        prev.map((img) =>
+          img && img.id === id
+            ? {
+                ...img,
+                uploading: false,
+                optimizing: false,
+                uploadError: SHOP_UPLOAD_NO_FILE_MESSAGE,
+              }
+            : img
+        )
+      );
+      warnShopUpload('[shop images] G slot transition', {
+        id,
+        next: 'failed',
+        reason: 'missing-file-reference',
+      });
+      return;
+    }
+
+    let previewUrl = target.previewUrl && target.previewUrl.startsWith('blob:')
+      ? target.previewUrl
+      : '';
+    if (!previewUrl) {
+      previewUrl = URL.createObjectURL(target.file);
+      setImages((prev) =>
+        prev.map((img) =>
+          img && img.id === id
+            ? {
+                ...img,
+                previewUrl,
+                url: img.url && !img.url.startsWith('blob:') ? img.url : previewUrl,
+              }
+            : img
+        )
+      );
+      debugShopUpload('[shop images] B preview created (retry)', {
+        id,
+        name: target.file.name,
+        previewUrl,
+      });
+    }
+
+    try {
+      await uploadManagedImage(id, target.file, previewUrl, setImages);
+    } catch {
+      // uploadManagedImage sets slot-level failure state
+    }
+  };
+
   const normalizeImageOrder = (images: ManagedImage[]): ManagedImage[] => {
     if (!images.length) return images;
     const primary = images.find((i) => i?.isPrimary) || images.find((i) => !!i);
@@ -719,7 +833,7 @@ export function AdminPage() {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const result = await adminUploadImage(file);
+    const result = await adminUploadImageUnified(file, { scope: 'products' });
     return result.url;
   };
 
@@ -802,7 +916,11 @@ export function AdminPage() {
     e.preventDefault();
     const uploadingCount = productImages.filter((img) => img?.uploading).length;
     const missingUrlCount = productImages.filter(
-      (img) => img && !img.uploading && !img.uploadError && !!img.previewUrl && !img.url
+      (img) =>
+        img &&
+        !img.uploading &&
+        !img.uploadError &&
+        (!!img.file || isBlockedImageUrl(img.url) || (!!img.previewUrl && !img.url))
     ).length;
     const failedCount = productImages.filter((img) => img?.uploadError).length;
     console.debug('[shop save] clicked', {
@@ -1071,13 +1189,15 @@ export function AdminPage() {
             onCreateProduct={handleCreateProduct}
             onProductFormChange={handleProductFormChange}
             onResetProductForm={resetProductForm}
-            onAddProductImages={(files, slotIndex) => addImages(files, setProductImages, slotIndex)}
+            onAddProductImages={(files, slotIndex) => addImages(files, productImages, setProductImages, slotIndex)}
             onSetPrimaryProductImage={(id) => setPrimaryImage(id, setProductImages)}
             onRemoveProductImage={(id) => removeImage(id, setProductImages)}
-            onAddEditProductImages={(files, slotIndex) => addImages(files, setEditProductImages, slotIndex)}
+            onRetryProductImage={(id) => void retryManagedImage(id, productImages, setProductImages)}
+            onAddEditProductImages={(files, slotIndex) => addImages(files, editProductImages, setEditProductImages, slotIndex)}
             onSetPrimaryEditImage={(id) => setPrimaryImage(id, setEditProductImages)}
             onMoveEditImage={(id, dir) => moveImage(id, dir, setEditProductImages)}
             onRemoveEditImage={(id) => removeImage(id, setEditProductImages)}
+            onRetryEditImage={(id) => void retryManagedImage(id, editProductImages, setEditProductImages)}
             onEditFormChange={handleEditFormChange}
             onUpdateProduct={handleUpdateProduct}
             onCancelEditProduct={cancelEditProduct}
