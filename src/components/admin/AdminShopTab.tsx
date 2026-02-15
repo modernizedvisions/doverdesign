@@ -192,7 +192,6 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editImages, setEditImages] = useState<ManagedImage[]>([]);
-  const [activeProductSlot, setActiveProductSlot] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const maxModalImages = 4;
@@ -517,8 +516,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       if (e?.target) e.target.value = '';
                       return;
                     }
-                    onAddProductImages(files, activeProductSlot ?? undefined);
-                    setActiveProductSlot(null);
+                    onAddProductImages(files);
                     if (e?.target) e.target.value = '';
                   }}
                 />
@@ -531,7 +529,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     return (
                       <div
                         key={image.id}
-                        className="relative aspect-square rounded-shell-lg overflow-hidden border border-driftwood/60 bg-linen/80 cursor-pointer"
+                        className="relative aspect-square rounded-shell-lg overflow-hidden border border-driftwood/60 bg-linen/80"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
@@ -547,10 +545,6 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         }
                         onAddProductImages(files, index);
                       }}
-                        onClick={() => {
-                          setActiveProductSlot(index);
-                          productImageFileInputRef.current?.click();
-                        }}
                       >
                         <ProgressiveImage
                           src={image.previewUrl ?? image.url}
@@ -563,14 +557,20 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/40 px-2 py-1 text-xs text-white">
                           <button
                             type="button"
-                            onClick={() => onSetPrimaryProductImage(image.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSetPrimaryProductImage(image.id);
+                            }}
                             className={`px-2 py-1 rounded-shell ${image.isPrimary ? 'bg-white text-charcoal' : 'bg-black/30 text-white'}`}
                           >
                             {image.isPrimary ? 'Primary' : 'Set primary'}
                           </button>
                           <button
                             type="button"
-                            onClick={() => onRemoveProductImage(image.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRemoveProductImage(image.id);
+                            }}
                             className="text-red-100 hover:text-red-300"
                           >
                             Remove
@@ -582,7 +582,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                   return (
                     <div
                       key={index}
-                      className="flex items-center justify-center aspect-square rounded-shell-lg border-2 border-dashed border-driftwood/70 bg-linen/70 text-xs text-charcoal/40 cursor-pointer"
+                      className="flex items-center justify-center aspect-square rounded-shell-lg border-2 border-dashed border-driftwood/70 bg-linen/70 text-xs text-charcoal/40"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
@@ -597,10 +597,6 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                           return;
                         }
                         onAddProductImages(files, index);
-                      }}
-                      onClick={() => {
-                        setActiveProductSlot(index);
-                        productImageFileInputRef.current?.click();
                       }}
                     >
                       <span className="text-[11px] uppercase tracking-[0.22em] font-semibold">Empty Slot</span>
@@ -873,14 +869,20 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                             <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/40 px-2 py-1 text-xs text-white">
                               <button
                                 type="button"
-                                onClick={() => handleSetPrimaryModalImage(image.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSetPrimaryModalImage(image.id);
+                                }}
                                 className={`px-2 py-1 rounded-shell ${image.isPrimary ? 'bg-white text-charcoal' : 'bg-black/30 text-white'}`}
                               >
                                 {image.isPrimary ? 'Primary' : 'Set primary'}
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleRemoveModalImage(image.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveModalImage(image.id);
+                                }}
                                 className="text-red-100 hover:text-red-300"
                               >
                                 Remove
@@ -890,14 +892,12 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         );
                       }
                       return (
-                        <button
+                        <div
                           key={idx}
-                          type="button"
-                          onClick={() => editProductImageFileInputRef.current?.click()}
                           className="flex items-center justify-center aspect-square rounded-shell-lg border-2 border-dashed border-driftwood/70 bg-linen/70 text-xs text-charcoal/40"
                         >
-                          Upload
-                        </button>
+                          Empty Slot
+                        </div>
                       );
                     })}
                   </div>

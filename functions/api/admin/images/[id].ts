@@ -13,7 +13,6 @@ type D1Database = {
 
 type Env = {
   IMAGES_BUCKET?: R2Bucket;
-  ADMIN_PASSWORD?: string;
   DB?: D1Database;
 };
 
@@ -99,4 +98,3 @@ export async function onRequest(context: {
   }
   return json({ ok: false, code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' }, 405);
 }
-

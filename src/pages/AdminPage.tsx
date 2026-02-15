@@ -33,6 +33,7 @@ import {
   archiveAdminCustomOrder,
 } from '../lib/db/customOrders';
 import type { AdminCustomOrder } from '../lib/db/customOrders';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export type ProductFormState = {
   name: string;
@@ -104,12 +105,42 @@ const AdminTabBadge = ({ count, isActive }: AdminTabBadgeProps) => {
   );
 };
 
+type AdminTabKey = 'orders' | 'shop' | 'messages' | 'customOrders' | 'images' | 'sold' | 'promotions';
+
+const ADMIN_TAB_TO_PATH: Record<AdminTabKey, string> = {
+  orders: '/admin/customers',
+  shop: '/admin/shop',
+  messages: '/admin/messages',
+  customOrders: '/admin/custom-orders',
+  images: '/admin/images',
+  sold: '/admin/sold',
+  promotions: '/admin/promotions',
+};
+
+const ADMIN_TABS: Array<{ key: AdminTabKey; label: string; badge?: number }> = [
+  { key: 'orders', label: 'Orders', badge: 0 },
+  { key: 'shop', label: 'Shop' },
+  { key: 'messages', label: 'Messages', badge: 0 },
+  { key: 'promotions', label: 'Promotions' },
+  { key: 'customOrders', label: 'Custom Orders' },
+  { key: 'images', label: 'Images' },
+  { key: 'sold', label: 'Sold Products' },
+];
+
+const resolveTabFromPath = (pathname: string): AdminTabKey => {
+  if (pathname.startsWith('/admin/messages')) return 'messages';
+  if (pathname.startsWith('/admin/shop')) return 'shop';
+  if (pathname.startsWith('/admin/custom-orders')) return 'customOrders';
+  if (pathname.startsWith('/admin/images')) return 'images';
+  if (pathname.startsWith('/admin/sold')) return 'sold';
+  if (pathname.startsWith('/admin/promotions')) return 'promotions';
+  if (pathname.startsWith('/admin/customers') || pathname.startsWith('/admin/orders')) return 'orders';
+  return 'orders';
+};
+
 export function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
@@ -121,7 +152,6 @@ export function AdminPage() {
   const [adminProducts, setAdminProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [galleryImages, setGalleryImages] = useState<AdminGalleryItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'orders' | 'shop' | 'messages' | 'customOrders' | 'images' | 'sold' | 'promotions'>('orders');
   const [gallerySaveState, setGallerySaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [productSaveState, setProductSaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [editProductSaveState, setEditProductSaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -134,12 +164,12 @@ export function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const productImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const editProductImageFileInputRef = useRef<HTMLInputElement | null>(null);
-  const passwordInputRef = useRef<HTMLInputElement | null>(null);
   const [messages] = useState<any[]>([]);
   const [customOrders, setCustomOrders] = useState<AdminCustomOrder[]>([]);
   const [customOrderDraft, setCustomOrderDraft] = useState<any>(null);
   const [customOrdersError, setCustomOrdersError] = useState<string | null>(null);
   const [isLoadingCustomOrders, setIsLoadingCustomOrders] = useState(false);
+  const activeTab = useMemo(() => resolveTabFromPath(location.pathname), [location.pathname]);
 
   const filteredOrders = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -157,93 +187,28 @@ export function AdminPage() {
     });
   }, [orders, searchQuery]);
 
-  const formatCurrency = (cents: number, currency: string = 'usd') => {
-    const amount = (cents ?? 0) / 100;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-    }).format(amount);
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    const checkSession = async () => {
-      setIsCheckingSession(true);
-      try {
-        const res = await fetch('/api/admin/session', { credentials: 'include' });
-        if (cancelled) return;
-        if (res.ok) {
-          setIsAuthenticated(true);
-          await loadAdminData();
-        } else {
-          setIsAuthenticated(false);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setIsAuthenticated(false);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsCheckingSession(false);
-        }
-      }
-    };
-    void checkSession();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ message?: string }>).detail;
-      setError(detail?.message || 'Admin session expired. Please re-authenticate.');
-      setIsAuthenticated(false);
-      setIsLoading(false);
-      setPassword('');
-      setIsCheckingSession(false);
+      if (import.meta.env.DEV) {
+        console.debug('[admin auth] required', detail?.message || 'session invalid');
+      }
+      window.location.href = '/admin';
     };
     window.addEventListener('admin-auth-required', handler as EventListener);
     return () => window.removeEventListener('admin-auth-required', handler as EventListener);
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     if (activeTab === 'shop' || activeTab === 'sold') {
       loadAdminProducts();
       refreshSoldProducts();
     }
-  }, [activeTab, isAuthenticated]);
+  }, [activeTab]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password }),
-      });
-      if (res.ok) {
-        setIsAuthenticated(true);
-        setPassword('');
-        setError('');
-        await loadAdminData();
-      } else if (res.status === 401) {
-        setError('Invalid password');
-      } else {
-        const detail = await res.json().catch(() => null);
-        setError(detail?.error || 'Error verifying password');
-      }
-    } catch (err) {
-      setError('Error verifying password');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    void loadAdminData();
+  }, []);
 
   const loadAdminData = async () => {
     // Fetch orders first with explicit loading/error handling so UI never shows stale empty data.
@@ -344,10 +309,16 @@ export function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
-    void fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
-    setIsAuthenticated(false);
-    setPassword('');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.debug('[admin auth] logout request failed', error);
+      }
+    } finally {
+      window.location.href = '/admin';
+    }
   };
 
   const handleCreateCustomOrderFromMessage = (message: {
@@ -362,7 +333,7 @@ export function AdminPage() {
       description: message.message || '',
       messageId: message.id,
     });
-    setActiveTab('customOrders');
+    navigate(ADMIN_TAB_TO_PATH.customOrders);
   };
 
   const handleSelectOrder = (order: AdminOrder) => {
@@ -1032,65 +1003,6 @@ export function AdminPage() {
     return () => clearTimeout(timeout);
   }, [productStatus]);
 
-  if (isCheckingSession) {
-    return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="lux-card w-full max-w-md p-8 text-center">
-          <h2 className="lux-heading text-2xl mb-3">Checking session…</h2>
-          <p className="lux-subtitle text-sm">Please wait while we verify admin access.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="lux-card w-full max-w-md p-8 text-charcoal">
-          <h2 className="lux-heading text-2xl mb-6 text-center">
-            Admin Login
-          </h2>
-          <form onSubmit={handleLogin}>
-            <div className="mb-4">
-              <label htmlFor="password" className="lux-label mb-2 block">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                ref={passwordInputRef}
-                className="lux-input font-semibold tracking-[0.12em]"
-                required
-              />
-            </div>
-            {error && (
-              <div className="mb-4 rounded-shell border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-                <div className="flex items-center justify-between gap-3">
-                  <span>{error}</span>
-                  <button
-                    type="button"
-                    onClick={() => passwordInputRef.current?.focus()}
-                    className="text-xs font-semibold text-rose-800 underline"
-                  >
-                    Re-enter Admin Password
-                  </button>
-                </div>
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="lux-button w-full justify-center disabled:opacity-50"
-            >
-              {isLoading ? 'Logging in...' : 'Login'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -1108,20 +1020,13 @@ export function AdminPage() {
 
           <div className="mb-6 border-b border-driftwood/50 pb-2">
           <nav className="flex gap-3 justify-start md:justify-center overflow-x-auto overflow-y-visible whitespace-nowrap -mx-4 px-4 py-2 md:mx-0 md:px-0">
-            {[
-              { key: 'orders', label: 'Orders', badge: unseenOrders },
-              { key: 'shop', label: 'Shop' },
-              { key: 'messages', label: 'Messages', badge: unreadMessages },
-              { key: 'promotions', label: 'Promotions' },
-              { key: 'customOrders', label: 'Custom Orders' },
-              { key: 'images', label: 'Images' },
-              { key: 'sold', label: 'Sold Products' },
-            ].map((tab) => {
+            {ADMIN_TABS.map((tab) => {
               const isActive = activeTab === tab.key;
+              const badge = tab.key === 'orders' ? unseenOrders : tab.key === 'messages' ? unreadMessages : tab.badge;
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  onClick={() => navigate(ADMIN_TAB_TO_PATH[tab.key])}
                   className={`relative inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.24em] transition-all ${
                     isActive
                       ? 'lux-button shadow-none'
@@ -1129,7 +1034,7 @@ export function AdminPage() {
                   }`}
                 >
                   {tab.label}
-                  <AdminTabBadge count={tab.badge} isActive={isActive} />
+                  <AdminTabBadge count={badge} isActive={isActive} />
                 </button>
               );
             })}
@@ -1435,3 +1340,4 @@ function describeImageKinds(images: ManagedImage[]) {
 function findBase64Urls(urls: string[]) {
   return urls.filter((url) => isBlockedImageUrl(url));
 }
+

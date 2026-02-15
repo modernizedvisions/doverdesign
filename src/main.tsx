@@ -15,6 +15,7 @@ import { Toaster } from 'sonner';
 import './index.css';
 
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
+const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage })));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage })));
 const CheckoutReturnPage = lazy(() => import('./pages/CheckoutReturnPage').then((m) => ({ default: m.CheckoutReturnPage })));
 
@@ -56,6 +57,22 @@ createRoot(document.getElementById('root')!).render(
           />
           <Route
             path="admin"
+            element={
+              <Suspense fallback={<RouteLoading />}>
+                <AdminLoginPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="admin/login"
+            element={
+              <Suspense fallback={<RouteLoading />}>
+                <AdminLoginPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="admin/*"
             element={
               <Suspense fallback={<RouteLoading />}>
                 <AdminPage />

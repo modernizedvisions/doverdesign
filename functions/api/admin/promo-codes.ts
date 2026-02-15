@@ -152,7 +152,7 @@ const ensurePromoCodeSchema = async (db: D1Database) => {
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_promo_codes_enabled ON promo_codes(enabled);`).run();
 };
 
-export async function onRequest(context: { env: { DB: D1Database; ADMIN_PASSWORD?: string }; request: Request }): Promise<Response> {
+export async function onRequest(context: { env: { DB: D1Database }; request: Request }): Promise<Response> {
   const { request, env } = context;
   const method = request.method.toUpperCase();
 
@@ -394,4 +394,3 @@ export async function onRequest(context: { env: { DB: D1Database; ADMIN_PASSWORD
     return json({ error: 'Internal server error' }, 500);
   }
 }
-

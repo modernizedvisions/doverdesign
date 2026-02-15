@@ -5,7 +5,6 @@ type Env = {
   IMAGES_BUCKET?: R2Bucket;
   PUBLIC_IMAGES_BASE_URL?: string;
   IMAGE_DEBUG?: string;
-  ADMIN_PASSWORD?: string;
   DB?: {
     prepare(query: string): {
       bind(...values: unknown[]): any;
@@ -355,4 +354,3 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     );
   }
 }
-

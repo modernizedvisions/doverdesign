@@ -1,11 +1,4 @@
-import { parseCookie, COOKIE_NAME } from '../_lib/adminSession';
-import { requireAdmin } from '../_lib/adminAuth';
-
-type Env = {
-  ADMIN_SESSION_SECRET?: string;
-};
-
-const json = (data: unknown, status = 200) =>
+const json = (data: unknown, status = 410) =>
   new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -14,16 +7,7 @@ const json = (data: unknown, status = 200) =>
     },
   });
 
-export async function onRequestGet(context: { env: Env; request: Request }): Promise<Response> {
-  const unauthorized = await requireAdmin(context.request, context.env);
-  if (unauthorized) return unauthorized;
-
-  const provided = parseCookie(context.request.headers.get('Cookie'), COOKIE_NAME);
-  return json({
-    ok: true,
-    code: 'AUTHORIZED',
-    providedLength: provided?.length ?? 0,
-    hasProvided: !!provided,
-  });
+// Deprecated endpoint.
+export async function onRequestGet(): Promise<Response> {
+  return json({ ok: false, code: 'DEPRECATED_AUTH_ENDPOINT' });
 }
-

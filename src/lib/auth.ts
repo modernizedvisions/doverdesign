@@ -1,4 +1,5 @@
-// TODO: Validate against a hashed ADMIN_PASSWORD stored in D1 via a Cloudflare Worker.
-export async function verifyAdminPassword(password: string): Promise<boolean> {
-  return password === 'admin123';
+// Deprecated.
+// Admin auth now uses /api/admin/auth/login + server-side sessions in D1.
+export async function verifyAdminPassword(): Promise<boolean> {
+  return false;
 }
