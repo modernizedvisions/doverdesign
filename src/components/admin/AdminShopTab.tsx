@@ -199,6 +199,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const isDev = import.meta.env.DEV;
+  const hasCategories = categories.length > 0;
   const maxModalImages = 4;
   const isOptimizing = productImages.some((img) => img?.optimizing);
   const isUploading = productImages.some((img) => img?.uploading);
@@ -213,6 +214,21 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
         img.url?.startsWith('data:'))
   ).length;
   const failedCount = productImages.filter((img) => img?.uploadError).length;
+  const createSelectedCategory = useMemo(
+    () => categories.find((cat) => (cat.name || '') === productForm.category) || null,
+    [categories, productForm.category]
+  );
+  const editSelectedCategory = useMemo(
+    () =>
+      categories.find((cat) => (cat.name || '') === (editProductForm?.category || '')) || null,
+    [categories, editProductForm?.category]
+  );
+  const createOverrideAmountInvalid =
+    !!productForm.shippingOverrideEnabled &&
+    parseCurrencyToCents(productForm.shippingOverrideAmount) === null;
+  const editOverrideAmountInvalid =
+    !!editProductForm?.shippingOverrideEnabled &&
+    parseCurrencyToCents(editProductForm.shippingOverrideAmount) === null;
 
   useEffect(() => {
     if (!isDev) return;
@@ -421,7 +437,14 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                   <div className="flex gap-3 pt-2 md:mt-auto">
                     <button
                       type="submit"
-                      disabled={productSaveState === 'saving' || isUploading || failedCount > 0 || missingUrlCount > 0}
+                      disabled={
+                        productSaveState === 'saving' ||
+                        isUploading ||
+                        failedCount > 0 ||
+                        missingUrlCount > 0 ||
+                        createOverrideAmountInvalid ||
+                        !hasCategories
+                      }
                       className="lux-button px-4 py-2 text-[10px] disabled:opacity-50"
                     >
                       {productSaveState === 'saving' ? (
@@ -433,12 +456,27 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         'Save Product'
                       )}
                     </button>
-                    {(isUploading || failedCount > 0 || missingUrlCount > 0) && (
+                    {(isUploading ||
+                      failedCount > 0 ||
+                      missingUrlCount > 0 ||
+                      createOverrideAmountInvalid ||
+                      !hasCategories) && (
                       <span className="text-xs text-charcoal/60 self-center">
                         {isOptimizing && 'Optimizing images...'}
                         {!isOptimizing && isUploading && 'Uploading images...'}
                         {!isUploading && failedCount > 0 && 'Fix failed uploads (remove/retry) before saving.'}
-                        {!isUploading && failedCount === 0 && missingUrlCount > 0 && 'Some images didn’t finish uploading. Retry or remove.'}
+                        {!isUploading && failedCount === 0 && missingUrlCount > 0 && 'Some images did not finish uploading. Retry or remove.'}
+                        {!isUploading &&
+                          failedCount === 0 &&
+                          missingUrlCount === 0 &&
+                          createOverrideAmountInvalid &&
+                          'Enter a valid override shipping amount (0 or more).'}
+                        {!isUploading &&
+                          failedCount === 0 &&
+                          !createOverrideAmountInvalid &&
+                          missingUrlCount === 0 &&
+                          !hasCategories &&
+                          'Create at least one category before saving a product.'}
                       </span>
                     )}
                     <button
@@ -490,6 +528,45 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         );
                       })
                     )}
+                  </div>
+                  <p className="mt-2 text-xs text-charcoal/70">
+                    {productForm.category
+                      ? `Category shipping: ${formatPriceDisplay(createSelectedCategory?.shippingCents ?? 0)} (${productForm.category})`
+                      : 'Category shipping: Select a category to see shipping.'}
+                  </p>
+                  <div className="mt-3 rounded-shell-lg border border-driftwood/60 bg-white/70 p-3 space-y-3">
+                    <ToggleSwitch
+                      label="Override shipping"
+                      checked={!!productForm.shippingOverrideEnabled}
+                      onChange={(val) => onProductFormChange('shippingOverrideEnabled', val)}
+                    />
+                    {productForm.shippingOverrideEnabled && (
+                      <div>
+                        <label className="lux-label mb-2 block">Override amount</label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          pattern="^\\$?\\d*(\\.\\d{0,2})?$"
+                          value={formatCurrencyDisplay(productForm.shippingOverrideAmount)}
+                          onChange={(e) =>
+                            onProductFormChange('shippingOverrideAmount', sanitizeCurrencyInput(e.target.value))
+                          }
+                          onBlur={(e) =>
+                            onProductFormChange('shippingOverrideAmount', formatCurrencyValue(e.target.value))
+                          }
+                          placeholder="$0.00"
+                          className="lux-input"
+                        />
+                        {createOverrideAmountInvalid && (
+                          <p className="mt-1 text-xs text-rose-700">
+                            Enter a valid amount (0 or more).
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-charcoal/60">
+                      Override shipping replaces category/cart shipping rules.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -759,7 +836,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                 </button>
                 <button
                   type="submit"
-                  disabled={editProductSaveState === 'saving'}
+                  disabled={editProductSaveState === 'saving' || editOverrideAmountInvalid || !hasCategories}
                   className="lux-button px-3 py-1 text-[10px] disabled:opacity-50"
                 >
                   {editProductSaveState === 'saving' ? 'Saving...' : 'Save'}
@@ -851,6 +928,46 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         onChange={(val) => onEditFormChange('isActive', val)}
                       />
                     </div>
+                  </div>
+
+                  <div className="rounded-shell-lg border border-driftwood/60 bg-white/70 p-3 space-y-3">
+                    <p className="text-xs text-charcoal/70">
+                      {editProductForm?.category
+                        ? `Category shipping: ${formatPriceDisplay(editSelectedCategory?.shippingCents ?? 0)} (${editProductForm.category})`
+                        : 'Category shipping: Select a category to see shipping.'}
+                    </p>
+                    <ToggleSwitchSmall
+                      label="Override shipping"
+                      checked={!!editProductForm?.shippingOverrideEnabled}
+                      onChange={(val) => onEditFormChange('shippingOverrideEnabled', val)}
+                    />
+                    {editProductForm?.shippingOverrideEnabled && (
+                      <div>
+                        <label className="lux-label mb-2 block">Override amount</label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          pattern="^\\$?\\d*(\\.\\d{0,2})?$"
+                          value={formatCurrencyDisplay(editProductForm.shippingOverrideAmount || '')}
+                          onChange={(e) =>
+                            onEditFormChange('shippingOverrideAmount', sanitizeCurrencyInput(e.target.value))
+                          }
+                          onBlur={(e) =>
+                            onEditFormChange('shippingOverrideAmount', formatCurrencyValue(e.target.value))
+                          }
+                          placeholder="$0.00"
+                          className="lux-input text-sm"
+                        />
+                        {editOverrideAmountInvalid && (
+                          <p className="mt-1 text-xs text-rose-700">
+                            Enter a valid amount (0 or more).
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-charcoal/60">
+                      Override shipping replaces category/cart shipping rules.
+                    </p>
                   </div>
                 </div>
 
@@ -1043,6 +1160,14 @@ function formatCurrencyValue(value: string): string {
   const parsed = Number(sanitized);
   if (!Number.isFinite(parsed) || parsed < 0) return '';
   return parsed.toFixed(2);
+}
+
+function parseCurrencyToCents(value: string): number | null {
+  const sanitized = sanitizeCurrencyInput(value);
+  if (!sanitized) return null;
+  const parsed = Number(sanitized);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed * 100);
 }
 
 interface ToggleSwitchProps {

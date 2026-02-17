@@ -24,6 +24,8 @@ export interface Product {
   stripePriceId?: string | null;
   priceCents?: number;
   soldAt?: string;
+  shippingOverrideEnabled?: boolean;
+  shippingOverrideAmountCents?: number | null;
 }
 
 export interface CartItem {
@@ -38,6 +40,8 @@ export interface CartItem {
   stripePriceId?: string | null;
   category?: string | null;
   categories?: string[] | null;
+  shippingOverrideEnabled?: boolean;
+  shippingOverrideAmountCents?: number | null;
   optionGroupLabel?: string | null;
   optionValue?: string | null;
 }

@@ -1,4 +1,3 @@
-import { defaultShopCategoryTiles } from '../../src/lib/db/mockData';
 import { normalizeImageUrl } from './_lib/images';
 
 type D1PreparedStatement = {
@@ -44,12 +43,6 @@ type Category = {
   optionGroupOptions?: string[];
 };
 
-const OTHER_ITEMS_CATEGORY = {
-  id: 'other-items',
-  name: 'Other Items',
-  slug: 'other-items',
-};
-
 const createCategoriesTable = `
   CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY,
@@ -86,8 +79,7 @@ export async function onRequestGet(context: {
   env: { DB: D1Database };
   request: Request;
 }): Promise<Response> {
-  try {    await seedDefaultCategories(context.env.DB);
-    await ensureOtherItemsCategory(context.env.DB);
+  try {
 
     const { results } = await context.env.DB
       .prepare(
@@ -151,64 +143,8 @@ const parseOptionGroupOptions = (value?: string | null): string[] => {
   }
 };
 
-const toSlug = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '');
-
-async function seedDefaultCategories(db: D1Database) {
-  const existing = await db.prepare('SELECT COUNT(*) as count FROM categories').first<{ count: number | string }>();
-  const count = typeof existing?.count === 'number' ? existing.count : Number(existing?.count ?? 0);
-  if (count > 0) return;
-
-  for (const tile of defaultShopCategoryTiles) {
-    const id = tile.id || tile.categorySlug || crypto.randomUUID();
-    const name = tile.label;
-    const slug = tile.categorySlug || toSlug(tile.label);
-    const imageUrl = tile.imageUrl || null;
-    await db
-      .prepare(
-        `INSERT OR IGNORE INTO categories (id, name, slug, image_url, hero_image_url, show_on_homepage) VALUES (?, ?, ?, ?, ?, ?);`
-      )
-      .bind(id, name, slug, imageUrl, imageUrl, 1)
-      .run();
-  }
-}
-
 async function ensureCategorySchema(_db: D1Database) {
   return;
-}
-
-async function ensureOtherItemsCategory(db: D1Database) {
-  try {
-    const existing = await db
-      .prepare(`SELECT id, slug, name FROM categories WHERE LOWER(slug) IN (?, ?) OR LOWER(name) = ? LIMIT 1;`)
-      .bind(OTHER_ITEMS_CATEGORY.slug, 'uncategorized', OTHER_ITEMS_CATEGORY.name.toLowerCase())
-      .first<{ id: string | null; slug?: string | null; name?: string | null }>();
-
-    if (existing?.id) {
-      const normalizedSlug = toSlug(existing.slug || existing.name || '');
-      if (normalizedSlug !== OTHER_ITEMS_CATEGORY.slug) {
-        await db
-          .prepare(`UPDATE categories SET slug = ?, name = ?, show_on_homepage = 1 WHERE id = ?;`)
-          .bind(OTHER_ITEMS_CATEGORY.slug, OTHER_ITEMS_CATEGORY.name, existing.id)
-          .run();
-      }
-      return existing.id;
-    }
-
-    const id = OTHER_ITEMS_CATEGORY.id || crypto.randomUUID();
-    await db
-      .prepare(`INSERT INTO categories (id, name, slug, show_on_homepage) VALUES (?, ?, ?, 1);`)
-      .bind(id, OTHER_ITEMS_CATEGORY.name, OTHER_ITEMS_CATEGORY.slug)
-      .run();
-    return id;
-  } catch (error) {
-    console.error('Failed to ensure Other Items category', error);
-    return null;
-  }
 }
 
 

@@ -371,6 +371,8 @@ export function CheckoutPage() {
         {
           category: product.category ?? null,
           categories: product.categories ?? null,
+          shippingOverrideEnabled: product.shippingOverrideEnabled ?? false,
+          shippingOverrideAmountCents: product.shippingOverrideAmountCents ?? null,
         },
       ];
     }

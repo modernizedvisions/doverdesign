@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS products (
   stripe_price_id TEXT,
   stripe_product_id TEXT,
   collection TEXT,
+  shipping_override_enabled INTEGER NOT NULL DEFAULT 0,
+  shipping_override_amount_cents INTEGER,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

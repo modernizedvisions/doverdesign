@@ -68,16 +68,10 @@ export function ContactForm({
   }, []);
 
   const categoryChips = useMemo(() => {
-    const filtered = categories
-      .filter((category) => {
-        const name = (category.name || '').toLowerCase();
-        const slug = (category.slug || '').toLowerCase();
-        return name !== 'other items' && slug !== 'other-items';
-      })
-      .map((category) => ({
-        id: category.id,
-        name: category.name,
-      }));
+    const filtered = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+    }));
     return filtered;
   }, [categories]);
 

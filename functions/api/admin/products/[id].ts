@@ -35,6 +35,8 @@ type ProductRow = {
   stripe_price_id?: string | null;
   stripe_product_id?: string | null;
   collection?: string | null;
+  shipping_override_enabled?: number | null;
+  shipping_override_amount_cents?: number | null;
   created_at: string | null;
 };
 
@@ -53,6 +55,8 @@ type UpdateProductInput = {
   stripePriceId?: string;
   stripeProductId?: string;
   collection?: string;
+  shippingOverrideEnabled?: boolean;
+  shippingOverrideAmountCents?: number | null;
 };
 
 const mapRowToProduct = (row: ProductRow, request: Request, env: { PUBLIC_IMAGES_BASE_URL?: string }): Product => {
@@ -86,6 +90,12 @@ const mapRowToProduct = (row: ProductRow, request: Request, env: { PUBLIC_IMAGES
     priceCents: row.price_cents ?? undefined,
     soldAt: undefined,
     quantityAvailable: row.quantity_available ?? undefined,
+    shippingOverrideEnabled: row.shipping_override_enabled === 1,
+    shippingOverrideAmountCents:
+      Number.isFinite(row.shipping_override_amount_cents as number) &&
+      (row.shipping_override_amount_cents as number) >= 0
+        ? Number(row.shipping_override_amount_cents)
+        : null,
     slug: row.slug ?? undefined,
   };
 };
@@ -108,6 +118,12 @@ const toSlug = (value: string) =>
     .replace(/(^-|-$)+/g, '');
 
 const sanitizeCategory = (value: string | undefined | null) => (value || '').trim();
+const normalizeShippingOverrideAmountCents = (value: unknown): number | null => {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed);
+};
 
 const validateUpdate = (input: UpdateProductInput) => {
   if (input.priceCents !== undefined && input.priceCents < 0) {
@@ -115,6 +131,10 @@ const validateUpdate = (input: UpdateProductInput) => {
   }
   if (input.category !== undefined && !sanitizeCategory(input.category)) {
     return 'category cannot be empty';
+  }
+  if (input.shippingOverrideEnabled === true) {
+    const amount = normalizeShippingOverrideAmountCents(input.shippingOverrideAmountCents);
+    if (amount === null) return 'shippingOverrideAmountCents is required when shipping override is enabled';
   }
   return null;
 };
@@ -129,6 +149,8 @@ const REQUIRED_PRODUCT_COLUMNS: Record<string, string> = {
   stripe_price_id: 'stripe_price_id TEXT',
   stripe_product_id: 'stripe_product_id TEXT',
   collection: 'collection TEXT',
+  shipping_override_enabled: 'shipping_override_enabled INTEGER NOT NULL DEFAULT 0',
+  shipping_override_amount_cents: 'shipping_override_amount_cents INTEGER',
 };
 
 const createProductsTable = `
@@ -150,6 +172,8 @@ const createProductsTable = `
     stripe_price_id TEXT,
     stripe_product_id TEXT,
     collection TEXT,
+    shipping_override_enabled INTEGER NOT NULL DEFAULT 0,
+    shipping_override_amount_cents INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `;
@@ -319,7 +343,7 @@ export async function onRequestPut(context: {
       SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json,
              primary_image_id, image_ids_json,
              is_active, is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id,
-             collection, created_at
+             collection, shipping_override_enabled, shipping_override_amount_cents, created_at
       FROM products WHERE id = ?;
     `
     )
@@ -442,6 +466,27 @@ export async function onRequestPut(context: {
       if (body.stripeProductId !== undefined) addSet('stripe_product_id = ?', body.stripeProductId);
     }
     if (body.collection !== undefined) addSet('collection = ?', body.collection);
+    if (body.shippingOverrideEnabled !== undefined || body.shippingOverrideAmountCents !== undefined) {
+      const existingOverrideEnabled = existing.shipping_override_enabled === 1;
+      const targetOverrideEnabled =
+        body.shippingOverrideEnabled !== undefined ? body.shippingOverrideEnabled === true : existingOverrideEnabled;
+      const targetOverrideAmount = normalizeShippingOverrideAmountCents(
+        body.shippingOverrideAmountCents !== undefined
+          ? body.shippingOverrideAmountCents
+          : existing.shipping_override_amount_cents
+      );
+      if (targetOverrideEnabled && targetOverrideAmount === null) {
+        return new Response(
+          JSON.stringify({ error: 'shippingOverrideAmountCents is required when shipping override is enabled' }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      addSet('shipping_override_enabled = ?', targetOverrideEnabled ? 1 : 0);
+      addSet('shipping_override_amount_cents = ?', targetOverrideEnabled ? targetOverrideAmount : null);
+    }
 
     if (!sets.length) {
       return new Response(JSON.stringify({ error: 'No fields to update' }), {
@@ -471,7 +516,7 @@ export async function onRequestPut(context: {
       SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json,
              primary_image_id, image_ids_json,
              is_active, is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id,
-             collection, created_at
+             collection, shipping_override_enabled, shipping_override_amount_cents, created_at
       FROM products WHERE id = ?;
     `
     )

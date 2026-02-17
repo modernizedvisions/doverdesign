@@ -3,6 +3,10 @@ import type { Category } from './types';
 export type ShippingItem = {
   category?: string | null;
   categories?: Array<string | null> | null;
+  shippingOverrideEnabled?: boolean | number | null;
+  shipping_override_enabled?: boolean | number | null;
+  shippingOverrideAmountCents?: number | null;
+  shipping_override_amount_cents?: number | null;
 };
 
 const normalizeCategoryKey = (value: string) =>
@@ -24,7 +28,7 @@ const buildCategoryShippingMap = (categories: Category[]) => {
     const nameKey = cat.name ? normalizeCategoryKey(cat.name) : '';
     [slugKey, nameKey].filter(Boolean).forEach((key) => {
       const existing = map.get(key);
-      if (existing === undefined || shippingCents < existing) {
+      if (existing === undefined || shippingCents > existing) {
         map.set(key, shippingCents);
       }
     });
@@ -32,35 +36,67 @@ const buildCategoryShippingMap = (categories: Category[]) => {
   return map;
 };
 
-const resolveItemShippingCents = (item: ShippingItem, map: Map<string, number>): number | null => {
+const normalizeOverrideEnabled = (value: unknown): boolean =>
+  value === true || value === 1 || value === '1';
+
+const normalizeOverrideAmountCents = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed);
+};
+
+const resolveOverrideShippingCents = (item: ShippingItem): number | null => {
+  const enabled = normalizeOverrideEnabled(
+    item.shippingOverrideEnabled ?? item.shipping_override_enabled
+  );
+  if (!enabled) return null;
+
+  return normalizeOverrideAmountCents(
+    item.shippingOverrideAmountCents ?? item.shipping_override_amount_cents
+  );
+};
+
+const resolveItemCategoryShippingCents = (item: ShippingItem, map: Map<string, number>): number => {
   const categories = [
     item.category,
     ...(Array.isArray(item.categories) ? item.categories : []),
   ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
-  if (!categories.length) return null;
+  if (!categories.length) return 0;
 
-  let itemMin: number | null = null;
+  let itemMax = 0;
   for (const raw of categories) {
     const key = normalizeCategoryKey(raw);
     if (!key || !map.has(key)) continue;
     const shipping = map.get(key) ?? 0;
-    if (shipping === 0) return 0;
-    if (itemMin === null || shipping < itemMin) itemMin = shipping;
+    if (shipping > itemMax) itemMax = shipping;
   }
-  return itemMin;
+  return itemMax;
 };
 
-// Centralized shipping rule for frontend display (must match server helper).
+// Centralized shipping rule for frontend display (must match server helper):
+// 1) If any product override is enabled, shipping = max(enabled override amounts)
+// 2) Otherwise shipping = max(category shipping requirements across items)
 export function calculateShippingCents(items: ShippingItem[], categories: Category[]): number {
-  if (!items.length || !categories.length) return 0;
+  if (!items.length) return 0;
+
   const map = buildCategoryShippingMap(categories);
-  let orderMin: number | null = null;
+  let overrideMax: number | null = null;
+  let categoryMax = 0;
+
   for (const item of items) {
-    const itemShipping = resolveItemShippingCents(item, map);
-    if (itemShipping === 0) return 0;
-    if (itemShipping !== null && (orderMin === null || itemShipping < orderMin)) {
-      orderMin = itemShipping;
+    const overrideShipping = resolveOverrideShippingCents(item);
+    if (overrideShipping !== null) {
+      if (overrideMax === null || overrideShipping > overrideMax) {
+        overrideMax = overrideShipping;
+      }
+      continue;
     }
+
+    const categoryShipping = resolveItemCategoryShippingCents(item, map);
+    if (categoryShipping > categoryMax) categoryMax = categoryShipping;
   }
-  return orderMin ?? 0;
+
+  if (overrideMax !== null) return overrideMax;
+  return categoryMax;
 }

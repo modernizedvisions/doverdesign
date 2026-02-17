@@ -11,15 +11,6 @@ interface CategoryCardEditorProps {
   isBusy?: boolean;
 }
 
-const OTHER_ITEMS_CATEGORY = {
-  slug: 'other-items',
-  name: 'Other Items',
-};
-
-const isOtherItemsCategory = (category: Category) =>
-  (category.slug || '').toLowerCase() === OTHER_ITEMS_CATEGORY.slug ||
-  (category.name || '').trim().toLowerCase() === OTHER_ITEMS_CATEGORY.name.toLowerCase();
-
 export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: CategoryCardEditorProps) {
   const [name, setName] = useState(category.name);
   const [isSavingName, setIsSavingName] = useState(false);
@@ -43,7 +34,6 @@ export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: Cat
   };
 
   const handleDelete = async () => {
-    if (isOtherItemsCategory(category)) return;
     const confirmed = window.confirm(`Delete category "${category.name}"?`);
     if (!confirmed) return;
     await onDelete(category.id);
@@ -136,19 +126,15 @@ export function CategoryCardEditor({ category, onUpdate, onDelete, isBusy }: Cat
             Show on Home Page
           </label>
 
-          {isOtherItemsCategory(category) ? (
-            <span className="text-xs text-charcoal/60">Required</span>
-          ) : (
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isBusy}
-              className="inline-flex items-center gap-1 text-sm text-rose-700 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isBusy}
+            className="inline-flex items-center gap-1 text-sm text-rose-700 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
         </div>
       </div>
     </div>

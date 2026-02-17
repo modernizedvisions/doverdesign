@@ -47,6 +47,8 @@ const loadCartFromStorage = (): CartItem[] => {
             stripePriceId: (item as CartItem).stripePriceId ?? (item as CartItemLegacy).stripePriceId ?? null,
             category: (item as CartItem).category ?? null,
             categories: (item as CartItem).categories ?? null,
+            shippingOverrideEnabled: (item as CartItem).shippingOverrideEnabled ?? false,
+            shippingOverrideAmountCents: (item as CartItem).shippingOverrideAmountCents ?? null,
             optionGroupLabel: (item as CartItem).optionGroupLabel ?? null,
             optionValue: (item as CartItem).optionValue ?? null,
           }))

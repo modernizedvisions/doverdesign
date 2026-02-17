@@ -56,6 +56,8 @@ export function ProductCard({ product, categoryOptionLookup }: ProductCardProps)
       stripePriceId: product.stripePriceId ?? null,
       category: product.category ?? null,
       categories: product.categories ?? null,
+      shippingOverrideEnabled: product.shippingOverrideEnabled ?? false,
+      shippingOverrideAmountCents: product.shippingOverrideAmountCents ?? null,
     });
     setCartDrawerOpen(true);
   };

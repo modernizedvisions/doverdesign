@@ -5,13 +5,6 @@ import { Category, Product } from '../lib/types';
 import { buildCategoryOptionLookup, normalizeCategoryKey } from '../lib/categoryOptions';
 import { ProductGrid } from '../components/ProductGrid';
 
-const OTHER_ITEMS_CATEGORY: Category = {
-  id: 'other-items',
-  name: 'Other Items',
-  slug: 'other-items',
-  showOnHomePage: true,
-};
-
 const toSlug = (value: string) => normalizeCategoryKey(value);
 
 const ensureCategoryDefaults = (category: Category): Category => ({
@@ -20,23 +13,6 @@ const ensureCategoryDefaults = (category: Category): Category => ({
   slug: category.slug || toSlug(category.name || ''),
   showOnHomePage: category.showOnHomePage ?? true,
 });
-
-const mergeCategories = (apiCategories: Category[], derivedCategories: Category[]): Category[] => {
-  const merged = new Map<string, Category>();
-  const upsert = (category: Category, preferOverride = false) => {
-    const normalizedKey = toSlug(category.slug || category.name || '');
-    if (!normalizedKey) return;
-    const next = ensureCategoryDefaults(category);
-    if (preferOverride || !merged.has(normalizedKey)) {
-      merged.set(normalizedKey, next);
-    }
-  };
-
-  derivedCategories.forEach((category) => upsert(category, false));
-  apiCategories.forEach((category) => upsert(category, true));
-
-  return Array.from(merged.values());
-};
 
 const dedupeCategories = (categories: Category[]): Category[] => {
   const seen = new Set<string>();
@@ -48,34 +24,6 @@ const dedupeCategories = (categories: Category[]): Category[] => {
     result.push(ensureCategoryDefaults(category));
   });
   return result;
-};
-
-const deriveCategoriesFromProducts = (items: Product[]): Category[] => {
-  const names = new Map<string, string>();
-  const addName = (name?: string | null) => {
-    const trimmed = (name || '').trim();
-    if (!trimmed) return;
-    const slug = toSlug(trimmed);
-    if (!names.has(slug)) names.set(slug, trimmed);
-  };
-
-  items.forEach((product) => {
-    addName(product.type);
-    addName((product as any).category);
-    if (Array.isArray(product.categories)) {
-      product.categories.forEach((c) => addName(c));
-    }
-    if (Array.isArray((product as any).categories)) {
-      (product as any).categories.forEach((c: unknown) => {
-        if (typeof c === 'string') addName(c);
-      });
-    }
-  });
-
-  const derived = Array.from(names.entries()).map(
-    ([slug, name]): Category => ({ id: slug, slug, name, showOnHomePage: true })
-  );
-  return derived;
 };
 
 const getProductCategoryNames = (product: Product): string[] => {
@@ -109,22 +57,6 @@ const buildCategoryLookups = (categoryList: Category[]) => {
     if (normalizedName) nameLookup.set(normalizedName, cat.slug);
   });
   return { slugLookup, nameLookup };
-};
-
-const ensureOtherItemsCategory = (categories: Category[], products: Product[]): Category[] => {
-  const normalizedOtherItems = toSlug(OTHER_ITEMS_CATEGORY.slug);
-  const hasOtherItems = categories.some(
-    (cat) => toSlug(cat.slug) === normalizedOtherItems || toSlug(cat.name) === normalizedOtherItems
-  );
-  const lookups = buildCategoryLookups(categories);
-  const needsFallback = products.some((product) => {
-    const resolution = resolveCategorySlugForProduct(product, categories, lookups);
-    return !resolution.slug;
-  });
-
-  if (hasOtherItems || !needsFallback) return categories;
-
-  return [...categories, OTHER_ITEMS_CATEGORY];
 };
 
 const resolveCategorySlugForProduct = (
@@ -202,14 +134,6 @@ const CATEGORY_COPY: Record<string, { title: string; description: string }> = {
     title: 'WINE STOPPERS',
     description: 'Hand-crafted shell stoppers for your favorite bottles.',
   },
-  'other-items': {
-    title: 'OTHER ITEMS',
-    description: '',
-  },
-  'other items': {
-    title: 'OTHER ITEMS',
-    description: '',
-  },
 };
 
 export function ShopPage() {
@@ -221,11 +145,8 @@ export function ShopPage() {
   const isDev = import.meta.env?.DEV;
 
   const categoryList = useMemo(() => {
-    const baseList = categories.length ? categories : deriveCategoriesFromProducts(products);
-    const deduped = dedupeCategories(baseList);
-    const withFallback = ensureOtherItemsCategory(deduped, products);
-    return dedupeCategories(withFallback);
-  }, [categories, products]);
+    return dedupeCategories(categories);
+  }, [categories]);
 
   useEffect(() => {
     loadProducts();
@@ -279,23 +200,21 @@ export function ShopPage() {
       groups[c.slug] = [];
     });
 
-    const fallbackSlug = OTHER_ITEMS_CATEGORY.slug;
     const lookups = buildCategoryLookups(categoryList);
 
     products.forEach((product) => {
-      const resolution = resolveCategorySlugForProduct(product, categoryList, lookups, fallbackSlug);
-      const key = resolution.slug || fallbackSlug;
-      if (isDev && (resolution.matchedBy === 'fallback' || !resolution.slug)) {
+      const resolution = resolveCategorySlugForProduct(product, categoryList, lookups);
+      if (isDev && !resolution.slug) {
         console.log('[ShopPage][category-fallback]', {
           productId: product.id,
           productName: product.name,
           candidateNames: resolution.candidateNames,
           normalizedCandidates: resolution.normalizedCandidates,
-          fallbackSlug,
           resolvedSlug: resolution.slug,
           matchedBy: resolution.matchedBy,
         });
       }
+      const key = resolution.slug;
       if (!key) return;
       if (!groups[key]) groups[key] = [];
       groups[key].push(product);
@@ -411,40 +330,46 @@ export function ShopPage() {
             <p className="text-gray-500">Loading products...</p>
           </div>
         ) : (
-          <div className="space-y-12">
-            {sectionCategories.map((category) => {
-              const items = groupedProducts[category.slug] || [];
-              if (items.length === 0) return null;
+          sectionCategories.length === 0 ? (
+            <div className="text-center py-12 border border-dashed border-driftwood/60 rounded-shell-lg bg-white/60">
+              <p className="text-charcoal/70">No categories yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-12">
+              {sectionCategories.map((category) => {
+                const items = groupedProducts[category.slug] || [];
+                if (items.length === 0) return null;
 
-              const copyKey = category.slug.toLowerCase();
-              const copy =
-                CATEGORY_COPY[copyKey] ||
-                CATEGORY_COPY[(category.name || '').toLowerCase()] ||
-                null;
-              const subtitle = (category.subtitle || copy?.description || '').trim();
-              const title = copy?.title || category.name;
+                const copyKey = category.slug.toLowerCase();
+                const copy =
+                  CATEGORY_COPY[copyKey] ||
+                  CATEGORY_COPY[(category.name || '').toLowerCase()] ||
+                  null;
+                const subtitle = (category.subtitle || copy?.description || '').trim();
+                const title = copy?.title || category.name;
 
-              return (
-                <section
-                  key={category.slug}
-                  id={`category-section-${category.slug}`}
-                  className="mb-10"
-                >
-                  <div className="text-center mb-6 space-y-2">
-                    <h2 className="text-2xl sm:text-3xl font-serif tracking-[0.03em] text-deep-ocean">
-                      {title}
-                    </h2>
-                    {subtitle && (
-                      <p className="mt-1 text-sm font-sans text-charcoal/70">{subtitle}</p>
-                    )}
-                  </div>
-                  <div className="rounded-2xl border border-driftwood/40 bg-linen/90 shadow-sm p-4 sm:p-6">
-                    <ProductGrid products={items} categoryOptionLookup={optionLookup} />
-                  </div>
-                </section>
-              );
-            })}
-          </div>
+                return (
+                  <section
+                    key={category.slug}
+                    id={`category-section-${category.slug}`}
+                    className="mb-10"
+                  >
+                    <div className="text-center mb-6 space-y-2">
+                      <h2 className="text-2xl sm:text-3xl font-serif tracking-[0.03em] text-deep-ocean">
+                        {title}
+                      </h2>
+                      {subtitle && (
+                        <p className="mt-1 text-sm font-sans text-charcoal/70">{subtitle}</p>
+                      )}
+                    </div>
+                    <div className="rounded-2xl border border-driftwood/40 bg-linen/90 shadow-sm p-4 sm:p-6">
+                      <ProductGrid products={items} categoryOptionLookup={optionLookup} />
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )
         )}
       </div>
     </div>

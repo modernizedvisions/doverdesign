@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS products (
   stripe_price_id TEXT,
   stripe_product_id TEXT,
   collection TEXT,
+  shipping_override_enabled INTEGER NOT NULL DEFAULT 0,
+  shipping_override_amount_cents INTEGER,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -360,9 +362,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_order_rate_quotes_order_key ON order_rate_
 CREATE INDEX IF NOT EXISTS idx_order_rate_quotes_expires ON order_rate_quotes(expires_at);
 
 -- Baseline rows
--- Other Items is enforced as non-deletable by API logic; schema has no dedicated flag.
-INSERT OR IGNORE INTO categories (id, name, slug, show_on_homepage)
-VALUES ('other-items', 'Other Items', 'other-items', 1);
-
 INSERT OR IGNORE INTO site_content (key, json)
 VALUES ('home', '{}');

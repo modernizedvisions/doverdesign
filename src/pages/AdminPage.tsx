@@ -42,6 +42,8 @@ export type ProductFormState = {
   description: string;
   price: string;
   category: string;
+  shippingOverrideEnabled: boolean;
+  shippingOverrideAmount: string;
   imageUrl: string;
   imageUrls: string;
   quantityAvailable: number;
@@ -77,6 +79,8 @@ const initialProductForm: ProductFormState = {
   description: '',
   price: '',
   category: '',
+  shippingOverrideEnabled: false,
+  shippingOverrideAmount: '',
   imageUrl: '',
   imageUrls: '',
   quantityAvailable: 1,
@@ -989,16 +993,26 @@ export function AdminPage() {
         throw new Error('Images must be uploaded first (no blob/data URLs).');
       }
       const uploaded = await resolveImageUrls(productImages);
-        const mergedImages = mergeImages(uploaded, manualUrls);
-        const imageIdsPayload = deriveImagePayload(productImages);
+      const mergedImages = mergeImages(uploaded, manualUrls);
+      const imageIdsPayload = deriveImagePayload(productImages);
+      const shippingOverrideAmountCents = parseShippingOverrideAmountCents(productForm.shippingOverrideAmount);
+      if (productForm.shippingOverrideEnabled && shippingOverrideAmountCents === null) {
+        setProductStatus({
+          type: 'error',
+          message: 'Override shipping amount is required when shipping override is enabled.',
+        });
+        setProductSaveState('error');
+        setTimeout(() => setProductSaveState('idle'), 1500);
+        return;
+      }
 
-        const payload = {
-          ...formStateToPayload(productForm),
-          imageUrl: mergedImages.imageUrl,
-          imageUrls: mergedImages.imageUrls,
-          primaryImageId: imageIdsPayload.primaryImageId,
-          imageIds: imageIdsPayload.imageIds,
-        };
+      const payload = {
+        ...formStateToPayload(productForm),
+        imageUrl: mergedImages.imageUrl,
+        imageUrls: mergedImages.imageUrls,
+        primaryImageId: imageIdsPayload.primaryImageId,
+        imageIds: imageIdsPayload.imageIds,
+      };
 
       const payloadBytes = new Blob([JSON.stringify(payload)]).size;
       console.debug('[shop save] request', { url: '/api/admin/products', method: 'POST', bytes: payloadBytes });
@@ -1073,6 +1087,18 @@ export function AdminPage() {
         throw new Error('Images must be uploaded first (no blob/data URLs).');
       }
       const mergedImages = deriveImagePayload(editProductImages);
+      const shippingOverrideAmountCents = parseShippingOverrideAmountCents(
+        editProductForm.shippingOverrideAmount
+      );
+      if (editProductForm.shippingOverrideEnabled && shippingOverrideAmountCents === null) {
+        setProductStatus({
+          type: 'error',
+          message: 'Override shipping amount is required when shipping override is enabled.',
+        });
+        setEditProductSaveState('error');
+        setTimeout(() => setEditProductSaveState('idle'), 1500);
+        return false;
+      }
 
       const payload = {
         ...formStateToPayload(editProductForm),
@@ -1402,11 +1428,20 @@ export function AdminPage() {
 }
 
 function productToFormState(product: Product): ProductFormState {
+  const shippingOverrideAmountCents =
+    Number.isFinite(product.shippingOverrideAmountCents as number) &&
+    (product.shippingOverrideAmountCents as number) >= 0
+      ? Number(product.shippingOverrideAmountCents)
+      : null;
+
   return {
     name: product.name,
     description: product.description,
     price: product.priceCents ? (product.priceCents / 100).toFixed(2) : '',
     category: normalizeCategoryValue(product.type || (product as any).category) || '',
+    shippingOverrideEnabled: product.shippingOverrideEnabled ?? false,
+    shippingOverrideAmount:
+      shippingOverrideAmountCents !== null ? (shippingOverrideAmountCents / 100).toFixed(2) : '',
     imageUrl: product.imageUrl,
     imageUrls: product.imageUrls ? product.imageUrls.join(',') : '',
     quantityAvailable: product.quantityAvailable ?? 1,
@@ -1423,6 +1458,7 @@ function formStateToPayload(state: ProductFormState) {
   const parsedImages = parseImageUrls(state.imageUrls);
   const quantityAvailable = state.isOneOff ? 1 : Math.max(1, Number(state.quantityAvailable) || 1);
   const category = normalizeCategoryValue(state.category);
+  const shippingOverrideAmountCents = parseShippingOverrideAmountCents(state.shippingOverrideAmount);
 
   return {
     name: state.name.trim(),
@@ -1430,6 +1466,8 @@ function formStateToPayload(state: ProductFormState) {
     priceCents: Math.round(priceNumber * 100),
     category,
     categories: category ? [category] : undefined,
+    shippingOverrideEnabled: state.shippingOverrideEnabled,
+    shippingOverrideAmountCents: state.shippingOverrideEnabled ? shippingOverrideAmountCents : null,
     imageUrl: state.imageUrl.trim(),
     imageUrls: parsedImages,
     quantityAvailable,
@@ -1447,6 +1485,13 @@ function parseImageUrls(value: string): string[] {
     .split(/[\n,]+/)
     .map((v) => v.trim())
     .filter(Boolean);
+}
+
+function parseShippingOverrideAmountCents(value: string): number | null {
+  if ((value || '').trim() === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed * 100);
 }
 
 function mergeManualImages(state: ProductFormState): { imageUrl: string; imageUrls: string[] } {

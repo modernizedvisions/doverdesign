@@ -28,6 +28,8 @@ type ProductRow = {
   stripe_price_id?: string | null;
   stripe_product_id?: string | null;
   collection?: string | null;
+  shipping_override_enabled?: number | null;
+  shipping_override_amount_cents?: number | null;
   created_at: string | null;
 };
 
@@ -273,7 +275,8 @@ export const onRequestPost = async (context: {
     const productsRes = await env.DB.prepare(
       `
       SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json, is_active,
-             is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id, collection, created_at
+             is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id, collection,
+             shipping_override_enabled, shipping_override_amount_cents, created_at
       FROM products
       WHERE id IN (${placeholders}) OR stripe_product_id IN (${placeholders});
     `
@@ -338,7 +341,11 @@ export const onRequestPost = async (context: {
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     let subtotalCents = 0;
-    const itemsForShipping: Array<{ category?: string | null }> = [];
+    const itemsForShipping: Array<{
+      category?: string | null;
+      shippingOverrideEnabled?: boolean;
+      shippingOverrideAmountCents?: number | null;
+    }> = [];
     const cartCategoryKeys: string[] = [];
 
     for (const pid of productIds) {
@@ -491,7 +498,15 @@ export const onRequestPost = async (context: {
       if (autoPercent === appliedPercent && autoPercent > 0) autoPercentApplied = true;
       maxPercentApplied = Math.max(maxPercentApplied, appliedPercent);
       subtotalCents += (product.price_cents ?? 0) * quantity;
-      itemsForShipping.push({ category: product.category ?? null });
+      itemsForShipping.push({
+        category: product.category ?? null,
+        shippingOverrideEnabled: product.shipping_override_enabled === 1,
+        shippingOverrideAmountCents:
+          Number.isFinite(product.shipping_override_amount_cents as number) &&
+          (product.shipping_override_amount_cents as number) >= 0
+            ? Number(product.shipping_override_amount_cents)
+            : null,
+      });
     }
 
     const checkoutOrigin = resolveCheckoutOrigin(env.VITE_PUBLIC_SITE_URL, request);

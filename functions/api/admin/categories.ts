@@ -1,4 +1,3 @@
-import { defaultShopCategoryTiles } from '../../../src/lib/db/mockData';
 import {
   normalizeImageUrl,
   resolveImageIdsToUrls,
@@ -47,12 +46,6 @@ type Category = {
   sortOrder?: number;
   optionGroupLabel?: string | null;
   optionGroupOptions?: string[];
-};
-
-const OTHER_ITEMS_CATEGORY = {
-  id: 'other-items',
-  name: 'Other Items',
-  slug: 'other-items',
 };
 
 const createCategoriesTable = `
@@ -174,8 +167,7 @@ export async function onRequest(context: { env: { DB: D1Database }; request: Req
 
   try {
     const unauthorized = await requireAdmin(context.request, context.env);
-    if (unauthorized) return unauthorized;    await seedDefaultCategories(context.env.DB);
-    await ensureOtherItemsCategory(context.env.DB);
+    if (unauthorized) return unauthorized;
 
     if (method === 'GET') {
       return handleGet(context.env.DB, context.request, context.env);
@@ -418,32 +410,27 @@ async function handleDelete(db: D1Database, request: Request): Promise<Response>
 
   if (!existing) return json({ error: 'Category not found' }, 404);
 
-  const normalized = toSlug(existing.slug || existing.name);
-  if (normalized === OTHER_ITEMS_CATEGORY.slug) {
-    return json({ error: 'Cannot delete Other Items category' }, 400);
-  }
-
-  await ensureOtherItemsCategory(db);
-
   const normalizedTarget = toSlug(existing.slug || existing.name);
   try {
     const { results } = await db
       .prepare(`SELECT id, category FROM products WHERE category IS NOT NULL;`)
       .all<{ id: string; category: string | null }>();
 
-    const toUpdate =
+    const linkedProducts =
       results?.filter((row) => row?.id && toSlug(row.category) === normalizedTarget).map((row) => row.id) || [];
 
-    if (toUpdate.length) {
-      const placeholders = toUpdate.map(() => '?').join(', ');
-      await db
-        .prepare(`UPDATE products SET category = ? WHERE id IN (${placeholders});`)
-        .bind(OTHER_ITEMS_CATEGORY.slug, ...toUpdate)
-        .run();
+    if (linkedProducts.length > 0) {
+      return json(
+        {
+          error: 'category_in_use',
+          detail: 'Cannot delete category while products are assigned. Reassign products first.',
+        },
+        400
+      );
     }
   } catch (error) {
-    console.error('Failed to reassign products to Other Items', error);
-    return json({ error: 'Failed to reassign products to Other Items' }, 500);
+    console.error('Failed to check linked products for category delete', error);
+    return json({ error: 'Failed to validate category delete' }, 500);
   }
 
   const result = await db.prepare(`DELETE FROM categories WHERE id = ?;`).bind(id).run();
@@ -485,26 +472,6 @@ const toSlug = (value: string | undefined | null) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
 
-async function seedDefaultCategories(db: D1Database) {
-  const existing = await db.prepare('SELECT COUNT(*) as count FROM categories').first<{ count: number | string }>();
-  const count = typeof existing?.count === 'number' ? existing.count : Number(existing?.count ?? 0);
-  if (count > 0) return;
-
-  for (const tile of defaultShopCategoryTiles) {
-    const id = tile.id || tile.categorySlug || crypto.randomUUID();
-    const name = tile.label;
-    const slug = tile.categorySlug || toSlug(tile.label);
-    const imageUrl = tile.imageUrl || null;
-    const heroImageUrl = tile.imageUrl || null;
-    await db
-      .prepare(
-        `INSERT OR IGNORE INTO categories (id, name, slug, image_url, hero_image_url, show_on_homepage) VALUES (?, ?, ?, ?, ?, ?);`
-      )
-      .bind(id, name, slug, imageUrl, heroImageUrl, 1)
-      .run();
-  }
-}
-
 async function ensureCategorySchema(_db: D1Database) {
   return;
 }
@@ -514,42 +481,6 @@ const json = (data: unknown, status = 200) =>
     status,
     headers: { 'Content-Type': 'application/json' },
   });
-
-async function ensureOtherItemsCategory(db: D1Database) {
-  try {
-    const existing = await db
-      .prepare(`SELECT id, slug, name FROM categories WHERE LOWER(slug) IN (?, ?) OR LOWER(name) = ? LIMIT 1;`)
-      .bind(OTHER_ITEMS_CATEGORY.slug, 'uncategorized', OTHER_ITEMS_CATEGORY.name.toLowerCase())
-      .first<{ id: string | null; slug?: string | null; name?: string | null }>();
-
-    if (existing?.id) {
-      const normalizedSlug = toSlug(existing.slug || existing.name || '');
-      if (normalizedSlug !== OTHER_ITEMS_CATEGORY.slug) {
-        await db
-          .prepare(`UPDATE categories SET slug = ?, name = ?, show_on_homepage = 1 WHERE id = ?;`)
-          .bind(OTHER_ITEMS_CATEGORY.slug, OTHER_ITEMS_CATEGORY.name, existing.id)
-          .run();
-        await db
-          .prepare(`UPDATE products SET category = ? WHERE LOWER(TRIM(category)) = ?;`)
-          .bind(OTHER_ITEMS_CATEGORY.slug, 'uncategorized')
-          .run();
-      }
-      return existing.id;
-    }
-
-    const id = OTHER_ITEMS_CATEGORY.id || crypto.randomUUID();
-    const name = OTHER_ITEMS_CATEGORY.name;
-    const slug = OTHER_ITEMS_CATEGORY.slug;
-    await db
-      .prepare(`INSERT INTO categories (id, name, slug, show_on_homepage) VALUES (?, ?, ?, 1);`)
-      .bind(id, name, slug)
-      .run();
-    return id;
-  } catch (error) {
-    console.error('Failed to ensure Other Items category', error);
-    return null;
-  }
-}
 
 
 

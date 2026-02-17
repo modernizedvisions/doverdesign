@@ -139,10 +139,3 @@ export const defaultHomeHeroConfig: HeroConfig = {
 export const GALLERY_STORAGE_KEY = 'artist-gallery-images';
 export const HOME_HERO_STORAGE_KEY = 'home-hero-images'; // reuse existing key for backward compatibility
 export const SHOP_CATEGORY_TILES_STORAGE_KEY = 'shop-category-tiles';
-
-export const defaultShopCategoryTiles = [
-  { id: 'ring-dish', label: 'Ring Dishes', ctaLabel: 'All Ring Dishes', categorySlug: 'ring-dish', imageUrl: '' },
-  { id: 'ornament', label: 'Ornaments', ctaLabel: 'All Ornaments', categorySlug: 'ornament', imageUrl: '' },
-  { id: 'decor', label: 'Decor', ctaLabel: 'All Decor', categorySlug: 'decor', imageUrl: '' },
-  { id: 'wine-stopper', label: 'Wine Stoppers', ctaLabel: 'All Wine Stoppers', categorySlug: 'wine-stopper', imageUrl: '' },
-];

@@ -5,7 +5,6 @@ import {
   SHOP_CATEGORY_TILES_STORAGE_KEY,
   defaultGalleryImages,
   defaultHomeHeroConfig,
-  defaultShopCategoryTiles,
 } from './mockData';
 import type { ShopCategoryTile } from '../types';
 
@@ -125,7 +124,7 @@ export function fetchShopCategoryTiles(): ShopCategoryTile[] {
   } catch (err) {
     console.warn('Shop category tiles storage read failed, using defaults.', err);
   }
-  return defaultShopCategoryTiles;
+  return [];
 }
 
 export async function saveShopCategoryTiles(tiles: ShopCategoryTile[]): Promise<void> {

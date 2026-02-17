@@ -136,6 +136,8 @@ export function ProductDetailPage() {
       stripePriceId: product.stripePriceId ?? null,
       category: product.category ?? null,
       categories: product.categories ?? null,
+      shippingOverrideEnabled: product.shippingOverrideEnabled ?? false,
+      shippingOverrideAmountCents: product.shippingOverrideAmountCents ?? null,
       optionGroupLabel: optionGroup?.label ?? null,
       optionValue: selectedOption ?? null,
     });
@@ -433,6 +435,10 @@ export function ProductDetailPage() {
                               quantity: 1,
                               imageUrl: item.thumbnailUrl || item.imageUrl,
                               oneoff: item.oneoff,
+                              category: item.category ?? null,
+                              categories: item.categories ?? null,
+                              shippingOverrideEnabled: item.shippingOverrideEnabled ?? false,
+                              shippingOverrideAmountCents: item.shippingOverrideAmountCents ?? null,
                               stripeProductId: item.stripeProductId ?? null,
                               stripePriceId: item.stripePriceId ?? null,
                             });

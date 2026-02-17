@@ -12,15 +12,6 @@ interface CategoryManagementModalProps {
   onCategorySelected?: (name: string) => void;
 }
 
-const OTHER_ITEMS_CATEGORY = {
-  slug: 'other-items',
-  name: 'Other Items',
-};
-
-const isOtherItemsCategory = (category: Category) =>
-  (category.slug || '').toLowerCase() === OTHER_ITEMS_CATEGORY.slug ||
-  (category.name || '').trim().toLowerCase() === OTHER_ITEMS_CATEGORY.name.toLowerCase();
-
 const normalizeCategoriesList = (items: Category[]): Category[] => {
   const map = new Map<string, Category>();
   const ordered: Category[] = [];
@@ -230,10 +221,6 @@ export function CategoryManagementModal({
   };
 
   const handleDeleteCategory = async (cat: Category) => {
-    if (isOtherItemsCategory(cat)) {
-      setCategoryMessage('This category is required and cannot be deleted.');
-      return;
-    }
     const confirmed = window.confirm('Delete this category?');
     if (!confirmed) return;
     try {
@@ -490,18 +477,14 @@ export function CategoryManagementModal({
                         >
                           {editCategoryId === cat.id ? 'Close' : 'Edit'}
                         </button>
-                        {isOtherItemsCategory(cat) ? (
-                          <span className="text-[10px] uppercase tracking-[0.18em] text-charcoal/50">Required</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="text-charcoal/60 hover:text-red-600"
-                            onClick={() => handleDeleteCategory(cat)}
-                            aria-label={`Delete ${cat.name}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="text-charcoal/60 hover:text-red-600"
+                          onClick={() => handleDeleteCategory(cat)}
+                          aria-label={`Delete ${cat.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                     {editCategoryId === cat.id && editDraft && (

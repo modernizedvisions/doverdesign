@@ -36,6 +36,8 @@ type ProductRow = {
   stripe_price_id?: string | null;
   stripe_product_id?: string | null;
   collection?: string | null;
+  shipping_override_enabled?: number | null;
+  shipping_override_amount_cents?: number | null;
   created_at: string | null;
 };
 
@@ -54,6 +56,8 @@ type NewProductInput = {
   stripePriceId?: string;
   stripeProductId?: string;
   collection?: string;
+  shippingOverrideEnabled?: boolean;
+  shippingOverrideAmountCents?: number | null;
 };
 
 const mapRowToProduct = (row: ProductRow, request: Request, env: { PUBLIC_IMAGES_BASE_URL?: string }): Product => {
@@ -87,6 +91,12 @@ const mapRowToProduct = (row: ProductRow, request: Request, env: { PUBLIC_IMAGES
     priceCents: row.price_cents ?? undefined,
     soldAt: undefined,
     quantityAvailable: row.quantity_available ?? undefined,
+    shippingOverrideEnabled: row.shipping_override_enabled === 1,
+    shippingOverrideAmountCents:
+      Number.isFinite(row.shipping_override_amount_cents as number) &&
+      (row.shipping_override_amount_cents as number) >= 0
+        ? Number(row.shipping_override_amount_cents)
+        : null,
     slug: row.slug ?? undefined,
   };
 };
@@ -109,6 +119,12 @@ const toSlug = (value: string) =>
     .replace(/(^-|-$)+/g, '');
 
 const sanitizeCategory = (value: string | undefined | null) => (value || '').trim();
+const normalizeShippingOverrideAmountCents = (value: unknown): number | null => {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed);
+};
 
 const validateNewProduct = (input: Partial<NewProductInput>) => {
   if (!input.name || !input.description || input.priceCents === undefined || input.priceCents === null) {
@@ -124,6 +140,11 @@ const validateNewProduct = (input: Partial<NewProductInput>) => {
   if (!input.imageUrl && !input.primaryImageId && !hasImageIds) {
     return 'imageUrl, primaryImageId, or imageIds are required';
   }
+  const shippingOverrideEnabled = input.shippingOverrideEnabled === true;
+  const shippingOverrideAmountCents = normalizeShippingOverrideAmountCents(input.shippingOverrideAmountCents);
+  if (shippingOverrideEnabled && shippingOverrideAmountCents === null) {
+    return 'shippingOverrideAmountCents is required when shipping override is enabled';
+  }
   return null;
 };
 
@@ -137,6 +158,8 @@ const REQUIRED_PRODUCT_COLUMNS: Record<string, string> = {
   stripe_price_id: 'stripe_price_id TEXT',
   stripe_product_id: 'stripe_product_id TEXT',
   collection: 'collection TEXT',
+  shipping_override_enabled: 'shipping_override_enabled INTEGER NOT NULL DEFAULT 0',
+  shipping_override_amount_cents: 'shipping_override_amount_cents INTEGER',
 };
 
 const createProductsTable = `
@@ -158,6 +181,8 @@ const createProductsTable = `
     stripe_price_id TEXT,
     stripe_product_id TEXT,
     collection TEXT,
+    shipping_override_enabled INTEGER NOT NULL DEFAULT 0,
+    shipping_override_amount_cents INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `;
@@ -240,7 +265,7 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
       SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json,
              primary_image_id, image_ids_json,
              is_active, is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id,
-             collection, created_at
+             collection, shipping_override_enabled, shipping_override_amount_cents, created_at
       FROM products
       ORDER BY created_at DESC;
     `);
@@ -302,6 +327,8 @@ export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SEC
     const quantityAvailable = isOneOff ? 1 : Math.max(1, body.quantityAvailable ?? 1);
     const isActive = body.isActive ?? true;
     const category = sanitizeCategory(body.category);
+    const shippingOverrideEnabled = body.shippingOverrideEnabled === true;
+    const shippingOverrideAmountCents = normalizeShippingOverrideAmountCents(body.shippingOverrideAmountCents);
 
     await ensureProductSchema(context.env.DB);
     try {
@@ -347,6 +374,8 @@ export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SEC
       'stripe_price_id',
       'stripe_product_id',
       'collection',
+      'shipping_override_enabled',
+      'shipping_override_amount_cents',
     ];
 
     const insertValues = [
@@ -367,6 +396,8 @@ export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SEC
       body.stripePriceId || null,
       body.stripeProductId || null,
       body.collection || null,
+      shippingOverrideEnabled ? 1 : 0,
+      shippingOverrideEnabled ? shippingOverrideAmountCents : null,
     ];
 
     if ((context.env as { DEBUG_PRODUCTS?: string }).DEBUG_PRODUCTS === '1') {
@@ -397,7 +428,7 @@ export async function onRequestPost(context: { env: { DB: D1Database; STRIPE_SEC
         SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json,
                primary_image_id, image_ids_json,
                is_active, is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id,
-               collection, created_at
+               collection, shipping_override_enabled, shipping_override_amount_cents, created_at
         FROM products WHERE id = ?;
       `
     )

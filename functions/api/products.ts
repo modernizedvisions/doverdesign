@@ -28,6 +28,8 @@ type ProductRow = {
   stripe_price_id?: string | null;
   stripe_product_id?: string | null;
   collection?: string | null;
+  shipping_override_enabled?: number | null;
+  shipping_override_amount_cents?: number | null;
   created_at: string | null;
 };
 
@@ -54,7 +56,8 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
       ? context.env.DB.prepare(`
           SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json,
                  primary_image_id, image_ids_json, is_active,
-                 is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id, collection, created_at
+                 is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id, collection,
+                 shipping_override_enabled, shipping_override_amount_cents, created_at
           FROM products
           WHERE (is_sold = 1 OR quantity_available = 0)
           ORDER BY created_at DESC;
@@ -62,7 +65,8 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
       : context.env.DB.prepare(`
           SELECT id, name, slug, description, price_cents, category, image_url, image_urls_json,
                  primary_image_id, image_ids_json, is_active,
-                 is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id, collection, created_at
+                 is_one_off, is_sold, quantity_available, stripe_price_id, stripe_product_id, collection,
+                 shipping_override_enabled, shipping_override_amount_cents, created_at
           FROM products
           WHERE (is_active = 1 OR is_active IS NULL)
             AND (is_sold IS NULL OR is_sold = 0)
@@ -102,6 +106,12 @@ export async function onRequestGet(context: { env: { DB: D1Database }; request: 
         priceCents: row.price_cents ?? undefined,
         soldAt: undefined,
         quantityAvailable: row.quantity_available ?? undefined,
+        shippingOverrideEnabled: row.shipping_override_enabled === 1,
+        shippingOverrideAmountCents:
+          Number.isFinite(row.shipping_override_amount_cents as number) &&
+          (row.shipping_override_amount_cents as number) >= 0
+            ? Number(row.shipping_override_amount_cents)
+            : null,
         slug: row.slug ?? undefined,
       };
     });
@@ -189,6 +199,8 @@ const REQUIRED_PRODUCT_COLUMNS: Record<string, string> = {
   stripe_price_id: 'stripe_price_id TEXT',
   stripe_product_id: 'stripe_product_id TEXT',
   collection: 'collection TEXT',
+  shipping_override_enabled: 'shipping_override_enabled INTEGER NOT NULL DEFAULT 0',
+  shipping_override_amount_cents: 'shipping_override_amount_cents INTEGER',
 };
 
 const createProductsTable = `
@@ -210,6 +222,8 @@ const createProductsTable = `
     stripe_price_id TEXT,
     stripe_product_id TEXT,
     collection TEXT,
+    shipping_override_enabled INTEGER NOT NULL DEFAULT 0,
+    shipping_override_amount_cents INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `;

@@ -22,6 +22,8 @@ export type AdminProductInput = {
   stripePriceId?: string;
   stripeProductId?: string;
   collection?: string;
+  shippingOverrideEnabled?: boolean;
+  shippingOverrideAmountCents?: number | null;
 };
 
 export type AdminProductUpdateInput = Partial<AdminProductInput>;
