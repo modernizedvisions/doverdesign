@@ -14,6 +14,7 @@ This patch changes only `/rates` request construction and default Easyship base 
 ## Findings Summary
 
 - `/rates` payload is built in `functions/api/_lib/easyship.ts` in `buildEasyshipRatesPayload` and now matches v2024-09 top-level `RateRequest` shape (no top-level `shipment` wrapper).
+- Each parcel now includes a non-empty `items` array built from `order_items` rows (with safe fallback when no rows exist).
 - Easyship HTTP calls are made in `requestEasyship` (`functions/api/_lib/easyship.ts`), with URL built from:
   - `normalizeBaseUrl(env.EASYSHIP_API_BASE_URL)` (fallback `https://public-api.easyship.com/2024-09`)
   - plus path `'/rates'`
@@ -103,7 +104,16 @@ Constructed by `buildEasyshipRatesPayload(...)` in `functions/api/_lib/easyship.
         "width": "[present]",
         "height": "[present]"
       },
-      "total_actual_weight": "[present]"
+      "total_actual_weight": "[present]",
+      "items": [
+        {
+          "description": "[present]",
+          "quantity": "[present]",
+          "actual_weight": "[present]",
+          "declared_currency": "[present]",
+          "declared_customs_value": "[present]"
+        }
+      ]
     }
   ]
 }
@@ -112,6 +122,7 @@ Constructed by `buildEasyshipRatesPayload(...)` in `functions/api/_lib/easyship.
 Schema fix status:
 
 - Top-level `shipment` wrapper has been removed from `/rates` payload.
+- `parcels[0].items` is always emitted as a non-empty array.
 - Debug logs/endpoint now expose `hasShipmentWrapper` to verify wrapper absence in runtime requests.
 
 ## Env Vars Actually Read
@@ -147,6 +158,7 @@ Related verification/support files:
 
 - `functions/api/_lib/easyship.ts` -> `requestEasyship(...)` (debug logs now show top-level keys and `hasShipmentWrapper`)
 - `functions/api/admin/debug/easyship/rates-shape.ts` (debug endpoint uses same payload builder)
+- `functions/api/_lib/shippingLabels.ts` -> `getOrderItemsForEasyship(...)` (maps D1 `order_items` into Easyship parcel items)
 
 Secondary review point (separate endpoint/schema):
 
@@ -161,7 +173,11 @@ When aligning to Easyship `RateRequest`, map current model as:
   - name, line1/line2, city, state, postal, country, phone
 - `destination_address` from order shipping destination (`orders.shipping_address_json` + `shipping_name` + `customer_email`)
 - `parcels[]` from shipment dimensions (`resolveShipmentDimensions`):
-  - box length/width/height (in), total_actual_weight (lb)
+  - box length/width/height (in), total_actual_weight (lb), and non-empty `items[]`
+- `items[]` from order lines (`order_items`):
+  - description from product name/product id
+  - quantity from `order_items.quantity`
+  - declared value from `order_items.price_cents` (USD)
 
 ## Debug Instrumentation Added
 

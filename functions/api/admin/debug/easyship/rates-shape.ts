@@ -9,6 +9,7 @@ import {
 import {
   ensureShippingLabelsSchema,
   getOrderDestination,
+  getOrderItemsForEasyship,
   getOrderShipment,
   hasRequiredDestination,
   jsonResponse,
@@ -16,6 +17,7 @@ import {
   orderExists,
   readShippingSettings,
   resolveShipmentDimensions,
+  type EasyshipOrderItem,
   validateShipFrom,
   type ShippingLabelsEnv,
 } from '../../../_lib/shippingLabels';
@@ -35,7 +37,8 @@ const trimOrNull = (value: unknown): string | null => {
 const toEasyshipRateRequest = (
   shipFrom: Awaited<ReturnType<typeof readShippingSettings>>,
   destination: NonNullable<Awaited<ReturnType<typeof getOrderDestination>>>,
-  dimensions: NonNullable<ReturnType<typeof resolveShipmentDimensions>>
+  dimensions: NonNullable<ReturnType<typeof resolveShipmentDimensions>>,
+  items: EasyshipOrderItem[]
 ): EasyshipRateRequest => ({
   origin: {
     name: shipFrom.shipFromName,
@@ -60,6 +63,11 @@ const toEasyshipRateRequest = (
     countryCode: destination.country || 'US',
   },
   dimensions,
+  items: items.map((item) => ({
+    description: item.description,
+    quantity: item.quantity,
+    declaredValueCents: item.declaredValueCents,
+  })),
 });
 
 const parseParcelIndex = (value: string | null): number | 'invalid' | null => {
@@ -146,7 +154,8 @@ export async function onRequestGet(
       );
     }
 
-    const requestBody = buildEasyshipRatesPayload(toEasyshipRateRequest(shipFrom, destination!, dimensions));
+    const orderItems = await getOrderItemsForEasyship(context.env.DB, orderId);
+    const requestBody = buildEasyshipRatesPayload(toEasyshipRateRequest(shipFrom, destination!, dimensions, orderItems));
     const payloadShape = summarizeEasyshipPayloadShape(requestBody);
     const baseUrl = normalizeBaseUrl(context.env.EASYSHIP_API_BASE_URL);
     const ratesUrl = `${baseUrl}/rates`;
@@ -174,6 +183,10 @@ export async function onRequestGet(
       bodyTopLevelKeys: payloadShape.topLevelKeys,
       hasShipmentWrapper: payloadShape.hasShipmentWrapper,
       shipmentWrapperKeys: payloadShape.shipmentWrapperKeys,
+      parcelsCount: payloadShape.parcelsCount,
+      firstParcelKeys: payloadShape.firstParcelKeys,
+      firstParcelItemsIsArray: payloadShape.firstParcelItemsIsArray,
+      firstParcelItemsLength: payloadShape.firstParcelItemsLength,
       bodySkeleton: payloadShape.skeleton,
     });
   } catch (error) {

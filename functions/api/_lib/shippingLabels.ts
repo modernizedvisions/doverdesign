@@ -252,6 +252,19 @@ export type ShippingDestination = {
   country: string | null;
 };
 
+export type EasyshipOrderItem = {
+  description: string;
+  quantity: number;
+  declaredValueCents: number | null;
+};
+
+type EasyshipOrderItemRow = {
+  product_id: string | null;
+  quantity: number | null;
+  price_cents: number | null;
+  product_name: string | null;
+};
+
 export async function readShippingSettings(db: D1Database): Promise<ShipFromSettings> {
   const row = await db
     .prepare(
@@ -559,6 +572,37 @@ export async function getOrderDestination(db: D1Database, orderId: string): Prom
   return parsedAddress;
 }
 
+export async function getOrderItemsForEasyship(db: D1Database, orderId: string): Promise<EasyshipOrderItem[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT
+         oi.product_id,
+         oi.quantity,
+         oi.price_cents,
+         p.name AS product_name
+       FROM order_items oi
+       LEFT JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id = ?
+       ORDER BY oi.rowid ASC;`
+    )
+    .bind(orderId)
+    .all<EasyshipOrderItemRow>();
+
+  return (results || []).map((row) => {
+    const quantityRaw = Number(row.quantity ?? 1);
+    const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? Math.floor(quantityRaw) : 1;
+    const valueRaw = Number(row.price_cents);
+    const declaredValueCents = Number.isFinite(valueRaw) && valueRaw >= 0 ? Math.round(valueRaw) : null;
+    const description = trimOrNull(row.product_name) || trimOrNull(row.product_id) || 'Order item';
+
+    return {
+      description,
+      quantity,
+      declaredValueCents,
+    };
+  });
+}
+
 export function hasRequiredDestination(destination: ShippingDestination | null): boolean {
   if (!destination) return false;
   return Boolean(
@@ -611,4 +655,3 @@ export function resolveShipmentDimensions(shipment: OrderShipment): ShipmentDime
     weightLb: shipment.weightLb,
   };
 }
-

@@ -12,6 +12,7 @@ import {
   digestHex,
   ensureShippingLabelsSchema,
   getOrderDestination,
+  getOrderItemsForEasyship,
   getOrderShipment,
   hasRequiredDestination,
   jsonResponse,
@@ -19,6 +20,7 @@ import {
   orderExists,
   readShippingSettings,
   resolveShipmentDimensions,
+  type EasyshipOrderItem,
   validateShipFrom,
   type ShippingLabelsEnv,
 } from '../../../../../_lib/shippingLabels';
@@ -42,7 +44,8 @@ const getRouteParams = (request: Request): { orderId: string; shipmentId: string
 const toEasyshipRateRequest = (
   shipFrom: Awaited<ReturnType<typeof readShippingSettings>>,
   destination: NonNullable<Awaited<ReturnType<typeof getOrderDestination>>>,
-  dimensions: NonNullable<ReturnType<typeof resolveShipmentDimensions>>
+  dimensions: NonNullable<ReturnType<typeof resolveShipmentDimensions>>,
+  items: EasyshipOrderItem[]
 ): EasyshipRateRequest => ({
   origin: {
     name: shipFrom.shipFromName,
@@ -67,6 +70,11 @@ const toEasyshipRateRequest = (
     countryCode: destination.country || 'US',
   },
   dimensions,
+  items: items.map((item) => ({
+    description: item.description,
+    quantity: item.quantity,
+    declaredValueCents: item.declaredValueCents,
+  })),
 });
 
 const parseCachedRates = (raw: string): ReturnType<typeof normalizeRateForClient>[] => {
@@ -127,8 +135,9 @@ export async function onRequestPost(
       );
     }
 
+    const orderItems = await getOrderItemsForEasyship(context.env.DB, params.orderId);
     const allowedCarriers = getAllowedCarriers(context.env);
-    const rateRequest = toEasyshipRateRequest(shipFrom, destination!, dimensions);
+    const rateRequest = toEasyshipRateRequest(shipFrom, destination!, dimensions, orderItems);
     const signaturePayload = buildRateCacheSignaturePayload({
       orderId: params.orderId,
       destination: rateRequest.destination,
@@ -230,4 +239,3 @@ export async function onRequest(
   }
   return onRequestPost(context);
 }
-
