@@ -232,9 +232,9 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
   const createCategoryShippingInlineText = productForm.category
     ? `${productForm.category} Shipping: ${formatPriceDisplay(createSelectedCategory?.shippingCents ?? 0)}`
     : 'Category shipping: —';
-  const editCategoryShippingInlineText = editProductForm?.category
+  const editCategoryShippingDetailText = editProductForm?.category
     ? `${editProductForm.category} Shipping: ${formatPriceDisplay(editSelectedCategory?.shippingCents ?? 0)}`
-    : 'Category shipping: —';
+    : `Category shipping: ${formatPriceDisplay(editSelectedCategory?.shippingCents ?? 0)}`;
 
   const addProductStatusMessages = useMemo(() => {
     const messages: string[] = [];
@@ -939,40 +939,11 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         checked={!!editProductForm?.isActive}
                         onChange={(val) => onEditFormChange('isActive', val)}
                       />
-                      <div className="space-y-2">
-                        <ToggleSwitchWithSubtext
-                          label="Override shipping"
-                          subtext={editCategoryShippingInlineText}
-                          checked={!!editProductForm?.shippingOverrideEnabled}
-                          onChange={(val) => onEditFormChange('shippingOverrideEnabled', val)}
-                          small
-                        />
-                        {editProductForm?.shippingOverrideEnabled && (
-                          <div className="space-y-1 sm:max-w-[180px]">
-                            <label className="lux-label block">Override amount</label>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              pattern="^\\$?\\d*(\\.\\d{0,2})?$"
-                              value={formatCurrencyDisplay(editProductForm.shippingOverrideAmount || '')}
-                              onChange={(e) =>
-                                onEditFormChange('shippingOverrideAmount', sanitizeCurrencyInput(e.target.value))
-                              }
-                              onBlur={(e) =>
-                                onEditFormChange('shippingOverrideAmount', formatCurrencyValue(e.target.value))
-                              }
-                              placeholder="0.00"
-                              className="lux-input text-sm"
-                            />
-                            {editOverrideAmountInvalid && (
-                              <p className="text-xs text-rose-700">Enter a valid amount (0 or more).</p>
-                            )}
-                            <p className="text-[10px] uppercase tracking-[0.18em] text-charcoal/60">
-                              Replaces category/cart shipping rules.
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                      <ToggleSwitchSmall
+                        label="Override shipping"
+                        checked={!!editProductForm?.shippingOverrideEnabled}
+                        onChange={(val) => onEditFormChange('shippingOverrideEnabled', val)}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1091,6 +1062,38 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         </div>
                       );
                     })}
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    {!editProductForm?.shippingOverrideEnabled && (
+                      <p className="text-xs text-charcoal/60">{editCategoryShippingDetailText}</p>
+                    )}
+
+                    {editProductForm?.shippingOverrideEnabled && (
+                      <div className="space-y-1 sm:max-w-[180px]">
+                        <label className="lux-label block">Override amount</label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          pattern="^\\$?\\d*(\\.\\d{0,2})?$"
+                          value={formatCurrencyDisplay(editProductForm.shippingOverrideAmount || '')}
+                          onChange={(e) =>
+                            onEditFormChange('shippingOverrideAmount', sanitizeCurrencyInput(e.target.value))
+                          }
+                          onBlur={(e) =>
+                            onEditFormChange('shippingOverrideAmount', formatCurrencyValue(e.target.value))
+                          }
+                          placeholder="0.00"
+                          className="lux-input text-sm"
+                        />
+                        {editOverrideAmountInvalid && (
+                          <p className="text-xs text-rose-700">Enter a valid amount (0 or more).</p>
+                        )}
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-charcoal/60">
+                          Replaces category/cart shipping rules.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1345,3 +1348,4 @@ function ManagedImagesList({
     </div>
   );
 }
+
