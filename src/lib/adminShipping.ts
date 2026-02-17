@@ -237,6 +237,7 @@ export async function adminFetchShipmentQuotes(
   selectedQuoteId: string | null;
   cached: boolean;
   expiresAt: string | null;
+  warning: string | null;
   shipments: OrderShipment[];
 }> {
   const response = await adminFetch(
@@ -253,6 +254,7 @@ export async function adminFetchShipmentQuotes(
     selectedQuoteId: data.selectedQuoteId ?? null,
     cached: !!data.cached,
     expiresAt: data.expiresAt ?? null,
+    warning: typeof data.warning === 'string' ? data.warning : null,
     shipments: Array.isArray(data.shipments) ? (data.shipments as OrderShipment[]) : [],
   };
 }
@@ -286,4 +288,3 @@ export async function adminBuyShipmentLabel(
     refreshed: data.refreshed === true,
   };
 }
-

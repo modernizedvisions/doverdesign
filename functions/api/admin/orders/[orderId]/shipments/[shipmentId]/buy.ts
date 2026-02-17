@@ -6,6 +6,7 @@ import {
   filterAllowedRates,
   getAllowedCarriers,
   getEasyshipShipment,
+  isEasyshipDebugEnabled,
   normalizeRateForClient,
   pickCheapestRate,
   type EasyshipRate,
@@ -33,6 +34,9 @@ type CacheRow = {
   rates_json: string;
   expires_at: string;
 };
+
+const NO_SHIPPING_SOLUTIONS_MESSAGE =
+  'No shipping solutions available based on the information provided. Adjust package details or test in production.';
 
 const getRouteParams = (request: Request): { orderId: string; shipmentId: string } | null => {
   const pathname = new URL(request.url).pathname;
@@ -268,6 +272,14 @@ export async function onRequestPost(
 
     const orderItems = await getOrderItemsForEasyship(context.env.DB, params.orderId);
     const allowedCarriers = getAllowedCarriers(context.env);
+    if (isEasyshipDebugEnabled(context.env)) {
+      console.log('[easyship][debug] buy carrier filter', {
+        orderId: params.orderId,
+        shipmentId: params.shipmentId,
+        allowedCarrierCount: allowedCarriers.length,
+        allowedCarriers,
+      });
+    }
     const rateRequest = toEasyshipRateRequest(shipFrom, destination!, dimensions, orderItems);
     const signaturePayload = buildRateCacheSignaturePayload({
       orderId: params.orderId,
@@ -291,6 +303,17 @@ export async function onRequestPost(
     let rates = cached?.rates_json ? parseCachedRates(cached.rates_json) : [];
     if (!rates.length) {
       const liveRates = await fetchEasyshipRates(context.env, rateRequest);
+      if (!liveRates.length) {
+        return jsonResponse(
+          {
+            ok: false,
+            code: 'NO_RATES',
+            error: NO_SHIPPING_SOLUTIONS_MESSAGE,
+            message: NO_SHIPPING_SOLUTIONS_MESSAGE,
+          },
+          400
+        );
+      }
       rates = filterAllowedRates(liveRates, allowedCarriers).sort((a, b) => a.amountCents - b.amountCents);
       if (!rates.length) {
         return jsonResponse(

@@ -74,6 +74,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
   const [shipments, setShipments] = useState<OrderShipment[]>([]);
   const [drafts, setDrafts] = useState<Record<string, ParcelDraft>>({});
   const [quotesByShipment, setQuotesByShipment] = useState<Record<string, ShipmentQuote[]>>({});
+  const [quoteWarningByShipment, setQuoteWarningByShipment] = useState<Record<string, string>>({});
   const [selectedQuoteByShipment, setSelectedQuoteByShipment] = useState<Record<string, string | null>>({});
   const [busyByShipment, setBusyByShipment] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -116,6 +117,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
       setShipFrom(settings.shipFrom);
       setBoxPresets(settings.boxPresets);
       setShipments(shipmentData.shipments);
+      setQuoteWarningByShipment({});
       seedDrafts(shipmentData.shipments);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Failed to load shipping labels data.');
@@ -261,6 +263,11 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
         delete next[shipment.id];
         return next;
       });
+      setQuoteWarningByShipment((prev) => {
+        const next = { ...prev };
+        delete next[shipment.id];
+        return next;
+      });
     });
   };
 
@@ -276,13 +283,26 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
         ...prev,
         [shipment.id]: quoted.selectedQuoteId,
       }));
-      setSuccess(quoted.cached ? 'Loaded cached quotes.' : 'Quotes fetched.');
+      if (quoted.warning) {
+        setQuoteWarningByShipment((prev) => ({ ...prev, [shipment.id]: quoted.warning }));
+        setSuccess('No rates available for this parcel.');
+      } else {
+        setQuoteWarningByShipment((prev) => {
+          const next = { ...prev };
+          delete next[shipment.id];
+          return next;
+        });
+        setSuccess(quoted.cached ? 'Loaded cached quotes.' : 'Quotes fetched.');
+      }
     });
   };
 
   const handleBuyLabel = async (shipment: OrderShipment, refreshOnly = false) => {
     if (!orderId) return;
     await withShipmentBusy(shipment.id, refreshOnly ? 'refreshing' : 'buying', async () => {
+      if (!refreshOnly && quoteWarningByShipment[shipment.id]) {
+        throw new Error(quoteWarningByShipment[shipment.id]);
+      }
       if (!refreshOnly) {
         await persistShipmentDraft(shipment.id);
       }
@@ -432,6 +452,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                     const draft = drafts[shipment.id] || initialDraftFromShipment(shipment);
                     const busyLabel = busyByShipment[shipment.id];
                     const rates = quotesByShipment[shipment.id] || [];
+                    const quoteWarning = quoteWarningByShipment[shipment.id] || '';
                     const selectedQuoteId = selectedQuoteByShipment[shipment.id] || shipment.quoteSelectedId || null;
                     const canRemove = !shipment.purchasedAt && shipment.labelState !== 'generated';
                     const pendingRefresh = shipment.labelState === 'pending' && !!shipment.easyshipShipmentId;
@@ -552,13 +573,22 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                             <button
                               type="button"
                               className="lux-button px-3 py-2 text-[10px] self-end"
-                              disabled={!shipFromReady}
+                              disabled={!shipFromReady || !!quoteWarning}
                               onClick={() => void handleBuyLabel(shipment)}
                             >
                               Buy Label
                             </button>
                           )}
                         </div>
+
+                        {quoteWarning && (
+                          <div className="mt-3 rounded-shell border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                            <div className="font-medium">{quoteWarning}</div>
+                            <div className="text-xs text-amber-700 mt-1">
+                              Verify parcel weight/dimensions, try a different preset, or test against production.
+                            </div>
+                          </div>
+                        )}
 
                         {rates.length > 0 && (
                           <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3">
@@ -638,4 +668,3 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
     </div>
   );
 }
-

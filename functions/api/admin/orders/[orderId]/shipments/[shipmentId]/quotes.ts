@@ -4,6 +4,7 @@ import {
   fetchEasyshipRates,
   filterAllowedRates,
   getAllowedCarriers,
+  isEasyshipDebugEnabled,
   normalizeRateForClient,
   pickCheapestRate,
   type EasyshipRateRequest,
@@ -30,6 +31,8 @@ type CacheRow = {
   rates_json: string;
   expires_at: string;
 };
+
+const NO_SHIPPING_SOLUTIONS_WARNING = 'No shipping solutions available based on the information provided';
 
 const getRouteParams = (request: Request): { orderId: string; shipmentId: string } | null => {
   const pathname = new URL(request.url).pathname;
@@ -137,6 +140,14 @@ export async function onRequestPost(
 
     const orderItems = await getOrderItemsForEasyship(context.env.DB, params.orderId);
     const allowedCarriers = getAllowedCarriers(context.env);
+    if (isEasyshipDebugEnabled(context.env)) {
+      console.log('[easyship][debug] quotes carrier filter', {
+        orderId: params.orderId,
+        shipmentId: params.shipmentId,
+        allowedCarrierCount: allowedCarriers.length,
+        allowedCarriers,
+      });
+    }
     const rateRequest = toEasyshipRateRequest(shipFrom, destination!, dimensions, orderItems);
     const signaturePayload = buildRateCacheSignaturePayload({
       orderId: params.orderId,
@@ -182,6 +193,26 @@ export async function onRequestPost(
     }
 
     const rawRates = await fetchEasyshipRates(context.env, rateRequest);
+    if (!rawRates.length) {
+      await context.env.DB.prepare(
+        `UPDATE order_shipments
+         SET quote_selected_id = NULL, updated_at = ?
+         WHERE id = ? AND order_id = ?;`
+      )
+        .bind(nowIso, params.shipmentId, params.orderId)
+        .run();
+      const shipments = await listOrderShipments(context.env.DB, params.orderId);
+      return jsonResponse({
+        ok: true,
+        cached: false,
+        shipmentTempKey,
+        expiresAt: null,
+        rates: [],
+        selectedQuoteId: null,
+        warning: NO_SHIPPING_SOLUTIONS_WARNING,
+        shipments,
+      });
+    }
     const allowedRates = filterAllowedRates(rawRates, allowedCarriers).sort((a, b) => a.amountCents - b.amountCents);
     if (!allowedRates.length) {
       return jsonResponse(

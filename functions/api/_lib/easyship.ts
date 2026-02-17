@@ -23,6 +23,8 @@ export type EasyshipRateItem = {
   declaredValueCents?: number | null;
 };
 
+const NO_SHIPPING_SOLUTIONS_DETAIL = 'No shipping solutions available based on the information provided';
+
 export type EasyshipShipmentSnapshot = {
   shipmentId: string;
   labelId: string | null;
@@ -75,6 +77,9 @@ const toAmountCents = (value: unknown): number | null => {
   if (numeric === null) return null;
   return Math.round(numeric * 100);
 };
+
+const poundsToKg = (valueLb: number): number => valueLb * 0.45359237;
+const inchesToCm = (valueIn: number): number => valueIn * 2.54;
 
 const trimOrNull = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -140,6 +145,54 @@ export const summarizeEasyshipPayloadShape = (payload: unknown) => {
     firstParcelFirstItemKeys,
     firstParcelFirstItemHasCategory: firstParcelFirstItemKeys.includes('category'),
     skeleton: buildRedactedSkeleton(payload),
+  };
+};
+
+const summarizeRateMetricsForDebug = (input: EasyshipRateRequest, payload: unknown) => {
+  const parcels = isObjectRecord(payload) && Array.isArray(payload.parcels) ? payload.parcels : [];
+  const firstParcel = isObjectRecord(parcels[0]) ? parcels[0] : {};
+  const firstBox = isObjectRecord(firstParcel.box) ? firstParcel.box : {};
+  const firstItems =
+    isObjectRecord(firstParcel) && Array.isArray(firstParcel.items)
+      ? (firstParcel.items as Array<Record<string, unknown>>)
+      : [];
+  const origin = isObjectRecord(payload) && isObjectRecord(payload.origin_address) ? payload.origin_address : {};
+  const destination =
+    isObjectRecord(payload) && isObjectRecord(payload.destination_address) ? payload.destination_address : {};
+  const firstItem = firstItems[0] || {};
+
+  return {
+    parcelMetrics: {
+      weight_lb: Number(input.dimensions.weightLb.toFixed(3)),
+      weight_kg: Number((Number(firstParcel.total_actual_weight) || 0).toFixed(3)),
+      dims_in: {
+        length: Number(input.dimensions.lengthIn.toFixed(2)),
+        width: Number(input.dimensions.widthIn.toFixed(2)),
+        height: Number(input.dimensions.heightIn.toFixed(2)),
+      },
+      dims_cm: {
+        length: Number((Number(firstBox.length) || 0).toFixed(2)),
+        width: Number((Number(firstBox.width) || 0).toFixed(2)),
+        height: Number((Number(firstBox.height) || 0).toFixed(2)),
+      },
+    },
+    addressSignals: {
+      origin: {
+        country: trimOrNull(origin.country_alpha2),
+        postal: trimOrNull(origin.postal_code),
+        hasState: !!trimOrNull(origin.state),
+      },
+      destination: {
+        country: trimOrNull(destination.country_alpha2),
+        postal: trimOrNull(destination.postal_code),
+        hasState: !!trimOrNull(destination.state),
+      },
+    },
+    itemsSignals: {
+      count: firstItems.length,
+      hasCategory: !!trimOrNull(firstItem.category),
+      hasHsCode: !!trimOrNull(firstItem.hs_code),
+    },
   };
 };
 
@@ -508,24 +561,25 @@ export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => ({
   },
   shipping_settings: {
     units: {
-      weight: 'lb',
-      dimensions: 'in',
+      weight: 'kg',
+      dimensions: 'cm',
     },
   },
   parcels: (() => {
     const items = toNonEmptyRateItems(input.items);
     const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
     const safeTotalQuantity = totalQuantity > 0 ? totalQuantity : 1;
-    const perItemWeight = Number((input.dimensions.weightLb / safeTotalQuantity).toFixed(4));
+    const totalWeightKg = Number(poundsToKg(input.dimensions.weightLb).toFixed(4));
+    const perItemWeight = Number((totalWeightKg / safeTotalQuantity).toFixed(4));
     const safePerItemWeight = perItemWeight > 0 ? perItemWeight : 0.001;
     return [
       {
         box: {
-          length: Number(input.dimensions.lengthIn.toFixed(2)),
-          width: Number(input.dimensions.widthIn.toFixed(2)),
-          height: Number(input.dimensions.heightIn.toFixed(2)),
+          length: Number(inchesToCm(input.dimensions.lengthIn).toFixed(2)),
+          width: Number(inchesToCm(input.dimensions.widthIn).toFixed(2)),
+          height: Number(inchesToCm(input.dimensions.heightIn).toFixed(2)),
         },
-        total_actual_weight: Number(input.dimensions.weightLb.toFixed(3)),
+        total_actual_weight: Number(totalWeightKg.toFixed(3)),
         items: items.map((item) => ({
           description: item.description,
           category: DEFAULT_EASYSHIP_ITEM_CATEGORY,
@@ -589,8 +643,23 @@ export async function fetchEasyshipRates(env: EasyshipEnv, input: EasyshipRateRe
     return buildMockRates(input);
   }
   const payload = buildEasyshipRatesPayload(input);
-  const data = await requestEasyship<any>(env, '/rates', 'POST', payload);
-  return parseRatesFromResponse(data);
+  if (isEasyshipDebugEnabled(env)) {
+    const metrics = summarizeRateMetricsForDebug(input, payload);
+    console.log('[easyship][debug] rates request metrics', metrics);
+  }
+  try {
+    const data = await requestEasyship<any>(env, '/rates', 'POST', payload);
+    return parseRatesFromResponse(data);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.toLowerCase().includes(NO_SHIPPING_SOLUTIONS_DETAIL.toLowerCase())) {
+      if (isEasyshipDebugEnabled(env)) {
+        console.log('[easyship][debug] rates returned no shipping solutions');
+      }
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function createShipmentAndBuyLabel(
