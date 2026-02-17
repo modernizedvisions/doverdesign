@@ -236,6 +236,30 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
     ? `${editProductForm.category} Shipping: ${formatPriceDisplay(editSelectedCategory?.shippingCents ?? 0)}`
     : 'Category shipping: —';
 
+  const addProductStatusMessages = useMemo(() => {
+    const messages: string[] = [];
+    if (isOptimizing) messages.push('Optimizing images...');
+    if (!isOptimizing && isUploading) messages.push('Uploading images...');
+    if (!isUploading && failedCount > 0) messages.push('Fix failed uploads (remove/retry) before saving.');
+    if (!isUploading && missingUrlCount > 0) {
+      messages.push('Some images did not finish uploading. Retry or remove.');
+    }
+    if (createOverrideAmountInvalid) {
+      messages.push('Enter a valid override shipping amount (0 or more).');
+    }
+    if (!hasCategories) {
+      messages.push('Create at least one category before saving a product.');
+    }
+    return messages;
+  }, [
+    createOverrideAmountInvalid,
+    failedCount,
+    hasCategories,
+    isOptimizing,
+    isUploading,
+    missingUrlCount,
+  ]);
+
   useEffect(() => {
     if (!isDev) return;
     console.debug('[shop save] disable check', {
@@ -439,16 +463,12 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                       onChange={(val) => onProductFormChange('isActive', val)}
                     />
                     <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <ToggleSwitch
-                          label="Override shipping"
-                          checked={!!productForm.shippingOverrideEnabled}
-                          onChange={(val) => onProductFormChange('shippingOverrideEnabled', val)}
-                        />
-                        <span className="text-[10px] uppercase tracking-[0.18em] text-charcoal/55 w-full sm:w-auto sm:ml-auto">
-                          {createCategoryShippingInlineText}
-                        </span>
-                      </div>
+                      <ToggleSwitchWithSubtext
+                        label="Override shipping"
+                        subtext={createCategoryShippingInlineText}
+                        checked={!!productForm.shippingOverrideEnabled}
+                        onChange={(val) => onProductFormChange('shippingOverrideEnabled', val)}
+                      />
                       {productForm.shippingOverrideEnabled && (
                         <div className="space-y-1 sm:max-w-[180px]">
                           <label className="lux-label block">Override amount</label>
@@ -477,58 +497,46 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex gap-3 pt-2 md:mt-auto">
-                    <button
-                      type="submit"
-                      disabled={
-                        productSaveState === 'saving' ||
-                        isUploading ||
-                        failedCount > 0 ||
-                        missingUrlCount > 0 ||
-                        createOverrideAmountInvalid ||
-                        !hasCategories
-                      }
-                      className="lux-button px-4 py-2 text-[10px] disabled:opacity-50"
-                    >
-                      {productSaveState === 'saving' ? (
-                        <span className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-white/80" />
-                          <span>Saving...</span>
-                        </span>
-                      ) : (
-                        'Save Product'
-                      )}
-                    </button>
-                    {(isUploading ||
-                      failedCount > 0 ||
-                      missingUrlCount > 0 ||
-                      createOverrideAmountInvalid ||
-                      !hasCategories) && (
-                      <span className="text-xs text-charcoal/60 self-center">
-                        {isOptimizing && 'Optimizing images...'}
-                        {!isOptimizing && isUploading && 'Uploading images...'}
-                        {!isUploading && failedCount > 0 && 'Fix failed uploads (remove/retry) before saving.'}
-                        {!isUploading && failedCount === 0 && missingUrlCount > 0 && 'Some images did not finish uploading. Retry or remove.'}
-                        {!isUploading &&
-                          failedCount === 0 &&
-                          missingUrlCount === 0 &&
-                          createOverrideAmountInvalid &&
-                          'Enter a valid override shipping amount (0 or more).'}
-                        {!isUploading &&
-                          failedCount === 0 &&
-                          !createOverrideAmountInvalid &&
-                          missingUrlCount === 0 &&
-                          !hasCategories &&
-                          'Create at least one category before saving a product.'}
-                      </span>
+                  <div className="space-y-2 pt-2 md:mt-auto">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="submit"
+                        disabled={
+                          productSaveState === 'saving' ||
+                          isUploading ||
+                          failedCount > 0 ||
+                          missingUrlCount > 0 ||
+                          createOverrideAmountInvalid ||
+                          !hasCategories
+                        }
+                        className="lux-button px-4 py-2 text-[10px] disabled:opacity-50 shrink-0"
+                      >
+                        {productSaveState === 'saving' ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-white/80" />
+                            <span>Saving...</span>
+                          </span>
+                        ) : (
+                          'Save Product'
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onResetProductForm}
+                        className="lux-button--ghost px-4 py-2 text-[10px] shrink-0"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    {addProductStatusMessages.length > 0 && (
+                      <div className="w-full space-y-1">
+                        {addProductStatusMessages.map((message) => (
+                          <p key={message} className="text-xs text-charcoal/60 leading-snug">
+                            {message}
+                          </p>
+                        ))}
+                      </div>
                     )}
-                    <button
-                      type="button"
-                      onClick={onResetProductForm}
-                      className="lux-button--ghost px-4 py-2 text-[10px]"
-                    >
-                      Clear
-                    </button>
                   </div>
                 </div>
 
@@ -932,16 +940,13 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                         onChange={(val) => onEditFormChange('isActive', val)}
                       />
                       <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <ToggleSwitchSmall
-                            label="Override shipping"
-                            checked={!!editProductForm?.shippingOverrideEnabled}
-                            onChange={(val) => onEditFormChange('shippingOverrideEnabled', val)}
-                          />
-                          <span className="text-[10px] uppercase tracking-[0.18em] text-charcoal/55 w-full sm:w-auto sm:ml-auto">
-                            {editCategoryShippingInlineText}
-                          </span>
-                        </div>
+                        <ToggleSwitchWithSubtext
+                          label="Override shipping"
+                          subtext={editCategoryShippingInlineText}
+                          checked={!!editProductForm?.shippingOverrideEnabled}
+                          onChange={(val) => onEditFormChange('shippingOverrideEnabled', val)}
+                          small
+                        />
                         {editProductForm?.shippingOverrideEnabled && (
                           <div className="space-y-1 sm:max-w-[180px]">
                             <label className="lux-label block">Override amount</label>
@@ -1221,6 +1226,49 @@ function ToggleSwitchSmall({
         />
       </span>
       <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal/80">{label}</span>
+    </button>
+  );
+}
+
+function ToggleSwitchWithSubtext({
+  label,
+  subtext,
+  checked,
+  onChange,
+  small = false,
+}: {
+  label: string;
+  subtext: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  small?: boolean;
+}) {
+  const trackClasses = checked ? 'bg-deep-ocean border-deep-ocean' : 'bg-sea-glass/30 border-driftwood/70';
+  const thumbClasses = small ? (checked ? 'translate-x-4' : 'translate-x-0.5') : checked ? 'translate-x-5' : 'translate-x-1';
+  const trackSizeClasses = small ? 'h-5 w-9' : 'h-6 w-11';
+  const labelClasses = small
+    ? 'text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal/80'
+    : 'text-[11px] uppercase tracking-[0.22em] font-semibold text-charcoal';
+
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`w-full text-left ${small ? 'flex items-start gap-2' : 'flex items-start gap-3'}`}
+    >
+      <span
+        className={`relative inline-flex ${trackSizeClasses} items-center rounded-full rounded-ui border transition-colors shrink-0 ${trackClasses}`}
+      >
+        <span
+          className={`inline-block h-4 w-4 rounded-full rounded-ui bg-white shadow transform transition-transform ${thumbClasses}`}
+        />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className={`block ${labelClasses}`}>{label}</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-[0.18em] text-charcoal/55">
+          {subtext}
+        </span>
+      </span>
     </button>
   );
 }
