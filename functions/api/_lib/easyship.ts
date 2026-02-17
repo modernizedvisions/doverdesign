@@ -3,6 +3,7 @@ type EasyshipEnv = {
   EASYSHIP_API_BASE_URL?: string;
   EASYSHIP_ALLOWED_CARRIERS?: string;
   EASYSHIP_MOCK?: string;
+  EASYSHIP_DEBUG?: string;
 };
 
 export type EasyshipRate = {
@@ -71,10 +72,58 @@ const trimOrNull = (value: unknown): string | null => {
   return trimmed ? trimmed : null;
 };
 
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
+const objectKeys = (value: unknown): string[] => (isObjectRecord(value) ? Object.keys(value) : []);
+
+const buildRedactedSkeleton = (value: unknown, depth = 0): unknown => {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) {
+    if (depth >= 6) return '[array]';
+    return value.length ? [buildRedactedSkeleton(value[0], depth + 1)] : [];
+  }
+  if (isObjectRecord(value)) {
+    if (depth >= 6) return '[object]';
+    const output: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) {
+      const nested = value[key];
+      if (nested === null || nested === undefined) {
+        output[key] = null;
+      } else if (typeof nested === 'object') {
+        output[key] = buildRedactedSkeleton(nested, depth + 1);
+      } else {
+        output[key] = '[present]';
+      }
+    }
+    return output;
+  }
+  return '[present]';
+};
+
+export const isEasyshipDebugEnabled = (env: EasyshipEnv): boolean => {
+  const raw = trimOrNull(env.EASYSHIP_DEBUG);
+  if (!raw) return false;
+  const normalized = raw.toLowerCase();
+  return normalized === 'true' || normalized === '1';
+};
+
+export const summarizeEasyshipPayloadShape = (payload: unknown) => {
+  const topLevelKeys = objectKeys(payload);
+  const shipmentValue = isObjectRecord(payload) ? payload.shipment : undefined;
+  const shipmentKeys = objectKeys(shipmentValue);
+  return {
+    topLevelKeys,
+    hasShipmentWrapper: topLevelKeys.includes('shipment'),
+    shipmentWrapperKeys: shipmentKeys,
+    skeleton: buildRedactedSkeleton(payload),
+  };
+};
+
 const toIsoNoMs = (date: Date): string => date.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
 const normalizeBaseUrl = (value: string | undefined): string => {
-  const fallback = 'https://api.easyship.com';
+  const fallback = 'https://public-api.easyship.com/2024-09';
   const base = (value || fallback).trim() || fallback;
   return base.replace(/\/+$/, '');
 };
@@ -316,6 +365,34 @@ const requestEasyship = async <T>(
   const baseUrl = normalizeBaseUrl(env.EASYSHIP_API_BASE_URL);
   const finalPath = path.startsWith('/') ? path : `/${path}`;
   const url = `${baseUrl}${finalPath}`;
+  if (isEasyshipDebugEnabled(env)) {
+    const tokenLength = token.length;
+    const payloadShape = summarizeEasyshipPayloadShape(body);
+    let host = 'unknown';
+    let pathname = finalPath;
+    try {
+      const parsed = new URL(url);
+      host = parsed.host;
+      pathname = parsed.pathname;
+    } catch {}
+    console.log('[easyship][debug] outgoing request shape', {
+      method,
+      endpoint: {
+        host,
+        path: pathname,
+      },
+      envPresent: {
+        EASYSHIP_API_BASE_URL: !!trimOrNull(env.EASYSHIP_API_BASE_URL),
+        EASYSHIP_TOKEN: !!token,
+        EASYSHIP_ALLOWED_CARRIERS: !!trimOrNull(env.EASYSHIP_ALLOWED_CARRIERS),
+      },
+      tokenLength,
+      bodyTopLevelKeys: payloadShape.topLevelKeys,
+      hasShipmentWrapper: payloadShape.hasShipmentWrapper,
+      shipmentWrapperKeys: payloadShape.shipmentWrapperKeys,
+      bodySkeleton: payloadShape.skeleton,
+    });
+  }
   const response = await fetch(url, {
     method,
     headers: {
@@ -359,47 +436,47 @@ export const pickCheapestRate = (rates: EasyshipRate[]): EasyshipRate | null => 
   return [...rates].sort((a, b) => a.amountCents - b.amountCents)[0];
 };
 
-const buildRatesPayload = (input: EasyshipRateRequest) => ({
-  shipment: {
-    origin_address: {
-      name: input.origin.name,
-      company_name: input.origin.companyName ?? undefined,
-      email: input.origin.email ?? undefined,
-      phone_number: input.origin.phone ?? undefined,
-      address_line_1: input.origin.addressLine1,
-      address_line_2: input.origin.addressLine2 ?? undefined,
-      city: input.origin.city,
-      state: input.origin.state,
-      postal_code: input.origin.postalCode,
-      country_alpha2: input.origin.countryCode,
-    },
-    destination_address: {
-      name: input.destination.name,
-      company_name: input.destination.companyName ?? undefined,
-      email: input.destination.email ?? undefined,
-      phone_number: input.destination.phone ?? undefined,
-      address_line_1: input.destination.addressLine1,
-      address_line_2: input.destination.addressLine2 ?? undefined,
-      city: input.destination.city,
-      state: input.destination.state,
-      postal_code: input.destination.postalCode,
-      country_alpha2: input.destination.countryCode,
-    },
-    parcels: [
-      {
-        box: {
-          length: Number(input.dimensions.lengthIn.toFixed(2)),
-          width: Number(input.dimensions.widthIn.toFixed(2)),
-          height: Number(input.dimensions.heightIn.toFixed(2)),
-          unit: 'in',
-        },
-        item: {
-          actual_weight: Number(input.dimensions.weightLb.toFixed(3)),
-          weight_unit: 'lb',
-        },
-      },
-    ],
+export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => ({
+  origin_address: {
+    contact_name: input.origin.name,
+    company_name: input.origin.companyName ?? undefined,
+    contact_email: input.origin.email ?? undefined,
+    contact_phone: input.origin.phone ?? undefined,
+    line_1: input.origin.addressLine1,
+    line_2: input.origin.addressLine2 ?? undefined,
+    city: input.origin.city,
+    state: input.origin.state,
+    postal_code: input.origin.postalCode,
+    country_alpha2: input.origin.countryCode,
   },
+  destination_address: {
+    contact_name: input.destination.name,
+    company_name: input.destination.companyName ?? undefined,
+    contact_email: input.destination.email ?? undefined,
+    contact_phone: input.destination.phone ?? undefined,
+    line_1: input.destination.addressLine1,
+    line_2: input.destination.addressLine2 ?? undefined,
+    city: input.destination.city,
+    state: input.destination.state,
+    postal_code: input.destination.postalCode,
+    country_alpha2: input.destination.countryCode,
+  },
+  shipping_settings: {
+    units: {
+      weight: 'lb',
+      dimensions: 'in',
+    },
+  },
+  parcels: [
+    {
+      box: {
+        length: Number(input.dimensions.lengthIn.toFixed(2)),
+        width: Number(input.dimensions.widthIn.toFixed(2)),
+        height: Number(input.dimensions.heightIn.toFixed(2)),
+      },
+      total_actual_weight: Number(input.dimensions.weightLb.toFixed(3)),
+    },
+  ],
 });
 
 const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => ({
@@ -451,7 +528,7 @@ export async function fetchEasyshipRates(env: EasyshipEnv, input: EasyshipRateRe
   if (maybeMock(env)) {
     return buildMockRates(input);
   }
-  const payload = buildRatesPayload(input);
+  const payload = buildEasyshipRatesPayload(input);
   const data = await requestEasyship<any>(env, '/rates', 'POST', payload);
   return parseRatesFromResponse(data);
 }
@@ -543,4 +620,3 @@ export const buildRateCacheSignaturePayload = (payload: {
     dimensions: payload.dimensions,
     allowedCarriers: payload.allowedCarriers.map((c) => toSlug(c)).sort(),
   });
-
