@@ -4,6 +4,8 @@ type EasyshipEnv = {
   EASYSHIP_ALLOWED_CARRIERS?: string;
   EASYSHIP_MOCK?: string;
   EASYSHIP_DEBUG?: string;
+  RESEND_OWNER_TO?: string;
+  EMAIL_OWNER_TO?: string;
 };
 
 export type EasyshipRate = {
@@ -115,6 +117,9 @@ const trimOrNull = (value: unknown): string | null => {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
 };
+
+const getStoreOwnerEmailFromEnv = (env: EasyshipEnv): string | null =>
+  trimOrNull(env.RESEND_OWNER_TO) || trimOrNull(env.EMAIL_OWNER_TO) || null;
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
@@ -577,8 +582,10 @@ const normalizeShipmentSnapshot = (payload: any): EasyshipShipmentSnapshot => {
   const status = statusRaw.toLowerCase();
 
   const shipmentId =
+    trimOrNull(shipment?.easyship_shipment_id) ||
     trimOrNull(shipment?.id) ||
     trimOrNull(shipment?.shipment_id) ||
+    trimOrNull(payload?.easyship_shipment_id) ||
     trimOrNull(payload?.shipment_id) ||
     '';
   const labelId =
@@ -1050,8 +1057,11 @@ const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => {
         }),
       },
     ],
-    courier_service_id: input.courierServiceId,
-    external_reference: input.externalReference ?? undefined,
+    courier_settings: trimOrNull(input.courierServiceId)
+      ? {
+          courier_service_id: trimOrNull(input.courierServiceId),
+        }
+      : undefined,
   };
 };
 
@@ -1184,7 +1194,19 @@ export async function createShipmentAndBuyLabel(
     return buildMockShipmentSnapshot(input);
   }
 
-  const payload = buildShipmentPayload(input);
+  const payloadInput: EasyshipCreateShipmentRequest = {
+    ...input,
+    origin: {
+      ...input.origin,
+      email: trimOrNull(input.origin.email) || getStoreOwnerEmailFromEnv(env) || null,
+    },
+    destination: {
+      ...input.destination,
+      phone: trimOrNull(input.destination.phone) || null,
+    },
+  };
+
+  const payload = buildShipmentPayload(payloadInput);
   const payloadShape = summarizeEasyshipPayloadShape(payload);
   const invalidDimensionsReason: string[] = [];
   if (!Number.isFinite(input.dimensions.lengthIn) || input.dimensions.lengthIn <= 0) invalidDimensionsReason.push('lengthIn');
@@ -1248,29 +1270,31 @@ export async function createShipmentAndBuyLabel(
     throw new Error('Easyship create shipment response missing shipment id');
   }
 
-  const purchaseCandidates = [
-    `/shipments/${encodeURIComponent(shipmentId)}/purchase`,
-    `/shipments/${encodeURIComponent(shipmentId)}/buy`,
-    `/shipments/${encodeURIComponent(shipmentId)}/label`,
-  ];
+  const batchLabelPayload = {
+    shipments: [
+      {
+        easyship_shipment_id: shipmentId,
+        ...(trimOrNull(input.courierServiceId)
+          ? { courier_service_id: trimOrNull(input.courierServiceId) }
+          : {}),
+      },
+    ],
+  };
 
-  let purchasedData: any = null;
-  let lastError: Error | null = null;
-  for (const path of purchaseCandidates) {
-    try {
-      purchasedData = await requestEasyship<any>(env, path, 'POST', {
-        courier_service_id: input.courierServiceId,
-      });
-      break;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-    }
-  }
-  if (!purchasedData) {
-    throw lastError || new Error('Easyship purchase label request failed');
+  if (isEasyshipDebugEnabled(env)) {
+    const batchPayloadShape = summarizeEasyshipPayloadShape(batchLabelPayload);
+    console.log('[easyship][debug] label batch request preflight', {
+      shipmentId,
+      payloadTopLevelKeys: batchPayloadShape.topLevelKeys,
+      hasShipmentWrapper: batchPayloadShape.hasShipmentWrapper,
+      shipmentWrapperKeys: batchPayloadShape.shipmentWrapperKeys,
+      bodySkeleton: batchPayloadShape.skeleton,
+    });
   }
 
-  return normalizeShipmentSnapshot(purchasedData);
+  await requestEasyship<any>(env, '/batches/labels', 'POST', batchLabelPayload);
+  const refreshed = await requestEasyship<any>(env, `/shipments/${encodeURIComponent(shipmentId)}`, 'GET');
+  return normalizeShipmentSnapshot(refreshed);
 }
 
 export async function getEasyshipShipment(env: EasyshipEnv, shipmentId: string): Promise<EasyshipShipmentSnapshot> {
