@@ -132,7 +132,14 @@ export async function onRequestPost(context: { request: Request; env: ShippingLa
       .run();
 
     const shipFrom = await readShippingSettings(context.env.DB);
-    return jsonResponse({ ok: true, shipFrom });
+    return jsonResponse({
+      ok: true,
+      shipFrom: {
+        ...shipFrom,
+        companyName: shipFrom.shipFromCompany,
+        company_name: shipFrom.shipFromCompany,
+      },
+    });
   } catch (error) {
     console.error('[admin/settings/shipping/ship-from] failed to update', error);
     const detail = error instanceof Error ? error.message : String(error);

@@ -581,6 +581,9 @@ export const onRequestPost = async (context: {
         shipping_address_collection: {
           allowed_countries: ['US', 'CA'],
         },
+        phone_number_collection: {
+          enabled: true,
+        },
         shipping_options: shippingOptions,
         billing_address_collection: 'auto',
         expires_at: expiresAt,

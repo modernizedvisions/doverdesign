@@ -91,6 +91,7 @@ export type EasyshipRateRequest = {
 
 // Easyship v2024-09 docs include "fashion" in the official Rates request example.
 const DEFAULT_EASYSHIP_ITEM_CATEGORY = 'fashion';
+const DEFAULT_ORIGIN_COMPANY_NAME = 'Dover Designs';
 
 export type EasyshipCreateShipmentRequest = EasyshipRateRequest & {
   courierServiceId: string;
@@ -921,6 +922,7 @@ const toNonEmptyRateItems = (items: EasyshipRateRequest['items']): EasyshipRateI
 export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => {
   const originCountry = (trimOrNull(input.origin.countryCode) || 'US').toUpperCase();
   const destinationCountry = (trimOrNull(input.destination.countryCode) || 'US').toUpperCase();
+  const originCompanyName = trimOrNull(input.origin.companyName) || DEFAULT_ORIGIN_COMPANY_NAME;
   const isDomesticUS = originCountry === 'US' && destinationCountry === 'US';
   const destinationCity = (trimOrNull(input.destination.city) || '').trim();
   const destinationState = (trimOrNull(input.destination.state) || '').trim();
@@ -934,7 +936,7 @@ export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => {
   return {
     origin_address: {
       contact_name: input.origin.name,
-      company_name: trimOrNull(input.origin.companyName) || undefined,
+      company_name: originCompanyName,
       contact_email: trimOrNull(input.origin.email) || undefined,
       contact_phone: trimOrNull(input.origin.phone) || undefined,
       line_1: input.origin.addressLine1,
@@ -992,6 +994,11 @@ export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => {
 const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => {
   const originCountry = (trimOrNull(input.origin.countryCode) || 'US').toUpperCase();
   const destinationCountry = (trimOrNull(input.destination.countryCode) || 'US').toUpperCase();
+  const originCompanyName = trimOrNull(input.origin.companyName) || DEFAULT_ORIGIN_COMPANY_NAME;
+  const destinationPhone = trimOrNull(input.destination.phone);
+  if (!destinationPhone) {
+    throw new Error('Missing destination phone number (required for Easyship).');
+  }
   const isDomesticUS = originCountry === 'US' && destinationCountry === 'US';
   const destinationCity = (trimOrNull(input.destination.city) || '').trim();
   const destinationState = (trimOrNull(input.destination.state) || '').trim();
@@ -1005,7 +1012,7 @@ const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => {
   return {
     origin_address: {
       contact_name: input.origin.name,
-      company_name: trimOrNull(input.origin.companyName) || undefined,
+      company_name: originCompanyName,
       contact_email: trimOrNull(input.origin.email) || undefined,
       contact_phone: trimOrNull(input.origin.phone) || undefined,
       line_1: input.origin.addressLine1,
@@ -1019,7 +1026,7 @@ const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => {
       contact_name: input.destination.name,
       company_name: trimOrNull(input.destination.companyName) || undefined,
       contact_email: trimOrNull(input.destination.email) || undefined,
-      contact_phone: trimOrNull(input.destination.phone) || undefined,
+      contact_phone: destinationPhone,
       line_1: input.destination.addressLine1,
       line_2: trimOrNull(input.destination.addressLine2) || undefined,
       city: destinationCity,
@@ -1229,6 +1236,8 @@ export async function createShipmentAndBuyLabel(
       orderId: orderId || null,
       shipmentId: shipmentId || null,
       courierServiceIdPresent: !!trimOrNull(input.courierServiceId),
+      destinationPhonePresent: !!trimOrNull((payload as any)?.destination_address?.contact_phone),
+      originCompanyPresent: !!trimOrNull((payload as any)?.origin_address?.company_name),
       payloadTopLevelKeys: payloadShape.topLevelKeys,
       hasShipmentWrapper: payloadShape.hasShipmentWrapper,
       shipmentWrapperKeys: payloadShape.shipmentWrapperKeys,

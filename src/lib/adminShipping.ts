@@ -2,6 +2,7 @@ import { adminFetch } from './adminAuth';
 
 export type ShipFromSettings = {
   shipFromName: string;
+  shipFromCompany: string;
   shipFromAddress1: string;
   shipFromAddress2: string;
   shipFromCity: string;

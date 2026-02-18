@@ -21,6 +21,7 @@ type PresetDraft = {
 
 const emptyShipFrom: ShipFromSettings = {
   shipFromName: '',
+  shipFromCompany: 'Dover Designs',
   shipFromAddress1: '',
   shipFromAddress2: '',
   shipFromCity: '',
@@ -342,6 +343,10 @@ export function AdminShippingSettingsTab() {
                 value={shipFrom.shipFromName}
                 onChange={(e) => setShipFrom((prev) => ({ ...prev, shipFromName: e.target.value }))}
               />
+            </div>
+            <div>
+              <label className="lux-label mb-2 block">Company</label>
+              <input className="lux-input bg-charcoal/5" value={shipFrom.shipFromCompany || 'Dover Designs'} readOnly />
             </div>
             <div>
               <label className="lux-label mb-2 block">Phone</label>

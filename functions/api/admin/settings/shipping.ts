@@ -17,7 +17,15 @@ export async function onRequestGet(context: { request: Request; env: ShippingLab
       readShippingSettings(context.env.DB),
       listShippingBoxPresets(context.env.DB),
     ]);
-    return jsonResponse({ ok: true, shipFrom, boxPresets });
+    return jsonResponse({
+      ok: true,
+      shipFrom: {
+        ...shipFrom,
+        companyName: shipFrom.shipFromCompany,
+        company_name: shipFrom.shipFromCompany,
+      },
+      boxPresets,
+    });
   } catch (error) {
     console.error('[admin/settings/shipping] failed to load settings', error);
     const detail = error instanceof Error ? error.message : String(error);
@@ -31,4 +39,3 @@ export async function onRequest(context: { request: Request; env: ShippingLabels
   }
   return onRequestGet(context);
 }
-

@@ -95,6 +95,7 @@ const toEasyshipRateRequest = (
 ): EasyshipRateRequest => ({
   origin: {
     name: shipFrom.shipFromName,
+    companyName: shipFrom.shipFromCompany || 'Dover Designs',
     phone: shipFrom.shipFromPhone || null,
     addressLine1: shipFrom.shipFromAddress1,
     addressLine2: shipFrom.shipFromAddress2 || null,
@@ -338,6 +339,16 @@ export async function onRequestPost(
       });
     }
     const rateRequest = toEasyshipRateRequest(shipFrom, destination!, dimensions, orderItems);
+    if (!trimOrNull(rateRequest.destination.phone)) {
+      return jsonResponse(
+        {
+          ok: false,
+          code: 'DESTINATION_PHONE_REQUIRED',
+          error: 'Missing destination phone number (required for Easyship).',
+        },
+        400
+      );
+    }
     const signaturePayload = buildRateCacheSignaturePayload({
       orderId: params.orderId,
       destination: rateRequest.destination,
@@ -419,6 +430,8 @@ export async function onRequestPost(
         selectedQuoteId,
         dimensions,
         expectedParcelsCount,
+        destinationPhonePresent: !!trimOrNull(rateRequest.destination.phone),
+        originCompanyPresent: !!trimOrNull(rateRequest.origin.companyName),
       });
     }
     const created = await createShipmentAndBuyLabel(context.env, {

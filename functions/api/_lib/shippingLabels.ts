@@ -71,6 +71,7 @@ type OrderAddressRow = {
   id: string;
   shipping_name: string | null;
   shipping_address_json: string | null;
+  shipping_phone?: string | null;
   customer_email: string | null;
 };
 
@@ -137,6 +138,7 @@ const US_STATE_CODES = new Set<string>([
 const normalizeCountryCode = (value: string): string => value.trim().toUpperCase().slice(0, 2);
 
 const isValidUSStateCode = (value: string): boolean => US_STATE_CODES.has(value.trim().toUpperCase());
+const DEFAULT_SHIP_FROM_COMPANY = 'Dover Designs';
 
 const toFiniteNumberOrNull = (value: unknown): number | null => {
   if (value === null || value === undefined || value === '') return null;
@@ -243,10 +245,22 @@ export async function ensureShippingLabelsSchema(db: D1Database): Promise<void> 
     .run();
   await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_order_rate_quotes_order_key ON order_rate_quotes(order_id, shipment_temp_key);`).run();
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_order_rate_quotes_expires ON order_rate_quotes(expires_at);`).run();
+
+  const ordersTable = await db
+    .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'orders' LIMIT 1;`)
+    .first<{ name: string }>();
+  if (ordersTable?.name) {
+    const orderColumns = await db.prepare(`PRAGMA table_info(orders);`).all<{ name: string }>();
+    const orderColumnNames = new Set((orderColumns.results || []).map((column) => column.name));
+    if (!orderColumnNames.has('shipping_phone')) {
+      await db.prepare(`ALTER TABLE orders ADD COLUMN shipping_phone TEXT;`).run();
+    }
+  }
 }
 
 export type ShipFromSettings = {
   shipFromName: string;
+  shipFromCompany: string;
   shipFromAddress1: string;
   shipFromAddress2: string;
   shipFromCity: string;
@@ -333,6 +347,7 @@ export async function readShippingSettings(db: D1Database): Promise<ShipFromSett
 
   return {
     shipFromName: row?.ship_from_name ?? '',
+    shipFromCompany: DEFAULT_SHIP_FROM_COMPANY,
     shipFromAddress1: row?.ship_from_address1 ?? '',
     shipFromAddress2: row?.ship_from_address2 ?? '',
     shipFromCity: row?.ship_from_city ?? '',
@@ -600,7 +615,7 @@ export function parseOrderAddress(value: unknown): ShippingDestination {
 
 export async function getOrderDestination(db: D1Database, orderId: string): Promise<ShippingDestination | null> {
   const row = await db
-    .prepare(`SELECT id, shipping_name, shipping_address_json, customer_email FROM orders WHERE id = ? LIMIT 1;`)
+    .prepare(`SELECT id, shipping_name, shipping_address_json, shipping_phone, customer_email FROM orders WHERE id = ? LIMIT 1;`)
     .bind(orderId)
     .first<OrderAddressRow>();
   if (!row) return null;
@@ -609,7 +624,7 @@ export async function getOrderDestination(db: D1Database, orderId: string): Prom
     name: row.shipping_name,
     companyName: null,
     email: row.customer_email,
-    phone: null,
+    phone: trimOrNull(row.shipping_phone),
     line1: null,
     line2: null,
     city: null,
@@ -623,6 +638,7 @@ export async function getOrderDestination(db: D1Database, orderId: string): Prom
       ...parseOrderAddress(decoded),
       name: trimOrNull((decoded as any)?.name) || row.shipping_name,
       email: trimOrNull((decoded as any)?.email) || row.customer_email,
+      phone: trimOrNull((decoded as any)?.phone) || trimOrNull(row.shipping_phone),
     };
   } catch {
     parsedAddress = {

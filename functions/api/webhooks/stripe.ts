@@ -53,6 +53,12 @@ type Env = {
 
 const STRIPE_WEBHOOK_TOLERANCE_SECONDS = 300;
 
+const trimOrNull = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
 type EmailLogPayload = {
   kind: string;
   branch: string;
@@ -118,6 +124,22 @@ function resolveCanonicalTotals(session: Stripe.Checkout.Session): CanonicalTota
     amountTax: toCents(totalDetails?.amount_tax),
     amountDiscount: toCents(totalDetails?.amount_discount),
     currency: session.currency || 'usd',
+  };
+}
+
+function buildShippingAddressPayload(args: {
+  shippingAddress: Stripe.Address | Stripe.ShippingAddress | null;
+  shippingName: string | null;
+  shippingPhone: string | null;
+  customerEmail: string | null;
+}): Record<string, unknown> | null {
+  const { shippingAddress, shippingName, shippingPhone, customerEmail } = args;
+  if (!shippingAddress && !shippingName && !shippingPhone && !customerEmail) return null;
+  return {
+    ...(shippingAddress ? shippingAddress : {}),
+    ...(shippingName ? { name: shippingName } : {}),
+    ...(shippingPhone ? { phone: shippingPhone } : {}),
+    ...(customerEmail ? { email: customerEmail } : {}),
   };
 }
 
@@ -214,6 +236,8 @@ export const onRequestPost = async (context: {
         sessionWithLines.customer_details?.name ||
         null;
       const shippingAddress = shippingDetails?.address || null;
+      const shippingPhone =
+        sessionWithLines.customer_details?.phone || (shippingDetails as any)?.phone || paymentIntent?.shipping?.phone || null;
 
       const firstCharge = paymentIntent?.charges?.data?.[0];
       console.log(
@@ -451,6 +475,7 @@ export const onRequestPost = async (context: {
         customerEmail,
         shippingName,
         shippingAddress,
+        shippingPhone,
         cardLast4,
         cardBrand,
         shippingCents,
@@ -829,6 +854,7 @@ async function ensureOrdersSchema(db: D1Database) {
       customer_email TEXT,
       shipping_name TEXT,
       shipping_address_json TEXT,
+      shipping_phone TEXT,
       card_last4 TEXT,
       card_brand TEXT,
       description TEXT,
@@ -873,6 +899,7 @@ async function ensureOrdersSchema(db: D1Database) {
     await addColumnIfMissing('currency', `ALTER TABLE orders ADD COLUMN currency TEXT;`);
     await addColumnIfMissing('description', `ALTER TABLE orders ADD COLUMN description TEXT;`);
     await addColumnIfMissing('shipping_cents', `ALTER TABLE orders ADD COLUMN shipping_cents INTEGER DEFAULT 0;`);
+    await addColumnIfMissing('shipping_phone', `ALTER TABLE orders ADD COLUMN shipping_phone TEXT;`);
     await addColumnIfMissing('is_seen', `ALTER TABLE orders ADD COLUMN is_seen INTEGER NOT NULL DEFAULT 0;`);
     await addColumnIfMissing('seen_at', `ALTER TABLE orders ADD COLUMN seen_at TEXT;`);
 
@@ -962,6 +989,15 @@ async function ensureShippingColumn(db: D1Database) {
       // Continue; insert attempts will surface errors if column truly missing.
     }
   }
+  if (!columnNames.has('shipping_phone')) {
+    try {
+      await db.prepare(`ALTER TABLE orders ADD COLUMN shipping_phone TEXT;`).run();
+      console.log('[stripe webhook] added shipping_phone column to orders');
+    } catch (err) {
+      console.error('[stripe webhook] failed to add shipping_phone column', err);
+      // Continue; insert attempts will surface errors if column truly missing.
+    }
+  }
 }
 
 async function handleCustomInvoicePayment(args: {
@@ -1019,11 +1055,11 @@ async function handleCustomInvoicePayment(args: {
   let inserted = await db
     .prepare(
       `INSERT INTO orders (
-        id, display_order_id, order_type, stripe_payment_intent_id, total_cents, amount_total_cents, amount_subtotal_cents, amount_shipping_cents, amount_tax_cents, amount_discount_cents, currency, customer_email, shipping_name, shipping_address_json, card_last4, card_brand, description, shipping_cents
+        id, display_order_id, order_type, stripe_payment_intent_id, total_cents, amount_total_cents, amount_subtotal_cents, amount_shipping_cents, amount_tax_cents, amount_discount_cents, currency, customer_email, shipping_name, shipping_address_json, shipping_phone, card_last4, card_brand, description, shipping_cents
       ) VALUES (
         ?, ?, 'custom', ?, ?,
         ?, ?, ?, ?, ?,
-        ?, ?, NULL, NULL, NULL, NULL, ?, ?
+        ?, ?, NULL, NULL, NULL, NULL, NULL, ?, ?
       );`
     )
     .bind(
@@ -1683,6 +1719,7 @@ async function handleCustomOrderPayment(args: {
     customerEmail: customerEmail || customOrder.customer_email,
     shippingName,
     shippingAddress,
+    shippingPhone,
     cardLast4,
     cardBrand,
     shippingCents: resolvedShippingCents,
@@ -2013,6 +2050,7 @@ async function insertStandardOrderAndItems(args: {
   customerEmail: string | null;
   shippingName: string | null;
   shippingAddress: Stripe.Address | Stripe.ShippingAddress | null;
+  shippingPhone: string | null;
   cardLast4: string | null;
   cardBrand: string | null;
   shippingCents: number;
@@ -2039,6 +2077,7 @@ async function insertStandardOrderAndItems(args: {
     customerEmail,
     shippingName,
     shippingAddress,
+    shippingPhone,
     cardLast4,
     cardBrand,
     shippingCents,
@@ -2081,6 +2120,13 @@ async function insertStandardOrderAndItems(args: {
   const amountDiscountCents = totals.amountDiscount ?? (session.total_details as any)?.amount_discount ?? 0;
   const currency = totals.currency || session.currency || 'usd';
   const totalCents = totalCentsOverride ?? amountTotalCents;
+  const normalizedShippingPhone = trimOrNull(shippingPhone);
+  const shippingAddressPayload = buildShippingAddressPayload({
+    shippingAddress,
+    shippingName,
+    shippingPhone: normalizedShippingPhone,
+    customerEmail,
+  });
   const promoCode = (session.metadata?.mv_promo_code || '').trim() || null;
   const promoPercentOff = parseInt(session.metadata?.mv_percent_off_applied || '0', 10) || 0;
   const promoFreeShipping = session.metadata?.mv_free_shipping_applied === '1' ? 1 : 0;
@@ -2099,9 +2145,9 @@ async function insertStandardOrderAndItems(args: {
       `
         INSERT INTO orders (
           id, display_order_id, order_type, stripe_payment_intent_id, total_cents, amount_total_cents, amount_subtotal_cents, amount_shipping_cents, amount_tax_cents, amount_discount_cents, currency,
-          customer_email, shipping_name, shipping_address_json, card_last4, card_brand, shipping_cents, description,
+          customer_email, shipping_name, shipping_address_json, shipping_phone, card_last4, card_brand, shipping_cents, description,
           promo_code, promo_percent_off, promo_free_shipping, promo_source
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       `
     )
     .bind(
@@ -2118,7 +2164,8 @@ async function insertStandardOrderAndItems(args: {
       currency,
       customerEmail,
       shippingName,
-      JSON.stringify(shippingAddress ?? null),
+      JSON.stringify(shippingAddressPayload),
+      normalizedShippingPhone,
       cardLast4,
       cardBrand,
       shippingCents,
@@ -2141,16 +2188,16 @@ async function insertStandardOrderAndItems(args: {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         `
       )
-      .bind(
-        orderId,
-        displayOrderId,
-        paymentIntentId,
-        totalCents,
-        customerEmail,
-        shippingName,
-        JSON.stringify(shippingAddress ?? null),
-        shippingCents
-      )
+        .bind(
+          orderId,
+          displayOrderId,
+          paymentIntentId,
+          totalCents,
+          customerEmail,
+          shippingName,
+          JSON.stringify(shippingAddressPayload),
+          shippingCents
+        )
       .run();
     orderInsertSucceeded = fallbackResult.success;
     console.log('[stripe webhook] order insert fallback', {

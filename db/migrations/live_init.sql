@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS orders (
   customer_email TEXT,
   shipping_name TEXT,
   shipping_address_json TEXT,
+  shipping_phone TEXT,
   card_last4 TEXT,
   card_brand TEXT,
   description TEXT,

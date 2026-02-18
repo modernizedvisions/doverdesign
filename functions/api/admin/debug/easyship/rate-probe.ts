@@ -44,6 +44,7 @@ const toEasyshipRateRequest = (
 ): EasyshipRateRequest => ({
   origin: {
     name: shipFrom.shipFromName,
+    companyName: shipFrom.shipFromCompany || 'Dover Designs',
     phone: shipFrom.shipFromPhone || null,
     addressLine1: shipFrom.shipFromAddress1,
     addressLine2: shipFrom.shipFromAddress2 || null,
@@ -190,4 +191,3 @@ export async function onRequest(
   }
   return onRequestPost(context);
 }
-
