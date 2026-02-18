@@ -162,6 +162,8 @@ export const summarizeEasyshipPayloadShape = (payload: unknown) => {
   const parcels = topLevelParcels.length ? topLevelParcels : shipmentParcels;
   const firstParcel = parcels[0];
   const firstParcelKeys = objectKeys(firstParcel);
+  const firstParcelBoxKeys =
+    isObjectRecord(firstParcel) && isObjectRecord(firstParcel.box) ? Object.keys(firstParcel.box) : [];
   const firstParcelItems =
     isObjectRecord(firstParcel) && Array.isArray(firstParcel.items)
       ? firstParcel.items
@@ -177,6 +179,7 @@ export const summarizeEasyshipPayloadShape = (payload: unknown) => {
     parcelSource: topLevelParcels.length ? 'top_level' : shipmentParcels.length ? 'shipment_wrapper' : 'none',
     parcelsCount: parcels.length,
     firstParcelKeys,
+    firstParcelBoxKeys,
     firstParcelItemsIsArray: Array.isArray(firstParcelItems),
     firstParcelItemsLength: Array.isArray(firstParcelItems) ? firstParcelItems.length : 0,
     firstParcelFirstItemKeys,
@@ -732,6 +735,7 @@ const requestEasyshipDetailed = async <T>(
       parcelSource: payloadShape.parcelSource,
       parcelsCount: payloadShape.parcelsCount,
       firstParcelKeys: payloadShape.firstParcelKeys,
+      firstParcelBoxKeys: payloadShape.firstParcelBoxKeys,
       firstParcelItemsIsArray: payloadShape.firstParcelItemsIsArray,
       firstParcelItemsLength: payloadShape.firstParcelItemsLength,
       firstParcelFirstItemKeys: payloadShape.firstParcelFirstItemKeys,
@@ -1017,7 +1021,6 @@ const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => ({
           length: Number(input.dimensions.lengthIn.toFixed(2)),
           width: Number(input.dimensions.widthIn.toFixed(2)),
           height: Number(input.dimensions.heightIn.toFixed(2)),
-          unit: 'in',
         },
         total_actual_weight: totalWeightLb,
         items: items.map((item) => {
