@@ -979,69 +979,67 @@ export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => {
 };
 
 const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => ({
-  shipment: {
-    origin_address: {
-      name: input.origin.name,
-      company_name: input.origin.companyName ?? undefined,
-      email: input.origin.email ?? undefined,
-      phone_number: input.origin.phone ?? undefined,
-      address_line_1: input.origin.addressLine1,
-      address_line_2: input.origin.addressLine2 ?? undefined,
-      city: input.origin.city,
-      state: input.origin.state,
-      postal_code: input.origin.postalCode,
-      country_alpha2: input.origin.countryCode,
-    },
-    destination_address: {
-      name: input.destination.name,
-      company_name: input.destination.companyName ?? undefined,
-      email: input.destination.email ?? undefined,
-      phone_number: input.destination.phone ?? undefined,
-      address_line_1: input.destination.addressLine1,
-      address_line_2: input.destination.addressLine2 ?? undefined,
-      city: input.destination.city,
-      state: input.destination.state,
-      postal_code: input.destination.postalCode,
-      country_alpha2: input.destination.countryCode,
-    },
-    parcels: [
-      (() => {
-        const items = toNonEmptyRateItems(input.items);
-        const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-        const safeTotalQuantity = totalQuantity > 0 ? totalQuantity : 1;
-        const totalWeightLb = Number(input.dimensions.weightLb.toFixed(3));
-        const perItemWeightLb = Number((totalWeightLb / safeTotalQuantity).toFixed(4));
-        const safePerItemWeightLb = perItemWeightLb > 0 ? perItemWeightLb : 0.001;
-
-        return {
-          box: {
-            length: Number(input.dimensions.lengthIn.toFixed(2)),
-            width: Number(input.dimensions.widthIn.toFixed(2)),
-            height: Number(input.dimensions.heightIn.toFixed(2)),
-            unit: 'in',
-          },
-          total_actual_weight: totalWeightLb,
-          items: items.map((item) => {
-            const baseDeclaredValueCents = Math.round(Number(item.declaredValueCents ?? 1));
-            const safeDeclaredValueCents = Number.isFinite(baseDeclaredValueCents)
-              ? Math.max(1, baseDeclaredValueCents)
-              : 1;
-            return {
-              description: item.description || 'Order items',
-              category: DEFAULT_EASYSHIP_ITEM_CATEGORY,
-              quantity: Math.max(1, item.quantity || 1),
-              actual_weight: safePerItemWeightLb,
-              weight_unit: 'lb',
-              declared_currency: 'USD',
-              declared_customs_value: Number((safeDeclaredValueCents / 100).toFixed(2)),
-            };
-          }),
-        };
-      })(),
-    ],
-    courier_service_id: input.courierServiceId,
-    external_reference: input.externalReference ?? undefined,
+  origin_address: {
+    name: input.origin.name,
+    company_name: input.origin.companyName ?? undefined,
+    email: input.origin.email ?? undefined,
+    phone_number: input.origin.phone ?? undefined,
+    address_line_1: input.origin.addressLine1,
+    address_line_2: input.origin.addressLine2 ?? undefined,
+    city: input.origin.city,
+    state: input.origin.state,
+    postal_code: input.origin.postalCode,
+    country_alpha2: input.origin.countryCode,
   },
+  destination_address: {
+    name: input.destination.name,
+    company_name: input.destination.companyName ?? undefined,
+    email: input.destination.email ?? undefined,
+    phone_number: input.destination.phone ?? undefined,
+    address_line_1: input.destination.addressLine1,
+    address_line_2: input.destination.addressLine2 ?? undefined,
+    city: input.destination.city,
+    state: input.destination.state,
+    postal_code: input.destination.postalCode,
+    country_alpha2: input.destination.countryCode,
+  },
+  parcels: [
+    (() => {
+      const items = toNonEmptyRateItems(input.items);
+      const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+      const safeTotalQuantity = totalQuantity > 0 ? totalQuantity : 1;
+      const totalWeightLb = Number(input.dimensions.weightLb.toFixed(3));
+      const perItemWeightLb = Number((totalWeightLb / safeTotalQuantity).toFixed(4));
+      const safePerItemWeightLb = perItemWeightLb > 0 ? perItemWeightLb : 0.001;
+
+      return {
+        box: {
+          length: Number(input.dimensions.lengthIn.toFixed(2)),
+          width: Number(input.dimensions.widthIn.toFixed(2)),
+          height: Number(input.dimensions.heightIn.toFixed(2)),
+          unit: 'in',
+        },
+        total_actual_weight: totalWeightLb,
+        items: items.map((item) => {
+          const baseDeclaredValueCents = Math.round(Number(item.declaredValueCents ?? 1));
+          const safeDeclaredValueCents = Number.isFinite(baseDeclaredValueCents)
+            ? Math.max(1, baseDeclaredValueCents)
+            : 1;
+          return {
+            description: item.description || 'Order items',
+            category: DEFAULT_EASYSHIP_ITEM_CATEGORY,
+            quantity: Math.max(1, item.quantity || 1),
+            actual_weight: safePerItemWeightLb,
+            weight_unit: 'lb',
+            declared_currency: 'USD',
+            declared_customs_value: Number((safeDeclaredValueCents / 100).toFixed(2)),
+          };
+        }),
+      };
+    })(),
+  ],
+  courier_service_id: input.courierServiceId,
+  external_reference: input.externalReference ?? undefined,
 });
 
 export async function fetchEasyshipRates(env: EasyshipEnv, input: EasyshipRateRequest): Promise<EasyshipRatesResult> {
