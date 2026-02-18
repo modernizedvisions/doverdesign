@@ -97,6 +97,11 @@ const getRawCarrierName = (rate: { carrier: string; raw: unknown }): string => {
     if (typeof raw.courier_name === 'string') return raw.courier_name;
     if (typeof raw.carrier === 'string') return raw.carrier;
     if (typeof raw.provider === 'string') return raw.provider;
+    if (raw.courier && typeof raw.courier === 'object' && !Array.isArray(raw.courier)) {
+      const courier = raw.courier as Record<string, unknown>;
+      if (typeof courier.name === 'string') return courier.name;
+      if (typeof courier.display_name === 'string') return courier.display_name;
+    }
   }
   return rate.carrier;
 };
@@ -212,6 +217,23 @@ export async function onRequestPost(
 
     const liveRates = await fetchEasyshipRates(context.env, rateRequest);
     const rawRates = liveRates.rates;
+    if (isEasyshipDebugEnabled(context.env)) {
+      const resultShape = liveRates as unknown as Record<string, unknown>;
+      const rateContainer = resultShape?.rates as unknown;
+      console.log('[easyship][debug] quotes fetchEasyshipRates shape', {
+        resultKeys: Object.keys(resultShape || {}),
+        ratesIsArray: Array.isArray(rateContainer),
+        ratesType: typeof rateContainer,
+        nestedRatesKeys:
+          !Array.isArray(rateContainer) && rateContainer && typeof rateContainer === 'object'
+            ? Object.keys(rateContainer as Record<string, unknown>)
+            : [],
+        firstRateKeys:
+          Array.isArray(rateContainer) && rateContainer[0] && typeof rateContainer[0] === 'object'
+            ? Object.keys(rateContainer[0] as Record<string, unknown>)
+            : [],
+      });
+    }
     const allowedRates = filterAllowedRates(rawRates, allowedCarriers).sort((a, b) => a.amountCents - b.amountCents);
     if (isEasyshipDebugEnabled(context.env)) {
       console.log('[easyship][debug] quotes rates pre/post filter', {

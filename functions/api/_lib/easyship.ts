@@ -348,42 +348,101 @@ const parseRatesFromResponse = (data: any): EasyshipRate[] => {
     ? data.data.couriers
     : [];
 
+  const readPath = (input: any, path: string): unknown => {
+    if (!input || typeof input !== 'object') return undefined;
+    return path.split('.').reduce<unknown>((acc, key) => {
+      if (acc && typeof acc === 'object' && !Array.isArray(acc)) {
+        return (acc as Record<string, unknown>)[key];
+      }
+      return undefined;
+    }, input);
+  };
+
+  const firstText = (input: any, paths: string[]): string | null => {
+    for (const path of paths) {
+      const value = readPath(input, path);
+      const text = trimOrNull(value);
+      if (text) return text;
+    }
+    return null;
+  };
+
+  const firstAmountCents = (input: any, paths: string[]): number | null => {
+    for (const path of paths) {
+      const value = readPath(input, path);
+      const cents = toAmountCents(value);
+      if (cents !== null) return cents;
+    }
+    return null;
+  };
+
+  const firstNumber = (input: any, paths: string[]): number | null => {
+    for (const path of paths) {
+      const value = readPath(input, path);
+      const numeric = toFiniteNumberOrNull(value);
+      if (numeric !== null) return numeric;
+    }
+    return null;
+  };
+
   const normalized = source
     .map((rate: any): EasyshipRate | null => {
       const id =
-        trimOrNull(rate?.courier_service_id) ||
-        trimOrNull(rate?.rate_id) ||
-        trimOrNull(rate?.id) ||
-        null;
+        firstText(rate, [
+          'courier_service_id',
+          'rate_id',
+          'id',
+          'courier_id',
+          'courier_service.id',
+          'courier.id',
+          'service.id',
+        ]) || null;
       const carrier =
-        trimOrNull(rate?.courier_name) ||
-        trimOrNull(rate?.carrier) ||
-        trimOrNull(rate?.provider) ||
-        null;
+        firstText(rate, [
+          'courier_name',
+          'carrier',
+          'provider',
+          'courier.name',
+          'courier.display_name',
+          'courier.company_name',
+          'service.courier_name',
+          'service.provider',
+        ]) || null;
       const service =
-        trimOrNull(rate?.service_name) ||
-        trimOrNull(rate?.service_level_name) ||
-        trimOrNull(rate?.service) ||
-        null;
+        firstText(rate, [
+          'service_name',
+          'service_level_name',
+          'service',
+          'courier_service_name',
+          'courier_service.name',
+          'service.name',
+          'shipping_service_name',
+          'shipping_service',
+        ]) || null;
       const amountCents =
-        toAmountCents(rate?.total_charge) ??
-        toAmountCents(rate?.shipping_rate) ??
-        toAmountCents(rate?.rate) ??
-        toAmountCents(rate?.amount) ??
-        null;
+        firstAmountCents(rate, [
+          'total_charge',
+          'shipping_rate',
+          'rate',
+          'amount',
+          'total_charge.amount',
+          'shipment_charge.total',
+          'shipment_charge.amount',
+          'shipping_total',
+          'total',
+        ]) ?? null;
       const currency =
-        trimOrNull(rate?.currency) ||
-        trimOrNull(rate?.currency_code) ||
-        trimOrNull(rate?.total_charge_currency) ||
-        'USD';
+        firstText(rate, [
+          'currency',
+          'currency_code',
+          'total_charge_currency',
+          'total_charge.currency',
+          'shipment_charge.currency',
+        ]) || 'USD';
       const etaDaysMin =
-        toFiniteNumberOrNull(rate?.delivery_days_min) ??
-        toFiniteNumberOrNull(rate?.estimated_delivery_days_min) ??
-        null;
+        firstNumber(rate, ['delivery_days_min', 'estimated_delivery_days_min', 'delivery.eta_min']) ?? null;
       const etaDaysMax =
-        toFiniteNumberOrNull(rate?.delivery_days_max) ??
-        toFiniteNumberOrNull(rate?.estimated_delivery_days_max) ??
-        null;
+        firstNumber(rate, ['delivery_days_max', 'estimated_delivery_days_max', 'delivery.eta_max']) ?? null;
 
       if (!id || !carrier || !service || amountCents === null) return null;
       return {
