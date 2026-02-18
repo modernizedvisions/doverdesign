@@ -982,68 +982,78 @@ export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => {
   };
 };
 
-const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => ({
-  origin_address: {
-    name: input.origin.name,
-    company_name: input.origin.companyName ?? undefined,
-    email: input.origin.email ?? undefined,
-    phone_number: input.origin.phone ?? undefined,
-    address_line_1: input.origin.addressLine1,
-    address_line_2: input.origin.addressLine2 ?? undefined,
-    city: input.origin.city,
-    state: input.origin.state,
-    postal_code: input.origin.postalCode,
-    country_alpha2: input.origin.countryCode,
-  },
-  destination_address: {
-    name: input.destination.name,
-    company_name: input.destination.companyName ?? undefined,
-    email: input.destination.email ?? undefined,
-    phone_number: input.destination.phone ?? undefined,
-    address_line_1: input.destination.addressLine1,
-    address_line_2: input.destination.addressLine2 ?? undefined,
-    city: input.destination.city,
-    state: input.destination.state,
-    postal_code: input.destination.postalCode,
-    country_alpha2: input.destination.countryCode,
-  },
-  parcels: [
-    (() => {
-      const items = toNonEmptyRateItems(input.items);
-      const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-      const safeTotalQuantity = totalQuantity > 0 ? totalQuantity : 1;
-      const totalWeightLb = Number(input.dimensions.weightLb.toFixed(3));
-      const perItemWeightLb = Number((totalWeightLb / safeTotalQuantity).toFixed(4));
-      const safePerItemWeightLb = perItemWeightLb > 0 ? perItemWeightLb : 0.001;
+const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => {
+  const originCountry = (trimOrNull(input.origin.countryCode) || 'US').toUpperCase();
+  const destinationCountry = (trimOrNull(input.destination.countryCode) || 'US').toUpperCase();
+  const isDomesticUS = originCountry === 'US' && destinationCountry === 'US';
+  const destinationCity = (trimOrNull(input.destination.city) || '').trim();
+  const destinationState = (trimOrNull(input.destination.state) || '').trim();
+  const items = toNonEmptyRateItems(input.items);
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const safeTotalQuantity = totalQuantity > 0 ? totalQuantity : 1;
+  const totalWeightKg = Number(poundsToKg(input.dimensions.weightLb).toFixed(4));
+  const perItemWeightKg = Number((totalWeightKg / safeTotalQuantity).toFixed(4));
+  const safePerItemWeightKg = perItemWeightKg > 0 ? perItemWeightKg : 0.001;
 
-      return {
+  return {
+    origin_address: {
+      contact_name: input.origin.name,
+      company_name: trimOrNull(input.origin.companyName) || undefined,
+      contact_email: trimOrNull(input.origin.email) || undefined,
+      contact_phone: trimOrNull(input.origin.phone) || undefined,
+      line_1: input.origin.addressLine1,
+      line_2: trimOrNull(input.origin.addressLine2) || undefined,
+      city: input.origin.city,
+      state: input.origin.state,
+      postal_code: input.origin.postalCode,
+      country_alpha2: originCountry,
+    },
+    destination_address: {
+      contact_name: input.destination.name,
+      company_name: trimOrNull(input.destination.companyName) || undefined,
+      contact_email: trimOrNull(input.destination.email) || undefined,
+      contact_phone: trimOrNull(input.destination.phone) || undefined,
+      line_1: input.destination.addressLine1,
+      line_2: trimOrNull(input.destination.addressLine2) || undefined,
+      city: destinationCity,
+      state: destinationState,
+      postal_code: input.destination.postalCode,
+      country_alpha2: destinationCountry,
+    },
+    shipping_settings: {
+      units: {
+        weight: 'kg',
+        dimensions: 'cm',
+      },
+    },
+    parcels: [
+      {
         box: {
-          length: Number(input.dimensions.lengthIn.toFixed(2)),
-          width: Number(input.dimensions.widthIn.toFixed(2)),
-          height: Number(input.dimensions.heightIn.toFixed(2)),
+          length: Number(inchesToCm(input.dimensions.lengthIn).toFixed(2)),
+          width: Number(inchesToCm(input.dimensions.widthIn).toFixed(2)),
+          height: Number(inchesToCm(input.dimensions.heightIn).toFixed(2)),
         },
-        total_actual_weight: totalWeightLb,
+        total_actual_weight: Number(totalWeightKg.toFixed(3)),
         items: items.map((item) => {
           const baseDeclaredValueCents = Math.round(Number(item.declaredValueCents ?? 1));
-          const safeDeclaredValueCents = Number.isFinite(baseDeclaredValueCents)
-            ? Math.max(1, baseDeclaredValueCents)
-            : 1;
+          const safeDeclaredValueCents = isDomesticUS
+            ? Math.max(1, Number.isFinite(baseDeclaredValueCents) ? baseDeclaredValueCents : 1)
+            : Math.max(0, Number.isFinite(baseDeclaredValueCents) ? baseDeclaredValueCents : 1);
           return {
             description: item.description || 'Order items',
             category: DEFAULT_EASYSHIP_ITEM_CATEGORY,
             quantity: Math.max(1, item.quantity || 1),
-            actual_weight: safePerItemWeightLb,
-            weight_unit: 'lb',
+            actual_weight: safePerItemWeightKg,
             declared_currency: 'USD',
             declared_customs_value: Number((safeDeclaredValueCents / 100).toFixed(2)),
           };
         }),
-      };
-    })(),
-  ],
-  courier_service_id: input.courierServiceId,
-  external_reference: input.externalReference ?? undefined,
-});
+      },
+    ],
+    courier_service_id: input.courierServiceId,
+    external_reference: input.externalReference ?? undefined,
+  };
+};
 
 export async function fetchEasyshipRates(env: EasyshipEnv, input: EasyshipRateRequest): Promise<EasyshipRatesResult> {
   if (maybeMock(env)) {
@@ -1184,18 +1194,40 @@ export async function createShipmentAndBuyLabel(
 
   if (isEasyshipDebugEnabled(env)) {
     const [orderId, shipmentId] = (input.externalReference || '').split(':');
+    const firstParcel =
+      payload && typeof payload === 'object' && Array.isArray((payload as any).parcels)
+        ? ((payload as any).parcels[0] as Record<string, unknown> | undefined)
+        : undefined;
+    const firstBox =
+      firstParcel && firstParcel.box && typeof firstParcel.box === 'object' && !Array.isArray(firstParcel.box)
+        ? (firstParcel.box as Record<string, unknown>)
+        : {};
+    const firstItems = firstParcel && Array.isArray(firstParcel.items) ? (firstParcel.items as Array<Record<string, unknown>>) : [];
     console.log('[easyship][debug] create shipment preflight', {
       orderId: orderId || null,
       shipmentId: shipmentId || null,
       courierServiceIdPresent: !!trimOrNull(input.courierServiceId),
+      payloadTopLevelKeys: payloadShape.topLevelKeys,
+      hasShipmentWrapper: payloadShape.hasShipmentWrapper,
+      shipmentWrapperKeys: payloadShape.shipmentWrapperKeys,
       dimensions: {
         lengthIn: Number(input.dimensions.lengthIn.toFixed(2)),
         widthIn: Number(input.dimensions.widthIn.toFixed(2)),
         heightIn: Number(input.dimensions.heightIn.toFixed(2)),
         weightLb: Number(input.dimensions.weightLb.toFixed(3)),
       },
+      convertedUnits: {
+        dimsCmFromPayload: {
+          length: Number(firstBox.length ?? 0),
+          width: Number(firstBox.width ?? 0),
+          height: Number(firstBox.height ?? 0),
+        },
+        totalWeightKgFromPayload: Number(firstParcel?.total_actual_weight ?? 0),
+        firstItemActualWeightKg: Number(firstItems[0]?.actual_weight ?? 0),
+      },
       parcelsCount: payloadShape.parcelsCount,
       firstParcelKeys: payloadShape.firstParcelKeys,
+      firstParcelBoxKeys: payloadShape.firstParcelBoxKeys,
       firstParcelItemsLength: payloadShape.firstParcelItemsLength,
       firstParcelFirstItemKeys: payloadShape.firstParcelFirstItemKeys,
       zeroParcelsReason: payloadShape.parcelsCount === 0 ? (invalidDimensionsReason.length ? invalidDimensionsReason : ['unknown']) : [],
