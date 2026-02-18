@@ -9,6 +9,7 @@ import {
   isEasyshipDebugEnabled,
   normalizeRateForClient,
   pickCheapestRate,
+  type EasyshipRawResponseHints,
   type EasyshipRate,
   type EasyshipRateRequest,
   type EasyshipShipmentSnapshot,
@@ -78,6 +79,13 @@ const parseCachedRates = (raw: string): EasyshipRate[] => {
     return [];
   }
 };
+
+const maybeDebugHints = (rawResponseHints: EasyshipRawResponseHints | undefined): Record<string, unknown> =>
+  rawResponseHints
+    ? {
+        rawResponseHints,
+      }
+    : {};
 
 const toEasyshipRateRequest = (
   shipFrom: Awaited<ReturnType<typeof readShippingSettings>>,
@@ -303,21 +311,35 @@ export async function onRequestPost(
     let rates = cached?.rates_json ? parseCachedRates(cached.rates_json) : [];
     if (!rates.length) {
       const liveRates = await fetchEasyshipRates(context.env, rateRequest);
-      if (!liveRates.length) {
+      if (isEasyshipDebugEnabled(context.env)) {
+        console.log('[easyship][debug] buy rates pre filter', {
+          orderId: params.orderId,
+          shipmentId: params.shipmentId,
+          rawRatesCount: liveRates.rates.length,
+          rawResponseHints: liveRates.rawResponseHints || null,
+        });
+      }
+      if (!liveRates.rates.length) {
         return jsonResponse(
           {
             ok: false,
             code: 'NO_RATES',
-            error: NO_SHIPPING_SOLUTIONS_MESSAGE,
-            message: NO_SHIPPING_SOLUTIONS_MESSAGE,
+            error: liveRates.warning || NO_SHIPPING_SOLUTIONS_MESSAGE,
+            message: liveRates.warning || NO_SHIPPING_SOLUTIONS_MESSAGE,
+            ...maybeDebugHints(liveRates.rawResponseHints),
           },
           400
         );
       }
-      rates = filterAllowedRates(liveRates, allowedCarriers).sort((a, b) => a.amountCents - b.amountCents);
+      rates = filterAllowedRates(liveRates.rates, allowedCarriers).sort((a, b) => a.amountCents - b.amountCents);
       if (!rates.length) {
         return jsonResponse(
-          { ok: false, code: 'NO_QUOTES', error: 'No supported carrier quotes found for this parcel.' },
+          {
+            ok: false,
+            code: 'NO_QUOTES',
+            error: 'No supported carrier quotes found for this parcel.',
+            ...maybeDebugHints(liveRates.rawResponseHints),
+          },
           422
         );
       }

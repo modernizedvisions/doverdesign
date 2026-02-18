@@ -62,6 +62,12 @@ export type ShipmentQuote = {
   etaDaysMax: number | null;
 };
 
+export type ShipmentQuoteDebugHints = {
+  status: number;
+  hasError: boolean;
+  errorCode: string | null;
+};
+
 const parseJson = async <T>(response: Response): Promise<T> => {
   const data = (await response.json().catch(() => null)) as T | null;
   if (!data) throw new Error('Response was not valid JSON');
@@ -238,6 +244,7 @@ export async function adminFetchShipmentQuotes(
   cached: boolean;
   expiresAt: string | null;
   warning: string | null;
+  rawResponseHints: ShipmentQuoteDebugHints | null;
   shipments: OrderShipment[];
 }> {
   const response = await adminFetch(
@@ -255,6 +262,18 @@ export async function adminFetchShipmentQuotes(
     cached: !!data.cached,
     expiresAt: data.expiresAt ?? null,
     warning: typeof data.warning === 'string' ? data.warning : null,
+    rawResponseHints:
+      data?.rawResponseHints &&
+      typeof data.rawResponseHints === 'object' &&
+      typeof data.rawResponseHints.status === 'number' &&
+      typeof data.rawResponseHints.hasError === 'boolean'
+        ? {
+            status: data.rawResponseHints.status,
+            hasError: data.rawResponseHints.hasError,
+            errorCode:
+              typeof data.rawResponseHints.errorCode === 'string' ? data.rawResponseHints.errorCode : null,
+          }
+        : null,
     shipments: Array.isArray(data.shipments) ? (data.shipments as OrderShipment[]) : [],
   };
 }

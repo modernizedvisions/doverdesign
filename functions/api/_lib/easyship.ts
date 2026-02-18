@@ -23,6 +23,35 @@ export type EasyshipRateItem = {
   declaredValueCents?: number | null;
 };
 
+export type EasyshipRawResponseHints = {
+  status: number;
+  hasError: boolean;
+  errorCode?: string | null;
+};
+
+export type EasyshipRatesResult = {
+  rates: EasyshipRate[];
+  warning: string | null;
+  rawResponseHints?: EasyshipRawResponseHints;
+};
+
+export type EasyshipDebugRequestResult = {
+  ok: boolean;
+  status: number;
+  endpoint: {
+    host: string;
+    path: string;
+  };
+  contentType: string | null;
+  responseTopKeys: string[];
+  warning: string | null;
+  message: string | null;
+  hasError: boolean;
+  errorCode: string | null;
+  ratesLength: number | null;
+  data: unknown;
+};
+
 const NO_SHIPPING_SOLUTIONS_DETAIL = 'No shipping solutions available based on the information provided';
 
 export type EasyshipShipmentSnapshot = {
@@ -227,6 +256,87 @@ const maybeText = (value: unknown): string | null => {
   return String(value);
 };
 
+const truncateText = (value: string | null, maxLength = 240): string | null => {
+  if (!value) return null;
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}...`;
+};
+
+const getResponseTopKeys = (data: unknown): string[] => (isObjectRecord(data) ? Object.keys(data) : []);
+
+const getResponseErrorCode = (data: any): string | null =>
+  trimOrNull(data?.error?.code) || trimOrNull(data?.code) || null;
+
+const getResponseWarning = (data: any): string | null =>
+  trimOrNull(data?.warning) ||
+  trimOrNull(data?.message) ||
+  trimOrNull(data?.detail) ||
+  trimOrNull(data?.error?.message) ||
+  trimOrNull(data?.error) ||
+  null;
+
+const getResponseMessage = (data: any): string | null =>
+  trimOrNull(data?.message) ||
+  trimOrNull(data?.detail) ||
+  trimOrNull(data?.warning) ||
+  trimOrNull(data?.error?.message) ||
+  trimOrNull(data?.error) ||
+  null;
+
+const getResponseHasErrorShape = (data: any): boolean => {
+  if (!data || typeof data !== 'object') return false;
+  const statusRaw = trimOrNull(data.status) || '';
+  const status = statusRaw.toLowerCase();
+  return Boolean(
+    data.error ||
+      (Array.isArray(data.errors) && data.errors.length > 0) ||
+      status === 'error' ||
+      status === 'failed' ||
+      getResponseErrorCode(data)
+  );
+};
+
+const getResponseErrorDetailsLength = (data: any): number | null => {
+  const details = data?.error?.details;
+  if (Array.isArray(details)) return details.length;
+  if (typeof details === 'string') return details.length;
+  if (details && typeof details === 'object') return Object.keys(details).length;
+  return null;
+};
+
+const getRatesArrayLengthHint = (data: any): number | null => {
+  if (Array.isArray(data?.rates)) return data.rates.length;
+  if (Array.isArray(data?.couriers)) return data.couriers.length;
+  if (Array.isArray(data?.data?.rates)) return data.data.rates.length;
+  if (Array.isArray(data?.data?.couriers)) return data.data.couriers.length;
+  return null;
+};
+
+class EasyshipHttpError extends Error {
+  status: number;
+  endpoint: { host: string; path: string };
+  warning: string | null;
+  errorCode: string | null;
+  hasError: boolean;
+
+  constructor(params: {
+    message: string;
+    status: number;
+    endpoint: { host: string; path: string };
+    warning: string | null;
+    errorCode: string | null;
+    hasError: boolean;
+  }) {
+    super(params.message);
+    this.name = 'EasyshipHttpError';
+    this.status = params.status;
+    this.endpoint = params.endpoint;
+    this.warning = params.warning;
+    this.errorCode = params.errorCode;
+    this.hasError = params.hasError;
+  }
+}
+
 const parseRatesFromResponse = (data: any): EasyshipRate[] => {
   const source: any[] = Array.isArray(data?.rates)
     ? data.rates
@@ -428,12 +538,13 @@ const buildMockShipmentSnapshot = (request: EasyshipCreateShipmentRequest): Easy
   };
 };
 
-const requestEasyship = async <T>(
+const requestEasyshipDetailed = async <T>(
   env: EasyshipEnv,
   path: string,
   method: 'GET' | 'POST',
-  body?: unknown
-): Promise<T> => {
+  body?: unknown,
+  options?: { throwOnHttpError?: boolean }
+): Promise<EasyshipDebugRequestResult & { data: T }> => {
   const token = trimOrNull(env.EASYSHIP_TOKEN);
   if (!token) {
     throw new Error('EASYSHIP_TOKEN is not configured');
@@ -441,22 +552,20 @@ const requestEasyship = async <T>(
   const baseUrl = normalizeBaseUrl(env.EASYSHIP_API_BASE_URL);
   const finalPath = path.startsWith('/') ? path : `/${path}`;
   const url = `${baseUrl}${finalPath}`;
+  let endpoint = { host: 'unknown', path: finalPath };
+  try {
+    const parsed = new URL(url);
+    endpoint = {
+      host: parsed.host,
+      path: parsed.pathname,
+    };
+  } catch {}
   if (isEasyshipDebugEnabled(env)) {
     const tokenLength = token.length;
     const payloadShape = summarizeEasyshipPayloadShape(body);
-    let host = 'unknown';
-    let pathname = finalPath;
-    try {
-      const parsed = new URL(url);
-      host = parsed.host;
-      pathname = parsed.pathname;
-    } catch {}
     console.log('[easyship][debug] outgoing request shape', {
       method,
-      endpoint: {
-        host,
-        path: pathname,
-      },
+      endpoint,
       envPresent: {
         EASYSHIP_API_BASE_URL: !!trimOrNull(env.EASYSHIP_API_BASE_URL),
         EASYSHIP_TOKEN: !!token,
@@ -491,16 +600,88 @@ const requestEasyship = async <T>(
   } catch {
     data = null;
   }
-  if (!response.ok) {
-    const detail =
-      trimOrNull(data?.message) ||
-      trimOrNull(data?.error) ||
-      trimOrNull(data?.detail) ||
-      text ||
-      'Easyship request failed';
-    throw new Error(`Easyship ${method} ${finalPath} failed (${response.status}): ${detail}`);
+
+  const contentType = trimOrNull(response.headers.get('content-type'));
+  const warning = getResponseWarning(data);
+  const message = getResponseMessage(data);
+  const hasError = getResponseHasErrorShape(data);
+  const errorCode = getResponseErrorCode(data);
+  const responseTopKeys = getResponseTopKeys(data);
+  const ratesLength = getRatesArrayLengthHint(data);
+  const errorDetailsLength = getResponseErrorDetailsLength(data);
+
+  if (isEasyshipDebugEnabled(env)) {
+    console.log('[easyship][debug] response summary', {
+      method,
+      endpoint,
+      status: response.status,
+      contentType,
+      responseTopKeys,
+      warning: truncateText(warning),
+      message: truncateText(message),
+      hasError,
+      errorCode,
+      errorDetailsLength,
+      ratesLength,
+    });
   }
-  return (data ?? {}) as T;
+
+  if (!response.ok && options?.throwOnHttpError !== false) {
+    const detail = warning || text || 'Easyship request failed';
+    throw new EasyshipHttpError({
+      message: `Easyship ${method} ${finalPath} failed (${response.status}): ${detail}`,
+      status: response.status,
+      endpoint,
+      warning,
+      errorCode,
+      hasError: true,
+    });
+  }
+  return {
+    ok: response.ok,
+    status: response.status,
+    endpoint,
+    contentType,
+    responseTopKeys,
+    warning,
+    message,
+    hasError,
+    errorCode,
+    ratesLength,
+    data: (data ?? {}) as T,
+  };
+};
+
+const requestEasyship = async <T>(
+  env: EasyshipEnv,
+  path: string,
+  method: 'GET' | 'POST',
+  body?: unknown
+): Promise<T> => {
+  const result = await requestEasyshipDetailed<T>(env, path, method, body);
+  return result.data;
+};
+
+export const requestEasyshipDebug = async (
+  env: EasyshipEnv,
+  path: string,
+  method: 'GET' | 'POST',
+  body?: unknown
+): Promise<EasyshipDebugRequestResult> => {
+  const result = await requestEasyshipDetailed<any>(env, path, method, body, { throwOnHttpError: false });
+  return {
+    ok: result.ok,
+    status: result.status,
+    endpoint: result.endpoint,
+    contentType: result.contentType,
+    responseTopKeys: result.responseTopKeys,
+    warning: result.warning,
+    message: result.message,
+    hasError: result.hasError,
+    errorCode: result.errorCode,
+    ratesLength: result.ratesLength,
+    data: result.data,
+  };
 };
 
 const normalizeCarrierLetters = (value: string): string => value.toUpperCase().replace(/[^A-Z]/g, '');
@@ -562,45 +743,51 @@ const toNonEmptyRateItems = (items: EasyshipRateRequest['items']): EasyshipRateI
   return [{ description: 'Order items', quantity: 1, declaredValueCents: 1 }];
 };
 
-export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => ({
-  origin_address: {
-    contact_name: input.origin.name,
-    company_name: input.origin.companyName ?? undefined,
-    contact_email: input.origin.email ?? undefined,
-    contact_phone: input.origin.phone ?? undefined,
-    line_1: input.origin.addressLine1,
-    line_2: input.origin.addressLine2 ?? undefined,
-    city: input.origin.city,
-    state: input.origin.state,
-    postal_code: input.origin.postalCode,
-    country_alpha2: input.origin.countryCode,
-  },
-  destination_address: {
-    contact_name: input.destination.name,
-    company_name: input.destination.companyName ?? undefined,
-    contact_email: input.destination.email ?? undefined,
-    contact_phone: input.destination.phone ?? undefined,
-    line_1: input.destination.addressLine1,
-    line_2: input.destination.addressLine2 ?? undefined,
-    city: input.destination.city,
-    state: input.destination.state,
-    postal_code: input.destination.postalCode,
-    country_alpha2: input.destination.countryCode,
-  },
-  shipping_settings: {
-    units: {
-      weight: 'kg',
-      dimensions: 'cm',
+export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => {
+  const originCountry = (trimOrNull(input.origin.countryCode) || 'US').toUpperCase();
+  const destinationCountry = (trimOrNull(input.destination.countryCode) || 'US').toUpperCase();
+  const isDomesticUS = originCountry === 'US' && destinationCountry === 'US';
+  const destinationCity = (trimOrNull(input.destination.city) || '').trim();
+  const destinationState = (trimOrNull(input.destination.state) || '').trim();
+  const items = toNonEmptyRateItems(input.items);
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const safeTotalQuantity = totalQuantity > 0 ? totalQuantity : 1;
+  const totalWeightKg = Number(poundsToKg(input.dimensions.weightLb).toFixed(4));
+  const perItemWeight = Number((totalWeightKg / safeTotalQuantity).toFixed(4));
+  const safePerItemWeight = perItemWeight > 0 ? perItemWeight : 0.001;
+
+  return {
+    origin_address: {
+      contact_name: input.origin.name,
+      company_name: trimOrNull(input.origin.companyName) || undefined,
+      contact_email: trimOrNull(input.origin.email) || undefined,
+      contact_phone: trimOrNull(input.origin.phone) || undefined,
+      line_1: input.origin.addressLine1,
+      line_2: trimOrNull(input.origin.addressLine2) || undefined,
+      city: input.origin.city,
+      state: input.origin.state,
+      postal_code: input.origin.postalCode,
+      country_alpha2: originCountry,
     },
-  },
-  parcels: (() => {
-    const items = toNonEmptyRateItems(input.items);
-    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-    const safeTotalQuantity = totalQuantity > 0 ? totalQuantity : 1;
-    const totalWeightKg = Number(poundsToKg(input.dimensions.weightLb).toFixed(4));
-    const perItemWeight = Number((totalWeightKg / safeTotalQuantity).toFixed(4));
-    const safePerItemWeight = perItemWeight > 0 ? perItemWeight : 0.001;
-    return [
+    destination_address: {
+      contact_name: input.destination.name,
+      company_name: trimOrNull(input.destination.companyName) || undefined,
+      contact_email: trimOrNull(input.destination.email) || undefined,
+      contact_phone: trimOrNull(input.destination.phone) || undefined,
+      line_1: input.destination.addressLine1,
+      line_2: trimOrNull(input.destination.addressLine2) || undefined,
+      city: destinationCity,
+      state: destinationState,
+      postal_code: input.destination.postalCode,
+      country_alpha2: destinationCountry,
+    },
+    shipping_settings: {
+      units: {
+        weight: 'kg',
+        dimensions: 'cm',
+      },
+    },
+    parcels: [
       {
         box: {
           length: Number(inchesToCm(input.dimensions.lengthIn).toFixed(2)),
@@ -608,18 +795,24 @@ export const buildEasyshipRatesPayload = (input: EasyshipRateRequest) => ({
           height: Number(inchesToCm(input.dimensions.heightIn).toFixed(2)),
         },
         total_actual_weight: Number(totalWeightKg.toFixed(3)),
-        items: items.map((item) => ({
-          description: item.description,
-          category: DEFAULT_EASYSHIP_ITEM_CATEGORY,
-          quantity: item.quantity,
-          actual_weight: safePerItemWeight,
-          declared_currency: 'USD',
-          declared_customs_value: Number(((item.declaredValueCents ?? 1) / 100).toFixed(2)),
-        })),
+        items: items.map((item) => {
+          const baseDeclaredValueCents = Math.round(Number(item.declaredValueCents ?? 1));
+          const safeDeclaredValueCents = isDomesticUS
+            ? Math.max(1, Number.isFinite(baseDeclaredValueCents) ? baseDeclaredValueCents : 1)
+            : Math.max(0, Number.isFinite(baseDeclaredValueCents) ? baseDeclaredValueCents : 1);
+          return {
+            description: item.description,
+            category: DEFAULT_EASYSHIP_ITEM_CATEGORY,
+            quantity: item.quantity,
+            actual_weight: safePerItemWeight,
+            declared_currency: 'USD',
+            declared_customs_value: Number((safeDeclaredValueCents / 100).toFixed(2)),
+          };
+        }),
       },
-    ];
-  })(),
-});
+    ],
+  };
+};
 
 const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => ({
   shipment: {
@@ -666,25 +859,89 @@ const buildShipmentPayload = (input: EasyshipCreateShipmentRequest) => ({
   },
 });
 
-export async function fetchEasyshipRates(env: EasyshipEnv, input: EasyshipRateRequest): Promise<EasyshipRate[]> {
+export async function fetchEasyshipRates(env: EasyshipEnv, input: EasyshipRateRequest): Promise<EasyshipRatesResult> {
   if (maybeMock(env)) {
-    return buildMockRates(input);
+    return {
+      rates: buildMockRates(input),
+      warning: null,
+    };
   }
   const payload = buildEasyshipRatesPayload(input);
+  const debugEnabled = isEasyshipDebugEnabled(env);
   if (isEasyshipDebugEnabled(env)) {
     const metrics = summarizeRateMetricsForDebug(input, payload);
+    const firstParcel = Array.isArray(payload.parcels) ? payload.parcels[0] : null;
+    const firstItems =
+      firstParcel && typeof firstParcel === 'object' && Array.isArray((firstParcel as any).items)
+        ? ((firstParcel as any).items as Array<Record<string, unknown>>)
+        : [];
     console.log('[easyship][debug] rates request metrics', metrics);
+    console.log('[easyship][debug] rates item/value checks', {
+      destinationHasCity: !!trimOrNull(payload.destination_address?.city),
+      destinationHasState: !!trimOrNull(payload.destination_address?.state),
+      itemCategoryPresent: !!trimOrNull(firstItems[0]?.category),
+      itemCategoryLength: trimOrNull(firstItems[0]?.category)?.length || 0,
+      declaredCustomsValues: firstItems.slice(0, 5).map((item) => Number(item.declared_customs_value ?? 0)),
+    });
   }
   try {
-    const data = await requestEasyship<any>(env, '/rates', 'POST', payload);
-    return parseRatesFromResponse(data);
+    const response = await requestEasyshipDetailed<any>(env, '/rates', 'POST', payload);
+    const rates = parseRatesFromResponse(response.data);
+    const warning = getResponseWarning(response.data);
+    const hasError = response.hasError;
+    if (hasError && !rates.length && debugEnabled) {
+      console.log('[easyship][debug] rates response was error-shaped with 200/ok status', {
+        status: response.status,
+        errorCode: response.errorCode,
+      });
+    }
+    return {
+      rates,
+      warning,
+      rawResponseHints: debugEnabled
+        ? {
+            status: response.status,
+            hasError,
+            errorCode: response.errorCode || null,
+          }
+        : undefined,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const lower = message.toLowerCase();
+    if (error instanceof EasyshipHttpError && lower.includes(NO_SHIPPING_SOLUTIONS_DETAIL.toLowerCase())) {
+      if (debugEnabled) {
+        console.log('[easyship][debug] rates returned no shipping solutions', {
+          status: error.status,
+          errorCode: error.errorCode || null,
+        });
+      }
+      return {
+        rates: [],
+        warning: error.warning || NO_SHIPPING_SOLUTIONS_DETAIL,
+        rawResponseHints: debugEnabled
+          ? {
+              status: error.status,
+              hasError: error.hasError,
+              errorCode: error.errorCode || null,
+            }
+          : undefined,
+      };
+    }
     if (message.toLowerCase().includes(NO_SHIPPING_SOLUTIONS_DETAIL.toLowerCase())) {
-      if (isEasyshipDebugEnabled(env)) {
+      if (debugEnabled) {
         console.log('[easyship][debug] rates returned no shipping solutions');
       }
-      return [];
+      return {
+        rates: [],
+        warning: NO_SHIPPING_SOLUTIONS_DETAIL,
+        rawResponseHints: debugEnabled
+          ? {
+              status: 0,
+              hasError: true,
+            }
+          : undefined,
+      };
     }
     throw error;
   }

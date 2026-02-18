@@ -11,6 +11,7 @@ import {
   adminUpdateOrderShipment,
   type OrderShipment,
   type ShipmentQuote,
+  type ShipmentQuoteDebugHints,
   type ShipFromSettings,
   type ShippingBoxPreset,
 } from '../../lib/adminShipping';
@@ -75,6 +76,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
   const [drafts, setDrafts] = useState<Record<string, ParcelDraft>>({});
   const [quotesByShipment, setQuotesByShipment] = useState<Record<string, ShipmentQuote[]>>({});
   const [quoteWarningByShipment, setQuoteWarningByShipment] = useState<Record<string, string>>({});
+  const [quoteDebugByShipment, setQuoteDebugByShipment] = useState<Record<string, ShipmentQuoteDebugHints | null>>({});
   const [selectedQuoteByShipment, setSelectedQuoteByShipment] = useState<Record<string, string | null>>({});
   const [busyByShipment, setBusyByShipment] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -118,6 +120,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
       setBoxPresets(settings.boxPresets);
       setShipments(shipmentData.shipments);
       setQuoteWarningByShipment({});
+      setQuoteDebugByShipment({});
       seedDrafts(shipmentData.shipments);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Failed to load shipping labels data.');
@@ -268,6 +271,11 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
         delete next[shipment.id];
         return next;
       });
+      setQuoteDebugByShipment((prev) => {
+        const next = { ...prev };
+        delete next[shipment.id];
+        return next;
+      });
     });
   };
 
@@ -282,6 +290,10 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
       setSelectedQuoteByShipment((prev) => ({
         ...prev,
         [shipment.id]: quoted.selectedQuoteId,
+      }));
+      setQuoteDebugByShipment((prev) => ({
+        ...prev,
+        [shipment.id]: quoted.rawResponseHints,
       }));
       if (quoted.warning) {
         setQuoteWarningByShipment((prev) => ({ ...prev, [shipment.id]: quoted.warning }));
@@ -453,6 +465,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                     const busyLabel = busyByShipment[shipment.id];
                     const rates = quotesByShipment[shipment.id] || [];
                     const quoteWarning = quoteWarningByShipment[shipment.id] || '';
+                    const quoteDebug = quoteDebugByShipment[shipment.id] || null;
                     const selectedQuoteId = selectedQuoteByShipment[shipment.id] || shipment.quoteSelectedId || null;
                     const canRemove = !shipment.purchasedAt && shipment.labelState !== 'generated';
                     const pendingRefresh = shipment.labelState === 'pending' && !!shipment.easyshipShipmentId;
@@ -587,6 +600,14 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                             <div className="text-xs text-amber-700 mt-1">
                               Verify parcel weight/dimensions, try a different preset, or test against production.
                             </div>
+                            {quoteDebug && (quoteDebug.hasError || quoteDebug.status !== 200) && (
+                              <details className="mt-2 rounded-shell border border-amber-200 bg-amber-100/60 px-2 py-1 text-xs text-amber-900">
+                                <summary className="cursor-pointer font-medium">Details (debug)</summary>
+                                <div className="mt-1">HTTP status: {quoteDebug.status}</div>
+                                <div>Error code: {quoteDebug.errorCode || '-'}</div>
+                                <div className="mt-1">Hint: if no couriers are available, run Easyship diagnostics endpoint.</div>
+                              </details>
+                            )}
                           </div>
                         )}
 

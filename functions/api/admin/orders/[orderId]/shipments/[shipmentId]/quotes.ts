@@ -7,6 +7,7 @@ import {
   isEasyshipDebugEnabled,
   normalizeRateForClient,
   pickCheapestRate,
+  type EasyshipRawResponseHints,
   type EasyshipRateRequest,
 } from '../../../../../_lib/easyship';
 import {
@@ -99,6 +100,13 @@ const getRawCarrierName = (rate: { carrier: string; raw: unknown }): string => {
   }
   return rate.carrier;
 };
+
+const maybeDebugHints = (rawResponseHints: EasyshipRawResponseHints | undefined): Record<string, unknown> =>
+  rawResponseHints
+    ? {
+        rawResponseHints,
+      }
+    : {};
 
 export async function onRequestPost(
   context: { request: Request; env: ShippingLabelsEnv & Record<string, string | undefined> }
@@ -202,7 +210,8 @@ export async function onRequestPost(
       });
     }
 
-    const rawRates = await fetchEasyshipRates(context.env, rateRequest);
+    const liveRates = await fetchEasyshipRates(context.env, rateRequest);
+    const rawRates = liveRates.rates;
     const allowedRates = filterAllowedRates(rawRates, allowedCarriers).sort((a, b) => a.amountCents - b.amountCents);
     if (isEasyshipDebugEnabled(context.env)) {
       console.log('[easyship][debug] quotes rates pre/post filter', {
@@ -211,6 +220,7 @@ export async function onRequestPost(
         rawRatesCount: rawRates.length,
         rawCarrierNames: rawRates.slice(0, 10).map((rate) => getRawCarrierName(rate)),
         filteredRatesCount: allowedRates.length,
+        rawResponseHints: liveRates.rawResponseHints || null,
       });
     }
     if (!rawRates.length) {
@@ -229,13 +239,19 @@ export async function onRequestPost(
         expiresAt: null,
         rates: [],
         selectedQuoteId: null,
-        warning: NO_SHIPPING_SOLUTIONS_WARNING,
+        warning: liveRates.warning || NO_SHIPPING_SOLUTIONS_WARNING,
         shipments,
+        ...maybeDebugHints(liveRates.rawResponseHints),
       });
     }
     if (!allowedRates.length) {
       return jsonResponse(
-        { ok: false, code: 'NO_QUOTES', error: 'No supported carrier quotes found for this parcel.' },
+        {
+          ok: false,
+          code: 'NO_QUOTES',
+          error: 'No supported carrier quotes found for this parcel.',
+          ...maybeDebugHints(liveRates.rawResponseHints),
+        },
         422
       );
     }
@@ -273,6 +289,7 @@ export async function onRequestPost(
       rates: normalizedRates,
       selectedQuoteId,
       shipments,
+      ...maybeDebugHints(liveRates.rawResponseHints),
     });
   } catch (error) {
     console.error('[admin/orders/:orderId/shipments/:shipmentId/quotes] failed to fetch quotes', error);
