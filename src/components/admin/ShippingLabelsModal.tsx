@@ -51,6 +51,12 @@ const toNumberOrNull = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const trimText = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
 const formatCurrency = (cents: number | null | undefined, currency = 'USD') => {
   const amount = (cents ?? 0) / 100;
   try {
@@ -69,20 +75,24 @@ const getInitials = (value: string) =>
     .map((part) => part[0]?.toUpperCase() || '')
     .join('') || 'IT';
 
-const resolveLabelStatus = (shipment: OrderShipment): { code: string; message: string; detail?: string | null } => {
-  if (shipment.labelState === 'failed' || shipment.errorMessage) {
-    return { code: 'failed', message: 'FAILED', detail: shipment.errorMessage || null };
+const resolveTrackingDisplayText = (shipment: OrderShipment): string => {
+  const tracking = trimText(shipment.trackingNumber);
+  if (tracking) return tracking;
+
+  const labelUrl = trimText(shipment.labelUrl);
+  const labelState = trimText(shipment.labelState)?.toLowerCase() || null;
+  const purchasedAt = trimText(shipment.purchasedAt);
+  const easyshipShipmentId = trimText(shipment.easyshipShipmentId);
+
+  if ((!labelState || labelState === 'pending') && !labelUrl && !purchasedAt && !easyshipShipmentId) {
+    return 'LABEL NOT YET CREATED';
   }
-  if (shipment.trackingNumber) {
-    return { code: 'tracking', message: shipment.trackingNumber };
+
+  if (!labelUrl && !purchasedAt) {
+    return 'LABEL NOT YET CREATED';
   }
-  if (shipment.labelState === 'generated' && shipment.labelUrl) {
-    return { code: 'ready_no_tracking', message: 'Label ready (tracking pending)' };
-  }
-  if (shipment.purchasedAt || shipment.easyshipShipmentId) {
-    return { code: 'pending', message: 'PENDING' };
-  }
-  return { code: 'not_purchased', message: 'LABEL NOT PURCHASED' };
+
+  return 'PENDING';
 };
 
 const initialDraftFromShipment = (shipment: OrderShipment): ParcelDraft => ({
@@ -374,16 +384,6 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
           : 'Label status is up to date.'
       );
     });
-  };
-
-  const handleCopyTracking = async (trackingNumber: string | null) => {
-    if (!trackingNumber) return;
-    try {
-      await navigator.clipboard.writeText(trackingNumber);
-      setSuccess('Tracking number copied.');
-    } catch {
-      setError('Failed to copy tracking number.');
-    }
   };
 
   if (!open || !order) return null;
@@ -713,47 +713,19 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
 
                         <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3 text-sm">
                           {(() => {
-                            const labelStatus = resolveLabelStatus(shipment);
-                            const isTracking = labelStatus.code === 'tracking';
-                            const isFailed = labelStatus.code === 'failed';
+                            const trackingValue = trimText(shipment.trackingNumber);
+                            const displayText = resolveTrackingDisplayText(shipment);
                             return (
-                              <>
-                                <div className="flex items-center justify-between gap-3">
-                                  <p className="lux-label text-[10px]">Label</p>
-                                  <div
-                                    className={`text-xs ${
-                                      isTracking
-                                        ? 'text-charcoal font-medium'
-                                        : isFailed
-                                        ? 'text-rose-700 font-semibold'
-                                        : labelStatus.code === 'pending'
-                                        ? 'text-amber-800 font-semibold'
-                                        : 'text-charcoal/70'
-                                    }`}
-                                  >
-                                    {isTracking ? (
-                                      <span className="inline-flex items-center gap-2">
-                                        <span>Tracking:</span>
-                                        <span className="font-mono">{labelStatus.message}</span>
-                                        <button
-                                          type="button"
-                                          className="lux-button--ghost px-2 py-1 text-[10px]"
-                                          onClick={() => void handleCopyTracking(shipment.trackingNumber)}
-                                        >
-                                          Copy
-                                        </button>
-                                      </span>
-                                    ) : (
-                                      labelStatus.message
-                                    )}
-                                  </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="lux-label text-[10px]">TRACKING:</p>
+                                <div
+                                  className={`text-xs ${
+                                    trackingValue ? 'font-mono text-charcoal font-medium' : 'text-charcoal/70'
+                                  }`}
+                                >
+                                  {displayText}
                                 </div>
-                                {isFailed && labelStatus.detail && (
-                                  <div className="mt-2 max-w-[540px] text-xs text-rose-700/90 truncate">
-                                    {labelStatus.detail}
-                                  </div>
-                                )}
-                              </>
+                              </div>
                             );
                           })()}
                           <div className="flex flex-wrap items-center justify-between gap-3">
