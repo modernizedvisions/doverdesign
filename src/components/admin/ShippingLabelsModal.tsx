@@ -360,10 +360,6 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
     }
   };
 
-  const customerPaidShippingCents = order?.amountShippingCents ?? order?.shippingCents ?? 0;
-  const actualLabelTotalCents = shipments.reduce((sum, shipment) => sum + (shipment.labelCostAmountCents || 0), 0);
-  const deltaCents = actualLabelTotalCents - customerPaidShippingCents;
-
   if (!open || !order) return null;
 
   return (
@@ -429,30 +425,6 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                 </div>
               </section>
 
-              <section className="lux-panel p-4">
-                <p className="lux-label text-[10px] mb-2">Shipping Cost Summary</p>
-                <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-3">
-                  <div className="flex items-center justify-between md:block">
-                    <span className="text-charcoal/70">Customer Paid</span>
-                    <div className="font-semibold text-charcoal">
-                      {formatCurrency(customerPaidShippingCents, order.currency || 'USD')}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between md:block">
-                    <span className="text-charcoal/70">Actual Label Total</span>
-                    <div className="font-semibold text-charcoal">
-                      {formatCurrency(actualLabelTotalCents, order.currency || 'USD')}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between md:block">
-                    <span className="text-charcoal/70">Difference (Actual - Paid)</span>
-                    <div className={`font-semibold ${deltaCents > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
-                      {formatCurrency(deltaCents, order.currency || 'USD')}
-                    </div>
-                  </div>
-                </div>
-              </section>
-
               <div className="flex items-center justify-between">
                 <p className="lux-label text-[10px]">Parcels</p>
                 <button
@@ -505,24 +477,25 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                          <div>
-                            <label className="lux-label mb-2 block">Box Preset</label>
-                            <select
-                              className="lux-input text-[11px] uppercase tracking-[0.2em] font-semibold"
-                              disabled={draft.useCustom}
-                              value={draft.boxPresetId}
-                              onChange={(e) => updateDraft(shipment.id, { boxPresetId: e.target.value })}
-                            >
-                              <option value="">Select preset</option>
-                              {boxPresets.map((preset) => (
-                                <option key={preset.id} value={preset.id}>
-                                  {preset.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="flex items-end">
+                        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                          <div className="w-full max-w-[320px] space-y-3">
+                            <div>
+                              <label className="lux-label mb-2 block">Box Preset</label>
+                              <select
+                                className="lux-input w-full text-[11px] uppercase tracking-[0.2em] font-semibold"
+                                disabled={draft.useCustom}
+                                value={draft.boxPresetId}
+                                onChange={(e) => updateDraft(shipment.id, { boxPresetId: e.target.value })}
+                              >
+                                <option value="">Select preset</option>
+                                {boxPresets.map((preset) => (
+                                  <option key={preset.id} value={preset.id}>
+                                    {preset.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
                             <label className="flex items-center gap-2 text-xs text-charcoal/80">
                               <input
                                 type="checkbox"
@@ -531,69 +504,72 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                               />
                               Use custom dimensions
                             </label>
-                          </div>
-                        </div>
 
-                        {draft.useCustom && (
-                          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                            <div>
-                              <label className="lux-label mb-2 block">Length (in)</label>
-                              <input
-                                className="lux-input"
-                                value={draft.customLengthIn}
-                                onChange={(e) => updateDraft(shipment.id, { customLengthIn: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <label className="lux-label mb-2 block">Width (in)</label>
-                              <input
-                                className="lux-input"
-                                value={draft.customWidthIn}
-                                onChange={(e) => updateDraft(shipment.id, { customWidthIn: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <label className="lux-label mb-2 block">Height (in)</label>
-                              <input
-                                className="lux-input"
-                                value={draft.customHeightIn}
-                                onChange={(e) => updateDraft(shipment.id, { customHeightIn: e.target.value })}
-                              />
-                            </div>
-                          </div>
-                        )}
+                            {draft.useCustom && (
+                              <div className="w-full">
+                                <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3">
+                                  <div>
+                                    <label className="lux-label mb-2 block">Length (in)</label>
+                                    <input
+                                      className="lux-input w-full"
+                                      value={draft.customLengthIn}
+                                      onChange={(e) => updateDraft(shipment.id, { customLengthIn: e.target.value })}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="lux-label mb-2 block">Width (in)</label>
+                                    <input
+                                      className="lux-input w-full"
+                                      value={draft.customWidthIn}
+                                      onChange={(e) => updateDraft(shipment.id, { customWidthIn: e.target.value })}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="lux-label mb-2 block">Height (in)</label>
+                                    <input
+                                      className="lux-input w-full"
+                                      value={draft.customHeightIn}
+                                      onChange={(e) => updateDraft(shipment.id, { customHeightIn: e.target.value })}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
-                        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
-                          <div>
-                            <label className="lux-label mb-2 block">Weight (lb)</label>
-                            <input
-                              className="lux-input"
-                              value={draft.weightLb}
-                              onChange={(e) => updateDraft(shipment.id, { weightLb: e.target.value })}
-                            />
+                            <div className="w-full max-w-[220px]">
+                              <label className="lux-label mb-2 block">Weight (lb)</label>
+                              <input
+                                className="lux-input w-full"
+                                value={draft.weightLb}
+                                onChange={(e) => updateDraft(shipment.id, { weightLb: e.target.value })}
+                              />
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            className="lux-button--ghost px-3 py-2 text-[10px] self-end"
-                            onClick={() => void withShipmentBusy(shipment.id, 'saving', async () => persistShipmentDraft(shipment.id))}
-                          >
-                            Save Parcel
-                          </button>
-                          <button
-                            type="button"
-                            className="lux-button--ghost px-3 py-2 text-[10px] self-end"
-                            onClick={() => void handleGetQuotes(shipment)}
-                          >
-                            Get Quotes
-                          </button>
-                          <button
-                            type="button"
-                            className="lux-button px-3 py-2 text-[10px] self-end"
-                            disabled={!shipFromReady || !!quoteWarning || !canBuyLabel}
-                            onClick={() => void handleBuyLabel(shipment)}
-                          >
-                            Buy Label
-                          </button>
+
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto">
+                            <button
+                              type="button"
+                              className="lux-button--ghost px-3 py-2 text-[10px] lg:self-end"
+                              onClick={() => void withShipmentBusy(shipment.id, 'saving', async () => persistShipmentDraft(shipment.id))}
+                            >
+                              Save Parcel
+                            </button>
+                            <button
+                              type="button"
+                              className="lux-button--ghost px-3 py-2 text-[10px] lg:self-end"
+                              onClick={() => void handleGetQuotes(shipment)}
+                            >
+                              Get Quotes
+                            </button>
+                            <button
+                              type="button"
+                              className="lux-button px-3 py-2 text-[10px] lg:self-end"
+                              disabled={!shipFromReady || !!quoteWarning || !canBuyLabel}
+                              onClick={() => void handleBuyLabel(shipment)}
+                            >
+                              Buy Label
+                            </button>
+                          </div>
                         </div>
 
                         {quoteWarning && (
@@ -646,12 +622,42 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                         )}
 
                         <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3 text-sm">
-                          <p className="lux-label text-[10px] mb-2">Label</p>
-                          {shipment.labelUrl ? (
-                            <div className="flex flex-wrap items-center gap-3 text-emerald-800">
-                              <span>
-                                {shipment.carrier || '-'} {shipment.service ? `| ${shipment.service}` : ''}
-                              </span>
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="lux-label text-[10px]">Label</p>
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                              {shipment.labelUrl ? (
+                                <a
+                                  href={shipment.labelUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="lux-button--ghost px-3 py-1 text-[10px]"
+                                >
+                                  Download Label (PDF)
+                                </a>
+                              ) : pendingRefresh ? (
+                                <>
+                                  <span className="text-xs text-amber-800">Generating...</span>
+                                  <button
+                                    type="button"
+                                    className="lux-button--ghost px-3 py-1 text-[10px]"
+                                    onClick={() => void handleRefreshLabel(shipment)}
+                                  >
+                                    <RefreshCcw className="h-4 w-4" />
+                                    Refresh
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-xs text-charcoal/60">No label yet</span>
+                              )}
+                            </div>
+                          </div>
+                          {(shipment.labelUrl || shipment.trackingNumber || shipment.labelCostAmountCents !== null) && (
+                            <div className="mt-2 flex flex-wrap items-center gap-3 text-emerald-800">
+                              {(shipment.carrier || shipment.service) && (
+                                <span>
+                                  {shipment.carrier || '-'} {shipment.service ? `| ${shipment.service}` : ''}
+                                </span>
+                              )}
                               {shipment.trackingNumber && (
                                 <span className="inline-flex items-center gap-2">
                                   Tracking: {shipment.trackingNumber}
@@ -667,29 +673,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                               {shipment.labelCostAmountCents !== null && (
                                 <span>Cost: {formatCurrency(shipment.labelCostAmountCents, shipment.labelCurrency)}</span>
                               )}
-                              <a
-                                href={shipment.labelUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="lux-button--ghost px-2 py-1 text-[10px]"
-                              >
-                                Download Label (PDF)
-                              </a>
                             </div>
-                          ) : pendingRefresh ? (
-                            <div className="flex flex-wrap items-center gap-3 text-amber-800">
-                              <span>Label generating...</span>
-                              <button
-                                type="button"
-                                className="lux-button--ghost px-3 py-1 text-[10px]"
-                                onClick={() => void handleRefreshLabel(shipment)}
-                              >
-                                <RefreshCcw className="h-4 w-4" />
-                                Refresh
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="text-charcoal/70">No label purchased yet.</div>
                           )}
                         </div>
                       </div>
