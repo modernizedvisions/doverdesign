@@ -85,14 +85,14 @@ const resolveTrackingDisplayText = (shipment: OrderShipment): string => {
   const easyshipShipmentId = trimText(shipment.easyshipShipmentId);
 
   if ((!labelState || labelState === 'pending') && !labelUrl && !purchasedAt && !easyshipShipmentId) {
-    return 'LABEL NOT YET CREATED';
+    return 'Label Not Yet Created';
   }
 
   if (!labelUrl && !purchasedAt) {
-    return 'LABEL NOT YET CREATED';
+    return 'Label Not Yet Created';
   }
 
-  return 'PENDING';
+  return 'Pending';
 };
 
 const initialDraftFromShipment = (shipment: OrderShipment): ParcelDraft => ({
@@ -318,7 +318,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
 
   const handleGetQuotes = async (shipment: OrderShipment) => {
     if (!orderId) return;
-    await withShipmentBusy(shipment.id, 'quoting', async () => {
+    await withShipmentBusy(shipment.id, 'Quoting', async () => {
       await persistShipmentDraft(shipment.id);
       const quoted = await adminFetchShipmentQuotes(orderId, shipment.id);
       setShipments(quoted.shipments);
@@ -348,7 +348,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
 
   const handleBuyLabel = async (shipment: OrderShipment) => {
     if (!orderId) return;
-    await withShipmentBusy(shipment.id, 'buying', async () => {
+    await withShipmentBusy(shipment.id, 'Buying', async () => {
       if (quoteWarningByShipment[shipment.id]) {
         throw new Error(quoteWarningByShipment[shipment.id]);
       }
@@ -604,7 +604,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                                 checked={draft.useCustom}
                                 onChange={(e) => updateDraft(shipment.id, { useCustom: e.target.checked })}
                               />
-                              Use custom dimensions
+                              Use Custom Dimensions
                             </label>
 
                             {draft.useCustom && (
