@@ -36,7 +36,6 @@ import {
   archiveAdminCustomOrder,
 } from '../lib/db/customOrders';
 import type { AdminCustomOrder } from '../lib/db/customOrders';
-import { clearStoredAdminPassword } from '../lib/emailListApi';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export type ProductFormState = {
@@ -374,7 +373,6 @@ export function AdminPage() {
         console.debug('[admin auth] logout request failed', error);
       }
     } finally {
-      clearStoredAdminPassword();
       window.location.href = '/admin';
     }
   };

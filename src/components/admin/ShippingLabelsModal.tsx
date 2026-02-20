@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, RefreshCcw, Trash2 } from 'lucide-react';
 import type { AdminOrder } from '../../lib/db/orders';
 import {
   adminBuyShipmentLabel,
@@ -176,7 +176,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
   const [quoteWarningByShipment, setQuoteWarningByShipment] = useState<Record<string, string>>({});
   const [quoteDebugByShipment, setQuoteDebugByShipment] = useState<Record<string, ShipmentQuoteDebugHints | null>>({});
   const [selectedQuoteByShipment, setSelectedQuoteByShipment] = useState<Record<string, string | null>>({});
-  const [, setPostBuyByShipment] = useState<Record<string, boolean>>({});
+  const [postBuyByShipment, setPostBuyByShipment] = useState<Record<string, boolean>>({});
   const [parcelStatusById, setParcelStatusById] = useState<Record<string, ParcelUiStatus>>({});
   const [busyByShipment, setBusyByShipment] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -641,6 +641,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                     const quoteWarning = quoteWarningByShipment[shipment.id] || '';
                     const quoteDebug = quoteDebugByShipment[shipment.id] || null;
                     const selectedQuoteId = selectedQuoteByShipment[shipment.id] || shipment.quoteSelectedId || null;
+                    const postBuyState = !!postBuyByShipment[shipment.id];
                     const isComplete =
                       shipment.labelState === 'generated' ||
                       !!shipment.purchasedAt ||
@@ -648,10 +649,11 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                     const canRemove = !shipment.purchasedAt && shipment.labelState !== 'generated';
                     const canBuyLabel = !shipment.purchasedAt && shipment.labelState !== 'generated';
                     const canRefreshLabel =
-                      shipment.labelState === 'pending' ||
+                      postBuyState ||
                       shipment.labelState === 'generated' ||
                       !!shipment.purchasedAt ||
-                      !!shipment.easyshipShipmentId;
+                      !!shipment.easyshipShipmentId ||
+                      !!shipment.labelUrl;
                     const parcelStatus = parcelStatusById[shipment.id] || { state: 'idle' };
                     const parcelStatusMessage =
                       parcelStatus.state === 'loading' ? getLoadingMessage(parcelStatus.action) : parcelStatus.state === 'idle' ? '' : parcelStatus.message;
@@ -736,7 +738,10 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                                 disabled={isParcelLoading}
                                 onClick={() => void handleRefreshLabel(shipment)}
                               >
-                                {isRefreshing ? 'REFRESHING...' : 'REFRESH'}
+                                <span className="inline-flex items-center gap-1.5">
+                                  <RefreshCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                                  {isRefreshing ? 'REFRESHING...' : 'REFRESH'}
+                                </span>
                               </button>
                             )}
                             {shipment.labelUrl ? (

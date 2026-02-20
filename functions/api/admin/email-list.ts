@@ -10,7 +10,7 @@ type EmailListItem = {
 export async function onRequestGet(
   context: { request: Request; env: EmailListEnv & Record<string, string | undefined> }
 ): Promise<Response> {
-  const unauthorized = await requireAdmin(context.request, context.env as any, { requireHeaderPassword: true });
+  const unauthorized = await requireAdmin(context.request, context.env as any);
   if (unauthorized) return unauthorized;
 
   try {
@@ -42,4 +42,3 @@ export async function onRequest(
   }
   return onRequestGet(context);
 }
-

@@ -3,33 +3,19 @@ import { Copy, Loader2, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminSectionHeader } from './AdminSectionHeader';
 import { formatDateTime } from '../../lib/date';
-import {
-  fetchAdminEmailList,
-  getStoredAdminPassword,
-  setStoredAdminPassword,
-} from '../../lib/emailListApi';
+import { fetchAdminEmailList } from '../../lib/emailListApi';
 import type { EmailListItem } from '../../lib/emailListTypes';
 
 export function AdminEmailListTab() {
-  const [password, setPassword] = useState(() => getStoredAdminPassword());
   const [items, setItems] = useState<EmailListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const hasPassword = password.trim().length > 0;
-
-  const load = async (passwordOverride?: string) => {
-    const candidate = (passwordOverride ?? password).trim();
-    if (!candidate) {
-      setError('Enter admin password to load the email list.');
-      setItems([]);
-      return;
-    }
-
+  const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetchAdminEmailList(candidate);
+      const response = await fetchAdminEmailList();
       setItems(response.items);
     } catch (loadError) {
       setItems([]);
@@ -40,8 +26,7 @@ export function AdminEmailListTab() {
   };
 
   useEffect(() => {
-    if (!hasPassword) return;
-    void load(password);
+    void load();
   }, []);
 
   const sortedItems = useMemo(
@@ -53,12 +38,6 @@ export function AdminEmailListTab() {
       }),
     [items]
   );
-
-  const handleSavePassword = () => {
-    const trimmed = password.trim();
-    setStoredAdminPassword(trimmed);
-    void load(trimmed);
-  };
 
   const handleCopy = async (email: string) => {
     try {
@@ -87,26 +66,12 @@ export function AdminEmailListTab() {
         subtitle="Emails collected from the public /join page."
       />
 
-      <div className="lux-panel p-4 space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1">
-            <label className="lux-label mb-2 block">Admin Password</label>
-            <input
-              type="password"
-              autoComplete="current-password"
-              className="lux-input text-sm"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter ADMIN_PASSWORD"
-            />
-          </div>
-          <button type="button" className="lux-button--ghost px-4 py-2 text-[10px]" onClick={handleSavePassword}>
-            Save & Load
-          </button>
+      <div className="lux-panel p-4">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             className="lux-button--ghost px-3 py-2 text-[10px] disabled:opacity-60"
-            disabled={loading || !hasPassword}
+            disabled={loading}
             onClick={() => void load()}
           >
             {loading ? (
@@ -130,9 +95,6 @@ export function AdminEmailListTab() {
             Copy All
           </button>
         </div>
-        <p className="text-xs text-charcoal/60">
-          This uses <code>x-admin-password</code> against <code>/api/admin/email-list</code>.
-        </p>
       </div>
 
       {error && (
@@ -179,4 +141,3 @@ export function AdminEmailListTab() {
     </div>
   );
 }
-

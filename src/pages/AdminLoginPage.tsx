@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setStoredAdminPassword } from '../lib/emailListApi';
 
 type LoginResponse = {
   ok?: boolean;
@@ -42,7 +41,6 @@ export function AdminLoginPage() {
       const payload = (await response.json().catch(() => null)) as LoginResponse | null;
 
       if (response.ok && payload?.ok) {
-        setStoredAdminPassword(password);
         setPassword('');
         navigate('/admin/customers', { replace: true });
         return;
