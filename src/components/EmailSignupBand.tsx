@@ -44,7 +44,7 @@ export function EmailSignupBand({ className = '' }: EmailSignupBandProps) {
     <section className={`lux-card p-6 sm:p-8 ${className}`}>
       <div className="space-y-3 text-center">
         <h2 className="lux-heading text-3xl sm:text-4xl">Join our Email List</h2>
-        <p className="lux-subtitle mx-auto max-w-2xl">
+        <p className="lux-label text-[10px] mx-auto max-w-2xl">
           New drops, restocks, and updates from Dover Designs.
         </p>
       </div>
