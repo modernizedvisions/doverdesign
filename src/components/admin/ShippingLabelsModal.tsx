@@ -729,6 +729,16 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                                 {busyLabel}
                               </span>
                             )}
+                            {canRefreshLabel && (
+                              <button
+                                type="button"
+                                className="lux-button--ghost px-3 py-2 text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={isParcelLoading}
+                                onClick={() => void handleRefreshLabel(shipment)}
+                              >
+                                {isRefreshing ? 'REFRESHING...' : 'REFRESH'}
+                              </button>
+                            )}
                             {shipment.labelUrl ? (
                               <a
                                 href={shipment.labelUrl}
@@ -746,16 +756,6 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                                 className="lux-button--ghost px-3 py-2 text-[10px] opacity-50 cursor-not-allowed"
                               >
                                 Download Label (PDF)
-                              </button>
-                            )}
-                            {canRefreshLabel && (
-                              <button
-                                type="button"
-                                className="lux-button--ghost px-3 py-2 text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={isParcelLoading}
-                                onClick={() => void handleRefreshLabel(shipment)}
-                              >
-                                {isRefreshing ? 'REFRESHING...' : 'REFRESH'}
                               </button>
                             )}
                             {!isComplete && (
