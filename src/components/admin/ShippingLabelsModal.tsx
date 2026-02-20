@@ -132,29 +132,41 @@ const normalizeParcelActionError = (errorLike: unknown): { message: string; subt
 };
 
 const getLoadingMessage = (action: ParcelUiAction): string => {
-  if (action === 'quotes') return 'Fetching quotes...';
-  if (action === 'buy') return 'Buying label...';
-  return 'Refreshing label...';
+  if (action === 'quotes') return 'Fetching Quotes...';
+  if (action === 'buy') return 'Buying Label...';
+  return 'Refreshing Label...';
 };
 
 const resolveTrackingDisplayText = (shipment: OrderShipment): string => {
   const tracking = trimText(shipment.trackingNumber);
   if (tracking) return tracking;
 
-  const labelUrl = trimText(shipment.labelUrl);
-  const labelState = trimText(shipment.labelState)?.toLowerCase() || null;
-  const purchasedAt = trimText(shipment.purchasedAt);
-  const easyshipShipmentId = trimText(shipment.easyshipShipmentId);
+  const hasPurchasedOrGenerated =
+    shipment.labelState === 'generated' ||
+    !!trimText(shipment.purchasedAt) ||
+    !!trimText(shipment.labelUrl) ||
+    !!trimText(shipment.easyshipShipmentId);
 
-  if ((!labelState || labelState === 'pending') && !labelUrl && !purchasedAt && !easyshipShipmentId) {
-    return 'Label Not Yet Created';
+  return hasPurchasedOrGenerated ? 'Pending' : 'Label Not Yet Created';
+};
+
+const toDisplayMeasurement = (value: number | string | null | undefined): number | null => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0 ? value : null;
   }
-
-  if (!labelUrl && !purchasedAt) {
-    return 'Label Not Yet Created';
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
+  return null;
+};
 
-  return 'Pending';
+const formatMeasurement = (value: number | null): string => {
+  if (value === null) return '\u2014';
+  if (Number.isInteger(value)) return String(value);
+  return Number(value.toFixed(2)).toString();
 };
 
 const initialDraftFromShipment = (shipment: OrderShipment): ParcelDraft => ({
@@ -176,7 +188,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
   const [quoteWarningByShipment, setQuoteWarningByShipment] = useState<Record<string, string>>({});
   const [quoteDebugByShipment, setQuoteDebugByShipment] = useState<Record<string, ShipmentQuoteDebugHints | null>>({});
   const [selectedQuoteByShipment, setSelectedQuoteByShipment] = useState<Record<string, string | null>>({});
-  const [postBuyByShipment, setPostBuyByShipment] = useState<Record<string, boolean>>({});
+  const [, setPostBuyByShipment] = useState<Record<string, boolean>>({});
   const [parcelStatusById, setParcelStatusById] = useState<Record<string, ParcelUiStatus>>({});
   const [busyByShipment, setBusyByShipment] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -449,7 +461,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
           delete next[shipment.id];
           return next;
         });
-        setSuccess(shipment.id, 'quotes', 'Quotes fetched.');
+        setSuccess(shipment.id, 'quotes', 'Quotes Fetched.');
       }
     } catch (quoteError) {
       const normalized = normalizeParcelActionError(quoteError);
@@ -648,13 +660,10 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                     const quoteWarning = quoteWarningByShipment[shipment.id] || '';
                     const quoteDebug = quoteDebugByShipment[shipment.id] || null;
                     const selectedQuoteId = selectedQuoteByShipment[shipment.id] || shipment.quoteSelectedId || null;
-                    const selectedQuote = rates.find((rate) => rate.id === selectedQuoteId) || null;
-                    const postBuyState = !!postBuyByShipment[shipment.id];
-                    const labelPurchased =
+                    const isComplete =
                       shipment.labelState === 'generated' ||
                       !!shipment.purchasedAt ||
-                      !!shipment.labelUrl ||
-                      postBuyState;
+                      !!shipment.labelUrl;
                     const canRemove = !shipment.purchasedAt && shipment.labelState !== 'generated';
                     const pendingRefresh = shipment.labelState === 'pending' && !!shipment.easyshipShipmentId;
                     const canBuyLabel = !shipment.purchasedAt && shipment.labelState !== 'generated';
@@ -666,21 +675,50 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                         ? [parcelStatus.message, parcelStatus.subtext].filter(Boolean).join(' ')
                         : parcelStatusMessage;
                     const isParcelLoading = parcelStatus.state === 'loading';
-                    const selectedServiceText = (() => {
+                    const selectedPresetId = draft.useCustom
+                      ? null
+                      : trimText(draft.boxPresetId) || trimText(shipment.boxPresetId);
+                    const selectedPreset = selectedPresetId
+                      ? boxPresets.find((preset) => preset.id === selectedPresetId) || null
+                      : null;
+                    const boxLabel = draft.useCustom
+                      ? 'Custom Box'
+                      : trimText(selectedPreset?.name) || trimText(shipment.boxPresetName) || 'Box Not Selected';
+                    const displayLength = draft.useCustom
+                      ? toDisplayMeasurement(draft.customLengthIn) ??
+                        toDisplayMeasurement(shipment.customLengthIn) ??
+                        toDisplayMeasurement(shipment.effectiveLengthIn)
+                      : selectedPreset
+                      ? toDisplayMeasurement(selectedPreset.lengthIn)
+                      : toDisplayMeasurement(shipment.effectiveLengthIn) ??
+                        toDisplayMeasurement(shipment.customLengthIn);
+                    const displayWidth = draft.useCustom
+                      ? toDisplayMeasurement(draft.customWidthIn) ??
+                        toDisplayMeasurement(shipment.customWidthIn) ??
+                        toDisplayMeasurement(shipment.effectiveWidthIn)
+                      : selectedPreset
+                      ? toDisplayMeasurement(selectedPreset.widthIn)
+                      : toDisplayMeasurement(shipment.effectiveWidthIn) ??
+                        toDisplayMeasurement(shipment.customWidthIn);
+                    const displayHeight = draft.useCustom
+                      ? toDisplayMeasurement(draft.customHeightIn) ??
+                        toDisplayMeasurement(shipment.customHeightIn) ??
+                        toDisplayMeasurement(shipment.effectiveHeightIn)
+                      : selectedPreset
+                      ? toDisplayMeasurement(selectedPreset.heightIn)
+                      : toDisplayMeasurement(shipment.effectiveHeightIn) ??
+                        toDisplayMeasurement(shipment.customHeightIn);
+                    const displayWeight = toDisplayMeasurement(draft.weightLb) ?? toDisplayMeasurement(shipment.weightLb);
+                    const parcelSummaryLine = `${formatMeasurement(displayLength)} \u00d7 ${formatMeasurement(displayWidth)} \u00d7 ${formatMeasurement(displayHeight)} in \u2022 ${formatMeasurement(displayWeight)} lb`;
+                    const trackingServiceText = (() => {
                       const carrier = trimText(shipment.carrier);
                       const service = trimText(shipment.service);
                       if (carrier && service) return `${carrier} \u2014 ${service}`;
                       if (service) return service;
                       if (carrier) return carrier;
-                      if (selectedQuote?.carrier && selectedQuote?.service) {
-                        return `${selectedQuote.carrier} \u2014 ${selectedQuote.service}`;
-                      }
-                      if (selectedQuote?.service) return selectedQuote.service;
-                      return 'Not selected yet';
+                      return 'Carrier Not Selected';
                     })();
-                    const downloadDisabledTitle = labelPurchased
-                      ? 'Label Purchased. Refresh to Download.'
-                      : 'You have not purchased a label yet.';
+                    const downloadDisabledTitle = 'No label yet';
                     return (
                       <div key={shipment.id} className="lux-panel p-4">
                         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
@@ -733,7 +771,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                                 Download Label (PDF)
                               </button>
                             )}
-                            {!labelPurchased && (
+                            {!isComplete && (
                               <button
                                 type="button"
                                 className="lux-button--ghost px-3 py-2 text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -743,7 +781,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                                 Get Quotes
                               </button>
                             )}
-                            {!labelPurchased && (
+                            {!isComplete && (
                               <button
                                 type="button"
                                 className="lux-button px-3 py-2 text-[10px]"
@@ -753,7 +791,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                                 Buy Label
                               </button>
                             )}
-                            {canRemove && (
+                            {!isComplete && canRemove && (
                               <button
                                 type="button"
                                 className="lux-button--ghost px-2 py-1 text-[10px] !text-rose-700"
@@ -765,95 +803,97 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                           </div>
                         </div>
 
-                        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                          <div className="w-full max-w-[520px] space-y-3">
-                            <div>
-                              <label className="lux-label mb-2 block">Box Preset</label>
-                              <select
-                                className="lux-input w-full text-[11px] uppercase tracking-[0.2em] font-semibold"
-                                disabled={draft.useCustom}
-                                value={draft.boxPresetId}
-                                onChange={(e) => updateDraft(shipment.id, { boxPresetId: e.target.value })}
-                              >
-                                <option value="">Select preset</option>
-                                {boxPresets.map((preset) => (
-                                  <option key={preset.id} value={preset.id}>
-                                    {preset.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <label className="flex items-center gap-2 text-xs text-charcoal/80">
-                              <input
-                                type="checkbox"
-                                checked={draft.useCustom}
-                                onChange={(e) => updateDraft(shipment.id, { useCustom: e.target.checked })}
-                              />
-                              Use Custom Dimensions
-                            </label>
-
-                            {draft.useCustom && (
-                              <div className="w-full">
-                                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
-                                  <div>
-                                    <label className="lux-label mb-2 block">Length (in)</label>
-                                    <input
-                                      className="lux-input w-full min-w-0"
-                                      value={draft.customLengthIn}
-                                      onChange={(e) => updateDraft(shipment.id, { customLengthIn: e.target.value })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="lux-label mb-2 block">Width (in)</label>
-                                    <input
-                                      className="lux-input w-full min-w-0"
-                                      value={draft.customWidthIn}
-                                      onChange={(e) => updateDraft(shipment.id, { customWidthIn: e.target.value })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="lux-label mb-2 block">Height (in)</label>
-                                    <input
-                                      className="lux-input w-full min-w-0"
-                                      value={draft.customHeightIn}
-                                      onChange={(e) => updateDraft(shipment.id, { customHeightIn: e.target.value })}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                              <div className="w-full max-w-[240px]">
-                                <label className="lux-label mb-2 block">Weight (lb)</label>
-                                <input
-                                  className="lux-input w-full"
-                                  value={draft.weightLb}
-                                  onChange={(e) => updateDraft(shipment.id, { weightLb: e.target.value })}
-                                />
-                              </div>
-                              {draft.useCustom && (
-                                <button
-                                  type="button"
-                                  className="lux-button--ghost px-3 py-2 text-[10px]"
-                                  onClick={() =>
-                                    void withShipmentBusy(shipment.id, 'saving', async () => persistShipmentDraft(shipment.id))
-                                  }
-                                >
-                                  Save Dimensions
-                                </button>
-                              )}
-                            </div>
-                          </div>
+                        <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3">
+                          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-charcoal">{boxLabel}</p>
+                          <p className="mt-1 text-xs text-charcoal/70">{parcelSummaryLine}</p>
                         </div>
 
-                        {labelPurchased ? (
-                          <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3">
-                            <p className="lux-label text-[10px] mb-1">Selected Service</p>
-                            <div className="text-sm font-medium text-charcoal">{selectedServiceText}</div>
+                        {!isComplete && (
+                          <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div className="w-full max-w-[520px] space-y-3">
+                              <div>
+                                <label className="lux-label mb-2 block">Box Preset</label>
+                                <select
+                                  className="lux-input w-full text-[11px] uppercase tracking-[0.2em] font-semibold"
+                                  disabled={draft.useCustom}
+                                  value={draft.boxPresetId}
+                                  onChange={(e) => updateDraft(shipment.id, { boxPresetId: e.target.value })}
+                                >
+                                  <option value="">Select preset</option>
+                                  {boxPresets.map((preset) => (
+                                    <option key={preset.id} value={preset.id}>
+                                      {preset.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <label className="flex items-center gap-2 text-xs text-charcoal/80">
+                                <input
+                                  type="checkbox"
+                                  checked={draft.useCustom}
+                                  onChange={(e) => updateDraft(shipment.id, { useCustom: e.target.checked })}
+                                />
+                                Use Custom Dimensions
+                              </label>
+
+                              {draft.useCustom && (
+                                <div className="w-full">
+                                  <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+                                    <div>
+                                      <label className="lux-label mb-2 block">Length (in)</label>
+                                      <input
+                                        className="lux-input w-full min-w-0"
+                                        value={draft.customLengthIn}
+                                        onChange={(e) => updateDraft(shipment.id, { customLengthIn: e.target.value })}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="lux-label mb-2 block">Width (in)</label>
+                                      <input
+                                        className="lux-input w-full min-w-0"
+                                        value={draft.customWidthIn}
+                                        onChange={(e) => updateDraft(shipment.id, { customWidthIn: e.target.value })}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="lux-label mb-2 block">Height (in)</label>
+                                      <input
+                                        className="lux-input w-full min-w-0"
+                                        value={draft.customHeightIn}
+                                        onChange={(e) => updateDraft(shipment.id, { customHeightIn: e.target.value })}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                                <div className="w-full max-w-[240px]">
+                                  <label className="lux-label mb-2 block">Weight (lb)</label>
+                                  <input
+                                    className="lux-input w-full"
+                                    value={draft.weightLb}
+                                    onChange={(e) => updateDraft(shipment.id, { weightLb: e.target.value })}
+                                  />
+                                </div>
+                                {draft.useCustom && (
+                                  <button
+                                    type="button"
+                                    className="lux-button--ghost px-3 py-2 text-[10px]"
+                                    onClick={() =>
+                                      void withShipmentBusy(shipment.id, 'saving', async () => persistShipmentDraft(shipment.id))
+                                    }
+                                  >
+                                    Save Dimensions
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        ) : (
+                        )}
+
+                        {!isComplete && (
                           <>
                             {quoteWarning && (
                               <div className="mt-3 rounded-shell border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -914,48 +954,45 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                               <div className="flex items-center justify-between gap-3">
                                 <p className="lux-label text-[10px]">TRACKING:</p>
                                 <div
-                                  className={`text-xs ${
-                                    trackingValue ? 'font-mono text-charcoal font-medium' : 'text-charcoal/70'
-                                  }`}
+                                  className="text-right"
                                 >
-                                  {displayText}
+                                  <div
+                                    className={`text-xs ${
+                                      trackingValue ? 'font-mono text-charcoal font-medium' : 'text-charcoal/70'
+                                    }`}
+                                  >
+                                    {displayText}
+                                  </div>
+                                  {trackingServiceText && (
+                                    <div className="mt-0.5 text-[11px] text-charcoal/60">{trackingServiceText}</div>
+                                  )}
                                 </div>
                               </div>
                             );
                           })()}
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex flex-wrap items-center justify-end gap-2">
-                              {pendingRefresh ? (
-                                <>
-                                  <span className="text-xs text-amber-800">Generating...</span>
-                                  <button
-                                    type="button"
-                                    className="lux-button--ghost px-3 py-1 text-[10px] disabled:opacity-50"
-                                    disabled={isParcelLoading}
-                                    onClick={() => void handleRefreshLabel(shipment)}
-                                  >
-                                    <RefreshCcw className="h-4 w-4" />
-                                    Refresh
-                                  </button>
-                                </>
-                              ) : null}
+                          {!isComplete && (
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div className="flex flex-wrap items-center justify-end gap-2">
+                                {pendingRefresh ? (
+                                  <>
+                                    <span className="text-xs text-amber-800">Generating...</span>
+                                    <button
+                                      type="button"
+                                      className="lux-button--ghost px-3 py-1 text-[10px] disabled:opacity-50"
+                                      disabled={isParcelLoading}
+                                      onClick={() => void handleRefreshLabel(shipment)}
+                                    >
+                                      <RefreshCcw className="h-4 w-4" />
+                                      Refresh
+                                    </button>
+                                  </>
+                                ) : null}
+                              </div>
                             </div>
-                          </div>
-                          {(shipment.labelUrl || shipment.trackingNumber || shipment.labelCostAmountCents !== null) && (
+                          )}
+                          {shipment.labelCostAmountCents !== null && (
                             <div className="mt-2 flex flex-wrap items-center gap-3 text-emerald-800">
-                              {(shipment.carrier || shipment.service) && (
-                                <span>
-                                  {shipment.carrier || '-'} {shipment.service ? `| ${shipment.service}` : ''}
-                                </span>
-                              )}
-                              {shipment.trackingNumber && (
-                                <span className="inline-flex items-center gap-2">
-                                  Tracking: {shipment.trackingNumber}
-                                </span>
-                              )}
-                              {shipment.labelCostAmountCents !== null && (
-                                <span>Cost: {formatCurrency(shipment.labelCostAmountCents, shipment.labelCurrency)}</span>
-                              )}
+                              <span>Cost: {formatCurrency(shipment.labelCostAmountCents, shipment.labelCurrency)}</span>
                             </div>
                           )}
                         </div>
