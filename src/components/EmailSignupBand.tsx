@@ -42,10 +42,9 @@ export function EmailSignupBand({ className = '' }: EmailSignupBandProps) {
 
   return (
     <section className={`lux-card p-6 sm:p-8 ${className}`}>
-      <div className="space-y-3">
-        <p className="section-eyebrow">Email List</p>
-        <h2 className="section-heading">Join our email list</h2>
-        <p className="section-subtext">
+      <div className="space-y-3 text-center">
+        <h2 className="lux-heading text-3xl sm:text-4xl">Join our Email List</h2>
+        <p className="lux-subtitle mx-auto max-w-2xl">
           New drops, restocks, and updates from Dover Designs.
         </p>
       </div>
@@ -62,7 +61,7 @@ export function EmailSignupBand({ className = '' }: EmailSignupBandProps) {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="lux-input h-11 flex-1 text-sm"
+          className="lux-input h-11 flex-1 text-sm placeholder:font-serif placeholder:tracking-[0.03em] placeholder:text-charcoal/60"
         />
         <button
           type="submit"
@@ -86,4 +85,3 @@ export function EmailSignupBand({ className = '' }: EmailSignupBandProps) {
     </section>
   );
 }
-

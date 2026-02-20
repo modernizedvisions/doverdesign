@@ -169,9 +169,6 @@ export function OrderDetailsModal({ open, order, onClose, onOpenShippingLabels }
   const taxCents = hasCanonicalTotals ? order.amountTaxCents ?? 0 : null;
   const discountCents = hasCanonicalTotals ? order.amountDiscountCents ?? 0 : null;
   const totalCents = order.amountTotalCents ?? order.totalCents ?? 0;
-  const customerPaidShippingCents = order.amountShippingCents ?? order.shippingCents ?? 0;
-  const actualLabelTotalCents = shipments.reduce((sum, shipment) => sum + (shipment.labelCostAmountCents || 0), 0);
-  const shippingDifferenceCents = actualLabelTotalCents - customerPaidShippingCents;
 
   const formattedAddress = hasShipping
     ? [
@@ -361,26 +358,6 @@ export function OrderDetailsModal({ open, order, onClose, onOpenShippingLabels }
                   ))}
                 </div>
               )}
-              <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
-                <div className="rounded-shell bg-linen/70 px-3 py-2">
-                  <div className="text-charcoal/70">Customer Paid Shipping</div>
-                  <div className="font-semibold text-charcoal">
-                    {formatCurrency(customerPaidShippingCents, order.currency || 'USD')}
-                  </div>
-                </div>
-                <div className="rounded-shell bg-linen/70 px-3 py-2">
-                  <div className="text-charcoal/70">Actual Label Total</div>
-                  <div className="font-semibold text-charcoal">
-                    {formatCurrency(actualLabelTotalCents, order.currency || 'USD')}
-                  </div>
-                </div>
-                <div className="rounded-shell bg-linen/70 px-3 py-2">
-                  <div className="text-charcoal/70">Difference (Actual - Paid)</div>
-                  <div className={`font-semibold ${shippingDifferenceCents > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
-                    {formatCurrency(shippingDifferenceCents, order.currency || 'USD')}
-                  </div>
-                </div>
-              </div>
             </section>
 
             {hasPromo && (

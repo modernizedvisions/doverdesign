@@ -83,9 +83,28 @@ const getInitials = (value: string) =>
     .map((part) => part[0]?.toUpperCase() || '')
     .join('') || 'IT';
 
-const PURCHASED_LABEL_TOOLTIP = 'Label already purchased for this parcel. Add a new parcel to buy another.';
 const NO_QUOTES_PRIMARY = 'No quotes found for this package. Try a different box size or weight.';
 const NO_QUOTES_SUBTEXT = 'If it still fails, try pricing it in Easyship directly.';
+const EASYSHIP_RATE_LIMIT_MESSAGE = 'Too many requests to Easyship. Refresh and try again in a moment.';
+
+const extractErrorMessage = (errorLike: unknown): string => {
+  if (errorLike instanceof Error) return errorLike.message || 'Operation failed.';
+  return String(errorLike || 'Operation failed.');
+};
+
+const hasStatus429 = (errorLike: unknown): boolean => {
+  if (!errorLike || typeof errorLike !== 'object') return false;
+  const maybeStatus = (errorLike as { status?: unknown }).status;
+  return typeof maybeStatus === 'number' && maybeStatus === 429;
+};
+
+const isEasyshipRateLimitError = (errorLike: unknown, message: string): boolean => {
+  if (hasStatus429(errorLike)) return true;
+  const normalized = message.toLowerCase();
+  if (normalized.includes('rate limit exceeded')) return true;
+  if (normalized.includes('429') && normalized.includes('maximum number of requests')) return true;
+  return false;
+};
 
 const isNoQuotesFailure = (message: string): boolean => {
   const normalized = message.toLowerCase();
@@ -98,7 +117,11 @@ const isNoQuotesFailure = (message: string): boolean => {
   );
 };
 
-const normalizeParcelActionError = (message: string): { message: string; subtext?: string } => {
+const normalizeParcelActionError = (errorLike: unknown): { message: string; subtext?: string } => {
+  const message = extractErrorMessage(errorLike);
+  if (isEasyshipRateLimitError(errorLike, message)) {
+    return { message: EASYSHIP_RATE_LIMIT_MESSAGE };
+  }
   if (isNoQuotesFailure(message)) {
     return {
       message: NO_QUOTES_PRIMARY,
@@ -153,6 +176,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
   const [quoteWarningByShipment, setQuoteWarningByShipment] = useState<Record<string, string>>({});
   const [quoteDebugByShipment, setQuoteDebugByShipment] = useState<Record<string, ShipmentQuoteDebugHints | null>>({});
   const [selectedQuoteByShipment, setSelectedQuoteByShipment] = useState<Record<string, string | null>>({});
+  const [postBuyByShipment, setPostBuyByShipment] = useState<Record<string, boolean>>({});
   const [parcelStatusById, setParcelStatusById] = useState<Record<string, ParcelUiStatus>>({});
   const [busyByShipment, setBusyByShipment] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -235,6 +259,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
   useEffect(() => {
     if (open) return;
     setParcelStatusById({});
+    setPostBuyByShipment({});
     setBusyByShipment({});
     setError('');
   }, [open]);
@@ -379,6 +404,11 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
         delete next[shipment.id];
         return next;
       });
+      setPostBuyByShipment((prev) => {
+        const next = { ...prev };
+        delete next[shipment.id];
+        return next;
+      });
       setParcelStatusById((prev) => {
         const next = { ...prev };
         delete next[shipment.id];
@@ -422,8 +452,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
         setSuccess(shipment.id, 'quotes', 'Quotes fetched.');
       }
     } catch (quoteError) {
-      const rawMessage = quoteError instanceof Error ? quoteError.message : 'Failed to fetch quotes.';
-      const normalized = normalizeParcelActionError(rawMessage);
+      const normalized = normalizeParcelActionError(quoteError);
       if (normalized.subtext) {
         setQuoteWarningByShipment((prev) => ({ ...prev, [shipment.id]: normalized.message }));
       }
@@ -443,15 +472,24 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
       const bought = await adminBuyShipmentLabel(orderId, shipment.id, {
         quoteSelectedId: selectedQuoteId,
       });
+      setPostBuyByShipment((prev) => ({ ...prev, [shipment.id]: true }));
       setShipments(bought.shipments);
       seedDrafts(bought.shipments);
       if (bought.selectedQuoteId) {
         setSelectedQuoteByShipment((prev) => ({ ...prev, [shipment.id]: bought.selectedQuoteId }));
       }
-      setSuccess(shipment.id, 'buy', bought.pendingRefresh ? 'Label purchase submitted. Refresh shortly.' : 'Label purchased.');
+      const updatedShipment =
+        (bought.shipment && bought.shipment.id === shipment.id ? bought.shipment : null) ||
+        bought.shipments.find((entry) => entry.id === shipment.id) ||
+        null;
+      const hasLabelUrl = !!trimText(updatedShipment?.labelUrl);
+      setSuccess(
+        shipment.id,
+        'buy',
+        hasLabelUrl ? 'Label purchased.' : 'Label Purchased. Refresh to Download.'
+      );
     } catch (buyError) {
-      const rawMessage = buyError instanceof Error ? buyError.message : 'Failed to buy shipment label.';
-      const normalized = normalizeParcelActionError(rawMessage);
+      const normalized = normalizeParcelActionError(buyError);
       setParcelError(shipment.id, 'buy', normalized.message, normalized.subtext);
     }
   };
@@ -469,12 +507,12 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
         refreshed.pendingRefresh
           ? 'Label still generating. Try refresh again shortly.'
           : refreshed.refreshed
-          ? 'Label status refreshed.'
+          ? 'Refresh Complete — Label is Ready.'
           : 'Label status is up to date.'
       );
     } catch (refreshError) {
-      const message = refreshError instanceof Error ? refreshError.message : 'Failed to refresh shipment label status.';
-      setParcelError(shipment.id, 'refresh', message);
+      const normalized = normalizeParcelActionError(refreshError);
+      setParcelError(shipment.id, 'refresh', normalized.message, normalized.subtext);
     }
   };
 
@@ -610,6 +648,13 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                     const quoteWarning = quoteWarningByShipment[shipment.id] || '';
                     const quoteDebug = quoteDebugByShipment[shipment.id] || null;
                     const selectedQuoteId = selectedQuoteByShipment[shipment.id] || shipment.quoteSelectedId || null;
+                    const selectedQuote = rates.find((rate) => rate.id === selectedQuoteId) || null;
+                    const postBuyState = !!postBuyByShipment[shipment.id];
+                    const labelPurchased =
+                      shipment.labelState === 'generated' ||
+                      !!shipment.purchasedAt ||
+                      !!shipment.labelUrl ||
+                      postBuyState;
                     const canRemove = !shipment.purchasedAt && shipment.labelState !== 'generated';
                     const pendingRefresh = shipment.labelState === 'pending' && !!shipment.easyshipShipmentId;
                     const canBuyLabel = !shipment.purchasedAt && shipment.labelState !== 'generated';
@@ -621,7 +666,21 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                         ? [parcelStatus.message, parcelStatus.subtext].filter(Boolean).join(' ')
                         : parcelStatusMessage;
                     const isParcelLoading = parcelStatus.state === 'loading';
-                    const purchasedLabelTooltip = canBuyLabel ? undefined : PURCHASED_LABEL_TOOLTIP;
+                    const selectedServiceText = (() => {
+                      const carrier = trimText(shipment.carrier);
+                      const service = trimText(shipment.service);
+                      if (carrier && service) return `${carrier} \u2014 ${service}`;
+                      if (service) return service;
+                      if (carrier) return carrier;
+                      if (selectedQuote?.carrier && selectedQuote?.service) {
+                        return `${selectedQuote.carrier} \u2014 ${selectedQuote.service}`;
+                      }
+                      if (selectedQuote?.service) return selectedQuote.service;
+                      return postBuyState ? 'Purchased' : 'Service selected';
+                    })();
+                    const downloadDisabledTitle = labelPurchased
+                      ? 'Label Purchased. Refresh to Download.'
+                      : 'You have not purchased a label yet.';
                     return (
                       <div key={shipment.id} className="lux-panel p-4">
                         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
@@ -667,14 +726,14 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                             ) : (
                               <button
                                 type="button"
-                                title="You have not purchased a label yet."
+                                title={downloadDisabledTitle}
                                 disabled
                                 className="lux-button--ghost px-3 py-2 text-[10px] opacity-50 cursor-not-allowed"
                               >
                                 Download Label (PDF)
                               </button>
                             )}
-                            <span title={purchasedLabelTooltip} className="inline-flex">
+                            {!labelPurchased && (
                               <button
                                 type="button"
                                 className="lux-button--ghost px-3 py-2 text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -683,8 +742,8 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                               >
                                 Get Quotes
                               </button>
-                            </span>
-                            <span title={purchasedLabelTooltip} className="inline-flex">
+                            )}
+                            {!labelPurchased && (
                               <button
                                 type="button"
                                 className="lux-button px-3 py-2 text-[10px]"
@@ -693,7 +752,7 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                               >
                                 Buy Label
                               </button>
-                            </span>
+                            )}
                             {canRemove && (
                               <button
                                 type="button"
@@ -789,53 +848,62 @@ export function ShippingLabelsModal({ open, order, onClose, onOpenSettings }: Sh
                           </div>
                         </div>
 
-                        {quoteWarning && (
-                          <div className="mt-3 rounded-shell border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                            <div className="font-medium">{quoteWarning}</div>
-                            <div className="text-xs text-amber-700 mt-1">
-                              Verify parcel weight/dimensions, try a different preset, or test against production.
-                            </div>
-                            {quoteDebug && (quoteDebug.hasError || quoteDebug.status !== 200) && (
-                              <details className="mt-2 rounded-shell border border-amber-200 bg-amber-100/60 px-2 py-1 text-xs text-amber-900">
-                                <summary className="cursor-pointer font-medium">Details (debug)</summary>
-                                <div className="mt-1">HTTP status: {quoteDebug.status}</div>
-                                <div>Error code: {quoteDebug.errorCode || '-'}</div>
-                                <div className="mt-1">Hint: if no couriers are available, run Easyship diagnostics endpoint.</div>
-                              </details>
-                            )}
-                          </div>
-                        )}
-
-                        {rates.length > 0 && (
+                        {labelPurchased ? (
                           <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3">
-                            <p className="lux-label text-[10px] mb-2">Quotes</p>
-                            <div className="space-y-2">
-                              {rates.map((rate) => (
-                                <label
-                                  key={rate.id}
-                                  className="flex flex-wrap items-center justify-between gap-2 rounded-shell border border-driftwood/60 px-3 py-2 text-sm"
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <input
-                                      type="radio"
-                                      name={`quote-${shipment.id}`}
-                                      checked={selectedQuoteId === rate.id}
-                                      onChange={() => setSelectedQuoteByShipment((prev) => ({ ...prev, [shipment.id]: rate.id }))}
-                                    />
-                                    <span className="font-medium text-charcoal">
-                                      {rate.carrier} - {rate.service}
-                                    </span>
-                                  </span>
-                                  <span className="text-charcoal/70">
-                                    {formatCurrency(rate.amountCents, rate.currency)}
-                                    {rate.etaDaysMin !== null && rate.etaDaysMax !== null
-                                      ? ` | ETA ${rate.etaDaysMin}-${rate.etaDaysMax}d`
-                                      : ''}
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
+                            <p className="lux-label text-[10px] mb-1">Selected Service</p>
+                            <div className="text-sm font-medium text-charcoal">{selectedServiceText}</div>
                           </div>
+                        ) : (
+                          <>
+                            {quoteWarning && (
+                              <div className="mt-3 rounded-shell border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                                <div className="font-medium">{quoteWarning}</div>
+                                <div className="text-xs text-amber-700 mt-1">
+                                  Verify parcel weight/dimensions, try a different preset, or test against production.
+                                </div>
+                                {quoteDebug && (quoteDebug.hasError || quoteDebug.status !== 200) && (
+                                  <details className="mt-2 rounded-shell border border-amber-200 bg-amber-100/60 px-2 py-1 text-xs text-amber-900">
+                                    <summary className="cursor-pointer font-medium">Details (debug)</summary>
+                                    <div className="mt-1">HTTP status: {quoteDebug.status}</div>
+                                    <div>Error code: {quoteDebug.errorCode || '-'}</div>
+                                    <div className="mt-1">Hint: if no couriers are available, run Easyship diagnostics endpoint.</div>
+                                  </details>
+                                )}
+                              </div>
+                            )}
+
+                            {rates.length > 0 && (
+                              <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3">
+                                <p className="lux-label text-[10px] mb-2">Quotes</p>
+                                <div className="space-y-2">
+                                  {rates.map((rate) => (
+                                    <label
+                                      key={rate.id}
+                                      className="flex flex-wrap items-center justify-between gap-2 rounded-shell border border-driftwood/60 px-3 py-2 text-sm"
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <input
+                                          type="radio"
+                                          name={`quote-${shipment.id}`}
+                                          checked={selectedQuoteId === rate.id}
+                                          onChange={() => setSelectedQuoteByShipment((prev) => ({ ...prev, [shipment.id]: rate.id }))}
+                                        />
+                                        <span className="font-medium text-charcoal">
+                                          {rate.carrier} - {rate.service}
+                                        </span>
+                                      </span>
+                                      <span className="text-charcoal/70">
+                                        {formatCurrency(rate.amountCents, rate.currency)}
+                                        {rate.etaDaysMin !== null && rate.etaDaysMax !== null
+                                          ? ` | ETA ${rate.etaDaysMin}-${rate.etaDaysMax}d`
+                                          : ''}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
 
                         <div className="mt-3 rounded-shell border border-driftwood/60 bg-white/80 p-3 text-sm">
