@@ -316,12 +316,13 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
 
   return (
     <div className="lux-card p-6 space-y-4">
-      <div className="space-y-3">
+      <div className="relative">
         <AdminSectionHeader
           title="Custom Orders"
           subtitle="Manage bespoke customer requests and payment links."
+          className="mb-0"
         />
-        <div className="flex justify-center sm:justify-end">
+        <div className="absolute right-0 top-0 flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => {
@@ -336,7 +337,7 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
             <button
               type="button"
               onClick={() => onReloadOrders?.()}
-              className="ml-2 lux-button--ghost px-3 py-2 text-[10px]"
+              className="lux-button--ghost px-3 py-2 text-[10px]"
             >
               Debug: Reload
             </button>
