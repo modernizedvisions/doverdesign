@@ -1105,7 +1105,12 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
         onCancel={() => setIsArchiveConfirmOpen(false)}
         onConfirm={handleArchive}
       />
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        overlayClassName="items-center px-3 py-6 sm:py-6"
+        contentClassName="max-h-[85vh] overflow-y-auto overflow-x-hidden"
+      >
         <DialogContent className="bg-white">
           <DialogHeader>
             <DialogTitle>Create Custom Order</DialogTitle>
