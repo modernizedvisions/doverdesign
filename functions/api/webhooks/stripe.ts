@@ -2263,14 +2263,16 @@ async function insertStandardOrderAndItems(args: {
         return items;
       })();
 
+  const nowIso = new Date().toISOString();
+
   if (preparedLineItems.length) {
     for (const li of preparedLineItems) {
       const itemId = crypto.randomUUID();
       const itemResult = await db
         .prepare(
           `
-          INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url, option_group_label, option_value)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+          INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url, option_group_label, option_value, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         `
       )
       .bind(
@@ -2281,7 +2283,8 @@ async function insertStandardOrderAndItems(args: {
         li.priceCents ?? 0,
         (li as any).imageUrl ?? null,
         (li as any).optionGroupLabel ?? null,
-        (li as any).optionValue ?? null
+        (li as any).optionValue ?? null,
+        nowIso
       )
       .run();
 
@@ -2296,8 +2299,8 @@ async function insertStandardOrderAndItems(args: {
     const itemResult = await db
       .prepare(
         `
-          INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url, option_group_label, option_value)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+          INSERT INTO order_items (id, order_id, product_id, quantity, price_cents, image_url, option_group_label, option_value, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         `
       )
       .bind(
@@ -2310,7 +2313,8 @@ async function insertStandardOrderAndItems(args: {
           : 0,
         fallbackImageUrl,
         null,
-        null
+        null,
+        nowIso
       )
       .run();
 

@@ -1,14 +1,14 @@
-name = "ecommerce-template"
+name = "doverdesign"
 compatibility_date = "2026-02-15"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "ecommerce-template"
-database_id = "ba2a062b-f334-4c6e-ba1e-0e6cd14b3a63"
-preview_database_id = "ba2a062b-f334-4c6e-ba1e-0e6cd14b3a63"
+database_name = "doverdesign"
+database_id = "5a6da159-9736-4038-b8b7-a5c4e6e64256"
+preview_database_id = "5a6da159-9736-4038-b8b7-a5c4e6e64256"
 migrations_dir = "db/migrations"
 
 [[r2_buckets]]
 binding = "IMAGES_BUCKET"
-bucket_name = "ecommerce-template"
-preview_bucket_name = "ecommerce-template"
+bucket_name = "mv-images"
+preview_bucket_name = "mv-images"
