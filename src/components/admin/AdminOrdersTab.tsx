@@ -25,6 +25,15 @@ export function AdminOrdersTab({
   loading,
   error,
 }: AdminOrdersTabProps) {
+  const getMobileCustomerNameLines = (name: string) => {
+    const normalized = name.trim().replace(/\s+/g, ' ');
+    const parts = normalized.split(' ').filter(Boolean);
+    const shouldSplit = normalized.length >= 14 && parts.length >= 2;
+    return shouldSplit
+      ? { firstLine: parts[0], secondLine: parts.slice(1).join(' '), split: true }
+      : { firstLine: normalized || 'Customer', secondLine: '', split: false };
+  };
+
   return (
     <div className="lux-card p-6">
       <AdminSectionHeader
@@ -75,22 +84,32 @@ export function AdminOrdersTab({
               <thead className="bg-linen/70">
                 <tr>
                   <th className="w-1/2 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Customer</th>
-                  <th className="w-1/4 px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Total</th>
+                  <th className="w-24 px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Total</th>
                   <th className="w-1/4 px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white/80 divide-y divide-driftwood/40">
-                {filteredOrders.map((order) => (
+                {filteredOrders.map((order) => {
+                  const customerName = order.shippingName || order.customerName || 'Customer';
+                  const mobileName = getMobileCustomerNameLines(customerName);
+                  return (
                   <tr key={order.id}>
-                    <td className="px-3 py-4 text-sm text-charcoal whitespace-normal break-words leading-tight">
+                    <td className="min-w-0 px-3 py-4 text-sm text-charcoal whitespace-normal break-words leading-tight">
                       <div className="flex items-center gap-2">
-                        <span>{order.shippingName || order.customerName || 'Customer'}</span>
+                        {mobileName.split ? (
+                          <span className="min-w-0 leading-tight">
+                            <span className="block">{mobileName.firstLine}</span>
+                            <span className="block">{mobileName.secondLine}</span>
+                          </span>
+                        ) : (
+                          <span className="min-w-0">{customerName}</span>
+                        )}
                         {order.isSeen === false && (
                           <span className="inline-flex h-2 w-2 rounded-ui bg-soft-gold ring-1 ring-deep-ocean/20" aria-label="Unseen order" />
                         )}
                       </div>
                     </td>
-                    <td className="px-2 py-4 text-center whitespace-nowrap text-sm text-charcoal">
+                    <td className="w-24 px-2 py-4 text-center whitespace-nowrap text-sm tabular-nums text-charcoal">
                       ${(((order.amountTotalCents ?? order.totalCents) || 0) / 100).toFixed(2)}
                     </td>
                     <td className="px-2 py-4 text-center align-middle">
@@ -115,7 +134,7 @@ export function AdminOrdersTab({
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
