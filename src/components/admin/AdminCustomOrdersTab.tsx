@@ -313,36 +313,55 @@ export const AdminCustomOrdersTab: React.FC<AdminCustomOrdersTabProps> = ({
     if (typeof order.shipping_cents === 'number') return order.shipping_cents;
     return 0;
   };
+  const handleOpenNewCustomOrder = () => {
+    reset(draftDefaults || { customerName: '', customerEmail: '', description: '', amount: '' });
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="lux-card p-6 space-y-4">
-      <div className="relative">
-        <AdminSectionHeader
-          title="Custom Orders"
-          subtitle="Manage bespoke customer requests and payment links."
-          className="mb-0"
-        />
-        <div className="absolute right-0 top-0 flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              reset(draftDefaults || { customerName: '', customerEmail: '', description: '', amount: '' });
-              setIsModalOpen(true);
-            }}
-            className="lux-button px-4 py-2 text-[10px]"
-          >
-            New Custom Order
-          </button>
-          {import.meta.env.DEV && (
+      <div className="space-y-3">
+        <div className="relative">
+          <AdminSectionHeader
+            title="Custom Orders"
+            subtitle="Manage bespoke customer requests and payment links."
+            className="mb-0"
+          />
+          <div className="absolute right-0 top-0 hidden sm:flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
-              onClick={() => onReloadOrders?.()}
-              className="lux-button--ghost px-3 py-2 text-[10px]"
+              onClick={handleOpenNewCustomOrder}
+              className="lux-button px-4 py-2 text-[10px]"
             >
-              Debug: Reload
+              New Custom Order
             </button>
-          )}
+            {import.meta.env.DEV && (
+              <button
+                type="button"
+                onClick={() => onReloadOrders?.()}
+                className="lux-button--ghost px-3 py-2 text-[10px]"
+              >
+                Debug: Reload
+              </button>
+            )}
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={handleOpenNewCustomOrder}
+          className="lux-button w-full px-4 py-2 text-[10px] sm:hidden"
+        >
+          New Custom Order
+        </button>
+        {import.meta.env.DEV && (
+          <button
+            type="button"
+            onClick={() => onReloadOrders?.()}
+            className="lux-button--ghost w-full px-3 py-2 text-[10px] sm:hidden"
+          >
+            Debug: Reload
+          </button>
+        )}
       </div>
 
       {error && (

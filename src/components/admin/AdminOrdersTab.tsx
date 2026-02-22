@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCcw } from 'lucide-react';
+import { Package, RefreshCcw } from 'lucide-react';
 import { AdminSectionHeader } from './AdminSectionHeader';
 import type { AdminOrder } from '../../lib/db/orders';
 import { formatEasternDateTime } from '../../lib/dates';
@@ -70,32 +70,31 @@ export function AdminOrdersTab({
         </div>
       ) : (
         <>
-          <div className="sm:hidden">
-            <table className="min-w-full divide-y divide-driftwood/50">
+          <div className="sm:hidden w-full min-w-0 overflow-x-auto">
+            <table className="w-full min-w-full table-fixed divide-y divide-driftwood/50">
               <thead className="bg-linen/70">
                 <tr>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Customer</th>
-                  <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Total</th>
-                  <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Actions</th>
+                  <th className="w-1/2 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Customer</th>
+                  <th className="w-1/4 px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Total</th>
+                  <th className="w-1/4 px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-deep-ocean/70">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white/80 divide-y divide-driftwood/40">
                 {filteredOrders.map((order) => (
                   <tr key={order.id}>
-                    <td className="px-4 py-4 text-sm text-charcoal whitespace-normal break-words leading-tight">
+                    <td className="px-3 py-4 text-sm text-charcoal whitespace-normal break-words leading-tight">
                       <div className="flex items-center gap-2">
                         <span>{order.shippingName || order.customerName || 'Customer'}</span>
                         {order.isSeen === false && (
                           <span className="inline-flex h-2 w-2 rounded-ui bg-soft-gold ring-1 ring-deep-ocean/20" aria-label="Unseen order" />
                         )}
                       </div>
-                      <div className="text-xs text-charcoal/60">{order.customerEmail || 'No email'}</div>
                     </td>
-                    <td className="px-4 py-4 text-center whitespace-nowrap text-sm text-charcoal">
+                    <td className="px-2 py-4 text-center whitespace-nowrap text-sm text-charcoal">
                       ${(((order.amountTotalCents ?? order.totalCents) || 0) / 100).toFixed(2)}
                     </td>
-                    <td className="px-4 py-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-2 py-4 text-center align-middle">
+                      <div className="flex flex-col items-center justify-center gap-2">
                         <button
                           type="button"
                           onClick={() => onSelectOrder(order)}
@@ -106,9 +105,11 @@ export function AdminOrdersTab({
                         <button
                           type="button"
                           onClick={() => onOpenShipping(order)}
-                          className="lux-button--ghost px-3 py-1 text-[10px]"
+                          aria-label="Shipping"
+                          title="Shipping"
+                          className="lux-button--ghost inline-flex h-7 w-7 items-center justify-center p-0"
                         >
-                          Shipping
+                          <Package className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       </div>
                     </td>

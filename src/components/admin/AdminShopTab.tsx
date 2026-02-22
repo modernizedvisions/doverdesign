@@ -498,7 +498,7 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                   </div>
 
                   <div className="space-y-2 pt-2 md:mt-auto">
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="hidden sm:flex flex-wrap items-center gap-3">
                       <button
                         type="submit"
                         disabled={
@@ -735,6 +735,36 @@ export const AdminShopTab: React.FC<AdminShopTabProps> = ({
                     </div>
                   );
                 })}
+              </div>
+              <div className="mt-4 flex items-center gap-3 sm:hidden">
+                <button
+                  type="submit"
+                  disabled={
+                    productSaveState === 'saving' ||
+                    isUploading ||
+                    failedCount > 0 ||
+                    missingUrlCount > 0 ||
+                    createOverrideAmountInvalid ||
+                    !hasCategories
+                  }
+                  className="lux-button flex-1 px-4 py-2 text-[10px] disabled:opacity-50"
+                >
+                  {productSaveState === 'saving' ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-white/80" />
+                      <span>Saving...</span>
+                    </span>
+                  ) : (
+                    'Save Product'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={onResetProductForm}
+                  className="lux-button--ghost flex-1 px-4 py-2 text-[10px]"
+                >
+                  Clear
+                </button>
               </div>
             </aside>
           </div>
