@@ -107,9 +107,10 @@ export function AdminOrdersTab({
                           onClick={() => onOpenShipping(order)}
                           aria-label="Shipping"
                           title="Shipping"
-                          className="lux-button--ghost inline-flex h-7 w-7 items-center justify-center p-0"
+                          className="lux-button--ghost relative inline-flex items-center justify-center px-3 py-1 text-[10px]"
                         >
-                          <Package className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="invisible">View</span>
+                          <Package className="pointer-events-none absolute h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       </div>
                     </td>

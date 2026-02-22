@@ -206,19 +206,30 @@ export function AdminCustomOrderExamplesTab() {
 
   return (
     <div className="lux-card p-6">
-      <div className="relative">
-        <div className="w-full text-center">
-          <AdminSectionHeader
-            title="Custom Order Examples"
-            subtitle="Manage the 9 custom examples shown on the Custom Orders page."
-          />
+      <div className="space-y-3">
+        <div className="relative">
+          <div className="w-full text-center">
+            <AdminSectionHeader
+              title="Custom Order Examples"
+              subtitle="Manage the 9 custom examples shown on the Custom Orders page."
+            />
+          </div>
+          <div className="absolute right-0 top-0 hidden sm:block">
+            <AdminSaveButton
+              saveState={saveState}
+              onClick={handleSave}
+              disabled={saveState === 'saving' || hasBlockingIssues}
+              idleLabel="Save Examples"
+            />
+          </div>
         </div>
-        <div className="absolute right-0 top-0">
+        <div className="sm:hidden">
           <AdminSaveButton
             saveState={saveState}
             onClick={handleSave}
             disabled={saveState === 'saving' || hasBlockingIssues}
             idleLabel="Save Examples"
+            className="w-full"
           />
         </div>
       </div>
