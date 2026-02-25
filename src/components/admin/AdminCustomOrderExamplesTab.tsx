@@ -219,7 +219,8 @@ export function AdminCustomOrderExamplesTab() {
               saveState={saveState}
               onClick={handleSave}
               disabled={saveState === 'saving' || hasBlockingIssues}
-              idleLabel="Save Examples"
+              idleLabel="SAVE"
+              className="sm:w-auto"
             />
           </div>
         </div>
@@ -228,7 +229,7 @@ export function AdminCustomOrderExamplesTab() {
             saveState={saveState}
             onClick={handleSave}
             disabled={saveState === 'saving' || hasBlockingIssues}
-            idleLabel="Save Examples"
+            idleLabel="SAVE"
             className="w-full"
           />
         </div>

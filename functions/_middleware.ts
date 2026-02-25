@@ -1,6 +1,7 @@
 type Env = {
   IMAGES_BUCKET?: R2Bucket;
   IMAGE_STORAGE_PREFIX?: string;
+  IMAGE_DEBUG?: string;
 };
 
 const json = (data: unknown, status = 200) =>
@@ -42,8 +43,18 @@ export async function onRequest(context: {
     return json({ ok: false, code: 'NOT_FOUND' }, 404);
   }
 
-  const requiredPrefix = `${normalizePrefix(context.env.IMAGE_STORAGE_PREFIX)}/`;
-  if (!storageKey.startsWith(requiredPrefix)) {
+  const primary = normalizePrefix(context.env.IMAGE_STORAGE_PREFIX);
+  const allowed = Array.from(new Set([primary, 'site', 'doverdesign'])).filter(Boolean);
+  const allowedPrefixes = allowed.map((p) => `${p}/`);
+  const isAllowed = allowedPrefixes.some((prefix) => storageKey.startsWith(prefix));
+  if (!isAllowed) {
+    const shouldLogReject = Boolean(context.env.IMAGE_STORAGE_PREFIX) || context.env.IMAGE_DEBUG === '1';
+    if (shouldLogReject) {
+      console.warn('[images/middleware] rejected key', {
+        storageKey,
+        allowedPrefixes,
+      });
+    }
     return json({ ok: false, code: 'NOT_FOUND' }, 404);
   }
 
