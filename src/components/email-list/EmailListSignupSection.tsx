@@ -82,7 +82,7 @@ export function EmailListSignupSection({
           <button
             type="submit"
             disabled={state === 'submitting'}
-            className="lux-button absolute right-1 top-1/2 h-9 -translate-y-1/2 px-5 text-[11px] disabled:opacity-60"
+            className="lux-button absolute inset-y-1 right-1 h-auto px-5 text-[11px] disabled:opacity-60"
           >
             {state === 'submitting' ? (
               <span className="inline-flex items-center gap-2">
