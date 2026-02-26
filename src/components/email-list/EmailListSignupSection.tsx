@@ -63,35 +63,37 @@ export function EmailListSignupSection({
         <p className="lux-label text-[10px] mx-auto max-w-2xl">{subtitle}</p>
       </div>
 
-      <form className={`${compact ? 'mt-5' : 'mt-6'} flex flex-col gap-3 sm:flex-row`} onSubmit={handleSubmit}>
+      <form className={`${compact ? 'mt-5' : 'mt-6'} mx-auto w-full max-w-2xl`} onSubmit={handleSubmit}>
         <label htmlFor={inputId} className="sr-only">
           Email address
         </label>
-        <input
-          id={inputId}
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          disabled={state === 'submitting'}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="you@example.com"
-          className="lux-input h-11 flex-1 text-sm placeholder:font-serif placeholder:tracking-[0.03em] placeholder:text-charcoal/60 disabled:opacity-60"
-        />
-        <button
-          type="submit"
-          disabled={state === 'submitting'}
-          className="lux-button h-11 px-5 text-[11px] disabled:opacity-60"
-        >
-          {state === 'submitting' ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Subscribing...
-            </span>
-          ) : (
-            'Join'
-          )}
-        </button>
+        <div className="relative">
+          <input
+            id={inputId}
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            disabled={state === 'submitting'}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+            className="lux-input h-11 w-full pr-28 text-sm placeholder:font-serif placeholder:tracking-[0.03em] placeholder:text-charcoal/60 disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={state === 'submitting'}
+            className="lux-button absolute right-1 top-1/2 h-9 -translate-y-1/2 px-5 text-[11px] disabled:opacity-60"
+          >
+            {state === 'submitting' ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Subscribing...
+              </span>
+            ) : (
+              'Join'
+            )}
+          </button>
+        </div>
       </form>
 
       <div aria-live="polite">
@@ -99,10 +101,6 @@ export function EmailListSignupSection({
         {state === 'duplicate' && <p className="mt-3 text-sm text-deep-ocean/80">{message}</p>}
         {state === 'error' && <p className="mt-3 text-sm text-rose-700">{message}</p>}
       </div>
-
-      <p className="mt-3 text-center text-xs text-charcoal/70">
-        We only send occasional updates. No spam. Unsubscribe anytime.
-      </p>
     </section>
   );
 }
