@@ -304,7 +304,7 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
 
         <SectionDivider />
 
-        <SectionWrapper id="join" className="py-16 sm:py-20 bg-[var(--warm-linen)]">
+        <SectionWrapper id="join" className="py-16 sm:py-20 bg-[#E6DFD4]">
           <div className="w-full max-w-4xl mx-auto">
             <EmailListSignupSection />
           </div>
