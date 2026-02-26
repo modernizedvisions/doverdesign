@@ -96,10 +96,10 @@ export function EmailListSignupSection({
         </div>
       </form>
 
-      <div aria-live="polite">
-        {state === 'success' && <p className="mt-3 text-sm text-emerald-700">{message}</p>}
-        {state === 'duplicate' && <p className="mt-3 text-sm text-deep-ocean/80">{message}</p>}
-        {state === 'error' && <p className="mt-3 text-sm text-rose-700">{message}</p>}
+      <div aria-live="polite" className="mx-auto mt-3 w-full max-w-2xl text-center">
+        {state === 'success' && <p className="lux-label text-[10px] text-emerald-700">{message}</p>}
+        {state === 'duplicate' && <p className="lux-label text-[10px] text-deep-ocean/80">{message}</p>}
+        {state === 'error' && <p className="lux-label text-[10px] text-rose-700">{message}</p>}
       </div>
     </section>
   );
