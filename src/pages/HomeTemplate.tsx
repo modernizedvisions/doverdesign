@@ -1,7 +1,8 @@
-﻿import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
 import { ContactForm } from '../components/ContactForm';
+import { EmailListSignupSection } from '../components/email-list/EmailListSignupSection';
 import type { HomeGalleryItem } from '../lib/types';
 
 export type HomeTemplateProps = {
@@ -137,17 +138,6 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
                   >
                     Custom Orders
                   </LuxuryButton>
-                </div>
-                <div className="grid max-sm:grid-cols-1 grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 justify-items-center">
-                  {[
-                    { title: 'Hand-painted', desc: 'Every shell finished in-studio' },
-                    { title: 'Gallery-grade', desc: 'UV protected and sealed' },
-                    { title: 'Ships with care', desc: 'White-glove packaging' },
-                  ].map((item) => (
-                    <div key={item.title} className="shell-card px-4 py-3 text-center">
-                      <p className="text-xs uppercase tracking-[0.28em] text-deep-ocean/80 whitespace-nowrap">{item.title}</p>
-                    </div>
-                  ))}
                 </div>
               </RevealOnScroll>
               <RevealOnScroll delay={120} className="relative">
@@ -313,6 +303,12 @@ export default function HomeTemplate({ heroImageUrl, galleryImageUrls, homeGalle
         </SectionWrapper>
 
         <SectionDivider />
+
+        <SectionWrapper id="join" className="py-16 sm:py-20 bg-[var(--warm-linen)]">
+          <div className="w-full max-w-4xl mx-auto">
+            <EmailListSignupSection />
+          </div>
+        </SectionWrapper>
 
         <SectionWrapper id="contact" className="py-16 sm:py-20 bg-transparent relative z-10">
           <SectionHeading
